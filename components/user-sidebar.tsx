@@ -21,8 +21,7 @@ const menuItems = [
   { icon: MapPin, label: 'My Locations', href: '/user/my-locations' },
   { icon: FileText, label: 'Emergency Plan', href: '/user/emergency-plan' },
   { icon: Shield, label: 'Preparedness', href: '/user/preparedness' },
-  { icon: Cloud, label: 'Weather', href: '/user/weather' },
-  { icon: Newspaper, label: 'News & Updates', href: '/user/news-updates' },
+  { icon: Cloud, label: 'Regional Weather', href: '/user/weather' },
 ]
 
 export function UserSidebar() {

@@ -30,23 +30,20 @@ export default function LoginPage() {
         localStorage.setItem('userName', 'Admin User')
         document.cookie = "userRole=admin; path=/; max-age=3600"
         router.push('/')
-      } else if (email === 'test@yopmail.com' && password === 'test123') {
-        localStorage.setItem('userRole', 'user')
+      } else if (
+        (email === 'test@yopmail.com' && password === 'test123') ||
+        (email === 'test1@yopmail.com' && password === 'test123') ||
+        (email.includes('@') && password.length >= 6)
+      ) {
+        const role = 'user'
+        const name = email === 'test@yopmail.com' ? 'Test User' :
+          email === 'test1@yopmail.com' ? 'User One' :
+            email.split('@')[0]
+
+        localStorage.setItem('userRole', role)
         localStorage.setItem('userEmail', email)
-        localStorage.setItem('userName', 'Test User')
-        document.cookie = "userRole=user; path=/; max-age=3600"
-        router.push('/user-dashboard')
-      } else if (email === 'test1@yopmail.com' && password === 'test123') {
-        localStorage.setItem('userRole', 'ready2go')
-        localStorage.setItem('userEmail', email)
-        localStorage.setItem('userName', 'Ready User')
-        document.cookie = "userRole=ready2go; path=/; max-age=3600"
-        router.push('/ready2go-dashboard')
-      } else if (email.includes('@') && password.length >= 6) {
-        localStorage.setItem('userRole', 'user')
-        localStorage.setItem('userEmail', email)
-        localStorage.setItem('userName', email.split('@')[0])
-        document.cookie = `userRole=user; path=/; max-age=3600`
+        localStorage.setItem('userName', name)
+        document.cookie = `userRole=${role}; path=/; max-age=3600`
         router.push('/user-dashboard')
       } else {
         setError('Invalid email or password.')

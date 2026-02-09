@@ -27,15 +27,13 @@ export const menuItems = [
   { icon: AlertCircle, label: 'Emergency Events', href: '/emergency-events' },
   { icon: Bell, label: 'Alerts & Communication', href: '/alerts-communication' },
   { icon: Map, label: 'GIS & Mapping', href: '/gis-mapping' },
-  { icon: Users, label: 'Responders & Agencies', href: '/responders-agencies' },
-  { icon: Brain, label: 'Virtual EOC / AI Center', href: '/virtual-eoc-ai-center' },
-  { icon: ClipboardList, label: 'After Action Review', href: '/after-action-review' },
+  { icon: ClipboardList, label: 'Incident Reports', href: '/after-action-review' },
   { icon: FileText, label: 'Emergency Plan', href: '/emergency-plan' },
   { icon: FileText, label: 'Preparedness Information', href: '/preparedness-information' },
 ]
 
 export const bottomItems = [
-  { icon: Settings, label: 'Settings', href: '/virtual-eoc-settings' },
+  // { icon: Settings, label: 'Settings', href: '/virtual-eoc-settings' },
   { icon: HelpCircle, label: 'Help', href: '#' },
   // { icon: LogOut, label: 'Log out', href: '#' },
 ]

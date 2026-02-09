@@ -112,7 +112,7 @@ export function Header({ userName = 'Admin User', onLogout }: HeaderProps) {
             </button>
 
             <div className="mb-4 flex items-center">
-              <h2 className="text-lg font-bold">Ready2Go</h2>
+              <h2 className="text-lg font-bold">Emergency Dashboard</h2>
             </div>
 
             <nav className="space-y-2">

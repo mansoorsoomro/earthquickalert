@@ -1,80 +1,101 @@
+'use client'
+
+import React, { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/card'
-import { AlertTriangle, Radio, Users, Activity } from 'lucide-react'
+import { AlertTriangle, CloudRain, Users, Globe } from 'lucide-react'
+import { getLatestEarthquakes, getWeatherData } from '@/lib/api-service'
 
 export function DashboardStats() {
+  const [quakeCount, setQuakeCount] = useState(0)
+  const [latestQuake, setLatestQuake] = useState('No recent activity')
+  const [weather, setWeather] = useState({ temp: 72, condition: 'Clear' })
+
+  useEffect(() => {
+    async function fetchData() {
+      const quakes = await getLatestEarthquakes()
+      setQuakeCount(quakes.length)
+      if (quakes.length > 0) {
+        const first = quakes[0].properties
+        setLatestQuake(`M${first.mag} - ${first.place}`)
+      }
+
+      const weatherData = await getWeatherData(37.7749, -122.4194) // SF
+      if (weatherData) {
+        setWeather(weatherData)
+      }
+    }
+    fetchData()
+    const interval = setInterval(fetchData, 300000) // Update every 5 mins
+    return () => clearInterval(interval)
+  }, [])
+
   return (
-    <div className="grid grid-cols-4 gap-4">
-      {/* Active Emergencies */}
-      <Card className="p-6 border-l-4 border-l-red-500">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Earthquake Status (USGS) */}
+      <Card className="p-6 border-l-4 border-l-orange-500 bg-white shadow-sm">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <p className="text-sm text-muted-foreground mb-2">Active Emergencies</p>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Earthquake Alerts</p>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-red-500">02</span>
-              <span className="text-xs text-muted-foreground">Active Events</span>
+              <span className="text-3xl font-bold text-slate-900">{quakeCount < 10 ? `0${quakeCount}` : quakeCount}</span>
+              <span className="text-xs text-slate-400">Past Hour</span>
             </div>
           </div>
-          <AlertTriangle className="w-5 h-5 text-red-500" />
-        </div>
-        <div className="space-y-2 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-red-500"></div>
-            <span>Tornado Warning - Zone A</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-red-500"></div>
-            <span>Flash Flood - East District</span>
+          <div className="p-2 bg-orange-50 rounded-lg">
+            <AlertTriangle className="w-5 h-5 text-orange-600" />
           </div>
         </div>
+        <p className="text-xs text-slate-600 italic truncate" title={latestQuake}>Latest: {latestQuake}</p>
       </Card>
 
-      {/* Emergencies */}
-      <Card className="p-6 border-l-4 border-l-blue-500">
+      {/* Weather Conditions (API) */}
+      <Card className="p-6 border-l-4 border-l-blue-500 bg-white shadow-sm">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <p className="text-sm text-muted-foreground mb-2">Emergencies</p>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Current Weather</p>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-blue-500">18</span>
-              <span className="text-xs text-muted-foreground">Alerts Sent</span>
+              <span className="text-3xl font-bold text-slate-900">{weather.temp}°F</span>
+              <span className="text-xs text-slate-400">{weather.condition}</span>
             </div>
           </div>
-          <Radio className="w-5 h-5 text-blue-500" />
+          <div className="p-2 bg-blue-50 rounded-lg">
+            <CloudRain className="w-5 h-5 text-blue-600" />
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Preparedness, Action Alerts, Resource Updates
-        </p>
+        <p className="text-xs text-slate-600 italic">SF Bay Area monitoring active</p>
       </Card>
 
-      {/* Ready2Go Users Impacted */}
-      <Card className="p-6 border-l-4 border-l-yellow-500">
+      {/* Citizen Safety */}
+      <Card className="p-6 border-l-4 border-l-green-500 bg-white shadow-sm">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <p className="text-sm text-muted-foreground mb-2">Ready2Go Users</p>
-            <p className="text-sm text-muted-foreground mb-2">Impacted</p>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Citizen Status</p>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-yellow-600">12,457</span>
+              <span className="text-3xl font-bold text-slate-900">1,402</span>
+              <span className="text-xs text-slate-400">Total Safe</span>
             </div>
           </div>
-          <Users className="w-5 h-5 text-yellow-600" />
+          <div className="p-2 bg-green-50 rounded-lg">
+            <Users className="w-5 h-5 text-green-600" />
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground">Citizens in affected zones</p>
+        <p className="text-xs text-slate-600 italic">85% of population reached</p>
       </Card>
 
-      {/* Virtual EOC Status */}
-      <Card className="p-6 border-l-4 border-l-green-500">
+      {/* API Connectivity */}
+      <Card className="p-6 border-l-4 border-l-slate-800 bg-slate-900 text-white shadow-sm">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <p className="text-sm text-muted-foreground mb-2">Virtual EOC Status</p>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-sm font-semibold text-green-600">Inactive</span>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">API Systems</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-bold text-white">Live</span>
             </div>
           </div>
-          <Activity className="w-5 h-5 text-green-500" />
+          <div className="p-2 bg-slate-800 rounded-lg">
+            <Globe className="w-5 h-5 text-blue-400" />
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Virtual EOC is only activated for major and catastrophic events.
-        </p>
+        <p className="text-xs text-slate-400 italic">Google Maps & USGS Connected</p>
       </Card>
     </div>
   )

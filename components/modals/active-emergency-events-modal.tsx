@@ -112,7 +112,7 @@ export function ActiveEmergencyEventsModal({ isOpen, onClose }: ActiveEmergencyE
                     <td className="py-4 px-4">
                       {event.canAssign ? (
                         <Button className="bg-blue-500 hover:bg-blue-600 text-white text-sm" size="sm">
-                          Task Assign
+                          Resend
                         </Button>
                       ) : (
                         <span className="text-gray-400 text-sm">—</span>

@@ -30,16 +30,16 @@ export function NotifyLeadersModal({ isOpen, onClose }: NotifyLeadersModalProps)
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-500">
-                <div className="bg-amber-500 p-8 text-white relative">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl animate-in fade-in zoom-in duration-500">
+                <div className="bg-amber-500 p-6 md:p-8 text-white relative">
                     <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
                     <div className="flex items-center justify-between relative z-10">
                         <div className="flex items-center gap-4">
                             <ShieldAlert className="w-10 h-10 text-amber-100 fill-amber-100" />
                             <div>
-                                <h2 className="text-3xl font-black">Notify Leaders</h2>
-                                <p className="text-amber-100 font-medium">Direct Stakeholder Communication</p>
+                                <h2 className="text-2xl md:text-3xl font-black">Notify Leaders</h2>
+                                <p className="text-amber-100 font-medium text-sm md:text-base">Direct Stakeholder Communication</p>
                             </div>
                         </div>
                         <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
@@ -48,7 +48,7 @@ export function NotifyLeadersModal({ isOpen, onClose }: NotifyLeadersModalProps)
                     </div>
                 </div>
 
-                <div className="p-8 space-y-6">
+                <div className="p-6 md:p-8 space-y-6">
                     <div>
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Select Stakeholders</h3>
                         <div className="grid grid-cols-1 gap-2">
@@ -85,7 +85,7 @@ export function NotifyLeadersModal({ isOpen, onClose }: NotifyLeadersModalProps)
                         <Button
                             onClick={handleSend}
                             disabled={isSent}
-                            className={`w-full py-7 font-black text-lg rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 ${isSent ? 'bg-green-500 hover:bg-green-500 text-white' : 'bg-slate-900 hover:bg-slate-800 text-white'
+                            className={`w-full py-6 md:py-7 font-black text-base md:text-lg rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 ${isSent ? 'bg-green-500 hover:bg-green-500 text-white' : 'bg-slate-900 hover:bg-slate-800 text-white'
                                 }`}
                         >
                             {isSent ? (
@@ -96,7 +96,7 @@ export function NotifyLeadersModal({ isOpen, onClose }: NotifyLeadersModalProps)
                             ) : (
                                 <>
                                     <Send className="w-5 h-5" />
-                                    Broaden Notification
+                                    Send message
                                 </>
                             )}
                         </Button>

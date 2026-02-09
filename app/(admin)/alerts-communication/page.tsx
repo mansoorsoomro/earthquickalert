@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle, Cloud, AlertCircle, Smartphone, MessageSquare, Mail, Zap } from 'lucide-react'
 import { AlertDetailModal } from '@/components/AlertDetailModal'
-import { GuidanceProtocolSheet } from '@/components/GuidanceProtocolSheet'
 import { Switch } from '@/components/ui/switch'
 
 export default function AlertsCommunicationPage() {
@@ -18,7 +17,6 @@ export default function AlertsCommunicationPage() {
 
   const [selectedAlert, setSelectedAlert] = useState<any>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-  const [isGuidanceSheetOpen, setIsGuidanceSheetOpen] = useState(false)
 
   const toggleNotification = (key: string) => {
     setNotificationPrefs((prev) => ({
@@ -112,11 +110,10 @@ export default function AlertsCommunicationPage() {
 
   const handleCheckIn = () => {
     setIsDetailModalOpen(false)
-    setIsGuidanceSheetOpen(true)
   }
 
   return (
-    
+
     <main className="p-6 space-y-6">
       <div className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded">
         <h1 className="text-3xl font-bold mb-2">Alerts & Communication</h1>
@@ -229,12 +226,6 @@ export default function AlertsCommunicationPage() {
         onClose={() => setIsDetailModalOpen(false)}
         onCheckIn={handleCheckIn}
         alert={selectedAlert}
-      />
-
-      <GuidanceProtocolSheet
-        isOpen={isGuidanceSheetOpen}
-        onClose={() => setIsGuidanceSheetOpen(false)}
-        alertTitle={selectedAlert?.title || ''}
       />
     </main>
   )
