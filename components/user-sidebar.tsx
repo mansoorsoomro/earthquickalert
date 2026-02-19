@@ -9,6 +9,10 @@ import {
   Shield,
   Cloud,
   Newspaper,
+  Users,
+  LifeBuoy,
+  BriefcaseMedical, // Added BriefcaseMedical icon
+  ShieldAlert,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
@@ -17,9 +21,12 @@ import Link from 'next/link'
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/user-dashboard' },
+  { icon: Users, label: 'Are We Safe?', href: '/user/are-we-safe' },
+  { icon: LifeBuoy, label: 'Emergency Resources', href: '/user/resources' },
+  { icon: BriefcaseMedical, label: 'Emergency Plan', href: '/user/emergency-plan' }, // Added Emergency Plan item
+  { icon: ShieldAlert, label: 'Active Shooter Guide', href: '/active-shooter' }, // Added Active Shooter Guide item
   { icon: Bell, label: 'Alerts', href: '/user/alerts' },
   { icon: MapPin, label: 'My Locations', href: '/user/my-locations' },
-  { icon: FileText, label: 'Emergency Plan', href: '/user/emergency-plan' },
   { icon: Shield, label: 'Preparedness', href: '/user/preparedness' },
   { icon: Cloud, label: 'Regional Weather', href: '/user/weather' },
 ]
@@ -75,6 +82,7 @@ export function UserSidebar() {
             localStorage.removeItem('userRole')
             localStorage.removeItem('userEmail')
             localStorage.removeItem('userName')
+            document.cookie = "userRole=; path=/; max-age=0"
             router.push('/login')
           }}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sidebar-foreground hover:bg-sidebar-accent transition-colors text-sm"

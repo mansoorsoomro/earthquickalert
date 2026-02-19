@@ -64,7 +64,7 @@ export interface EOCActivation {
 
 export interface EmergencyResource {
     id: string
-    type: 'hospital' | 'shelter' | 'medical-clinic' | 'fema' | 'red-cross' | 'food-bank' | 'other'
+    type: 'hospital' | 'shelter' | 'medical-clinic' | 'fema' | 'red-cross' | 'food-bank' | 'pharmacy' | 'gas' | 'lodging' | 'other'
     name: string
     location: {
         lat: number

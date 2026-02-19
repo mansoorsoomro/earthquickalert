@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Bell, Newspaper, Volume2, VolumeX } from 'lucide-react'
 
 export default function NewsUpdatesPage() {
   const [activeCategory, setActiveCategory] = useState('all')
@@ -15,6 +15,15 @@ export default function NewsUpdatesPage() {
       description: 'Join us for a city-wide emergency preparedness drill next Saturday to practice response procedures.',
       time: '2 hours ago',
       image: '🚨',
+      type: 'push' // Audible
+    },
+    {
+      category: 'safety',
+      title: 'Planned Power Outage - Ward 4',
+      description: 'Utility crews will be performing maintenance. Expect 2-hour outages starting at 10 PM.',
+      time: '1 day ago',
+      image: '⚡',
+      type: 'feed' // Non-audible
     },
     {
       category: 'safety',
@@ -22,6 +31,7 @@ export default function NewsUpdatesPage() {
       description: 'City-wide preparedness exercise is being held on Saturday to ensure readiness.',
       time: '1 day ago',
       image: '👮',
+      type: 'feed'
     },
     {
       category: 'community',
@@ -29,6 +39,7 @@ export default function NewsUpdatesPage() {
       description: 'Community center wellness checkups this Thursday from 10 AM to 5 PM.',
       time: '3 days ago',
       image: '🏥',
+      type: 'feed'
     },
     {
       category: 'safety',
@@ -36,6 +47,7 @@ export default function NewsUpdatesPage() {
       description: 'Highway 101 closure this weekend for planned maintenance work.',
       time: '4 days ago',
       image: '🚗',
+      type: 'feed'
     },
   ]
 
@@ -62,8 +74,8 @@ export default function NewsUpdatesPage() {
             key={cat.id}
             onClick={() => setActiveCategory(cat.id)}
             className={`px-4 py-2 rounded-full font-medium transition-colors ${activeCategory === cat.id
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
           >
             {cat.label}
@@ -79,9 +91,20 @@ export default function NewsUpdatesPage() {
               <div className="text-4xl flex-shrink-0">{item.image}</div>
               <div className="flex-1">
                 <div className="flex items-start justify-between mb-2">
-                  <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded capitalize">
-                    {item.category}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded capitalize">
+                      {item.category}
+                    </span>
+                    {(item as any).type === 'push' ? (
+                      <span className="flex items-center gap-1 text-[10px] font-black text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100 italic">
+                        <Volume2 className="w-3 h-3" /> PUSH ALERT (AUDIBLE)
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 uppercase">
+                        <VolumeX className="w-3 h-3" /> FEED ONLY
+                      </span>
+                    )}
+                  </div>
                   <span className="text-xs text-gray-500">{item.time}</span>
                 </div>
                 <h3 className="text-lg font-bold mb-2">{item.title}</h3>

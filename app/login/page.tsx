@@ -32,19 +32,26 @@ export default function LoginPage() {
         router.push('/')
       } else if (
         (email === 'test@yopmail.com' && password === 'test123') ||
-        (email === 'test1@yopmail.com' && password === 'test123') ||
+        (email === 'test1@gmail.com' && password === 'test123') ||
+        (email === 'test2@gmail.com' && password === 'test123') ||
         (email.includes('@') && password.length >= 6)
       ) {
         const role = 'user'
         const name = email === 'test@yopmail.com' ? 'Test User' :
-          email === 'test1@yopmail.com' ? 'User One' :
-            email.split('@')[0]
+          email === 'test1@gmail.com' ? 'Blue Sky User' :
+            email === 'test2@gmail.com' ? 'EOC User' :
+              email.split('@')[0]
 
         localStorage.setItem('userRole', role)
         localStorage.setItem('userEmail', email)
         localStorage.setItem('userName', name)
         document.cookie = `userRole=${role}; path=/; max-age=3600`
-        router.push('/user-dashboard')
+
+        if (email === 'test2@gmail.com') {
+          router.push('/virtual-eoc')
+        } else {
+          router.push('/user-dashboard')
+        }
       } else {
         setError('Invalid email or password.')
       }

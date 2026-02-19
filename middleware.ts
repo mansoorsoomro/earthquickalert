@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
 
     // Define public routes that don't need auth
-    const isPublicRoute = pathname === '/login' || pathname === '/signup' || pathname.startsWith('/_next') || pathname === '/favicon.ico'
+    const isPublicRoute = pathname === '/' || pathname === '/login' || pathname === '/signup' || pathname.startsWith('/_next') || pathname === '/favicon.ico'
 
     if (!userRole && !isPublicRoute) {
         return NextResponse.redirect(new URL('/login', request.url))

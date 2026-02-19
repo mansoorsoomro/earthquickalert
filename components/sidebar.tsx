@@ -16,6 +16,7 @@ import {
   HelpCircle,
   LogOut,
   X,
+  Building2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
@@ -23,11 +24,12 @@ import logo from '../public/logo.png'
 import { Button } from '@/components/ui/button'
 
 export const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
+  { icon: LayoutDashboard, label: 'Dashboard', href: '/admin-dashboard' },
   { icon: AlertCircle, label: 'Emergency Events', href: '/emergency-events' },
   { icon: Bell, label: 'Alerts & Communication', href: '/alerts-communication' },
   { icon: Map, label: 'GIS & Mapping', href: '/gis-mapping' },
-  { icon: ClipboardList, label: 'Incident Reports', href: '/after-action-review' },
+  { icon: Users, label: 'Responders & Agencies', href: '/responders-agencies' },
+  { icon: ClipboardList, label: 'After Action Review', href: '/after-action-review' },
   { icon: FileText, label: 'Emergency Plan', href: '/emergency-plan' },
   { icon: FileText, label: 'Preparedness Information', href: '/preparedness-information' },
 ]

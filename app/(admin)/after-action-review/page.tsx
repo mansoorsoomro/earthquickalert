@@ -1,9 +1,38 @@
 'use client'
 
+import { useState } from 'react'
 import { Card } from '@/components/ui/card'
-import { Flame, AlertTriangle, Clock, Brain } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Flame, AlertTriangle, Clock, Brain, ThumbsUp, BookOpen, Plus, CheckCircle } from 'lucide-react'
 
 export default function AfterActionReviewPage() {
+
+  const [wentWellItems, setWentWellItems] = useState([
+    'Early alert dissemination reached 96% of impacted residents within 3 minutes.',
+    'Inter-agency coordination between Fire, Police, and OEM was seamless.',
+    'Shelter-in-place guidance was clear and well-received by the public.',
+  ])
+  const [lessonsItems, setLessonsItems] = useState([
+    'Secondary alert channel (email) had a 15-minute delay — investigate SMTP configuration.',
+    'More clear signage needed at Shelter B entry points.',
+  ])
+  const [newWentWell, setNewWentWell] = useState('')
+  const [newLesson, setNewLesson] = useState('')
+  const [savedWW, setSavedWW] = useState(false)
+  const [savedLL, setSavedLL] = useState(false)
+
+  const addWentWell = () => {
+    if (newWentWell.trim()) {
+      setWentWellItems(prev => [...prev, newWentWell.trim()])
+      setNewWentWell('')
+    }
+  }
+  const addLesson = () => {
+    if (newLesson.trim()) {
+      setLessonsItems(prev => [...prev, newLesson.trim()])
+      setNewLesson('')
+    }
+  }
 
   const timelineEvents = [
     {
@@ -245,6 +274,81 @@ export default function AfterActionReviewPage() {
           </table>
         </div>
       </Card>
+
+      {/* What Went Well */}
+      <Card className="p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+            <ThumbsUp className="w-4 h-4 text-green-700" />
+          </div>
+          <h2 className="text-lg font-bold">What Went Well</h2>
+          <span className="text-xs text-gray-400 ml-auto">Manual entry — not AI generated</span>
+        </div>
+
+        <div className="space-y-2 mb-4">
+          {wentWellItems.map((item, i) => (
+            <div key={i} className="flex items-start gap-3 p-3 bg-green-50 border border-green-100 rounded-lg">
+              <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-gray-700">{item}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newWentWell}
+            onChange={e => setNewWentWell(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addWentWell()}
+            placeholder="Add what went well..."
+            className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm"
+          />
+          <Button size="sm" variant="outline" onClick={addWentWell} className="flex items-center gap-1">
+            <Plus className="w-4 h-4" />Add
+          </Button>
+          <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => setSavedWW(true)}>
+            {savedWW ? '✓ Saved' : 'Save'}
+          </Button>
+        </div>
+      </Card>
+
+      {/* Lessons Learned */}
+      <Card className="p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+            <BookOpen className="w-4 h-4 text-orange-700" />
+          </div>
+          <h2 className="text-lg font-bold">Lessons Learned</h2>
+          <span className="text-xs text-gray-400 ml-auto">Manual entry — not AI generated</span>
+        </div>
+
+        <div className="space-y-2 mb-4">
+          {lessonsItems.map((item, i) => (
+            <div key={i} className="flex items-start gap-3 p-3 bg-orange-50 border border-orange-100 rounded-lg">
+              <BookOpen className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-gray-700">{item}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newLesson}
+            onChange={e => setNewLesson(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addLesson()}
+            placeholder="Add a lesson learned..."
+            className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm"
+          />
+          <Button size="sm" variant="outline" onClick={addLesson} className="flex items-center gap-1">
+            <Plus className="w-4 h-4" />Add
+          </Button>
+          <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white" onClick={() => setSavedLL(true)}>
+            {savedLL ? '✓ Saved' : 'Save'}
+          </Button>
+        </div>
+      </Card>
     </main>
   )
 }
+

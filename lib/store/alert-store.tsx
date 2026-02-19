@@ -20,7 +20,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
 
     // Load alerts from localStorage on mount
     useEffect(() => {
-        const stored = localStorage.getItem('emergency-alerts')
+        const stored = localStorage.getItem('adminAlerts')
         if (stored) {
             try {
                 const parsed = JSON.parse(stored)
@@ -39,7 +39,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
 
     // Save alerts to localStorage whenever they change
     useEffect(() => {
-        localStorage.setItem('emergency-alerts', JSON.stringify(alerts))
+        localStorage.setItem('adminAlerts', JSON.stringify(alerts))
     }, [alerts])
 
     const createAlert = useCallback((alertData: Omit<Alert, 'id' | 'createdAt'>): Alert => {

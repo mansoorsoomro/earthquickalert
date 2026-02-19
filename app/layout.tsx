@@ -32,6 +32,8 @@ export const metadata: Metadata = {
   },
 }
 
+import { SafetyProvider } from '@/components/providers/safety-provider'
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -44,9 +46,11 @@ export default function RootLayout({
       </head>
       <body className={`font-sans antialiased`}>
         <AuthProvider>
-          <EmergencyProvider>
-            {children}
-          </EmergencyProvider>
+          <SafetyProvider>
+            <EmergencyProvider>
+              {children}
+            </EmergencyProvider>
+          </SafetyProvider>
         </AuthProvider>
         <Analytics />
       </body>
