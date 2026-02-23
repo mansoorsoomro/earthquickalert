@@ -2,12 +2,16 @@ import mongoose from 'mongoose';
 
 let MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ready2go';
 
-if (MONGODB_URI.startsWith('mongodb+srv://')) {
-    const url = new URL(MONGODB_URI);
-    if (!url.pathname || url.pathname === '/') {
-        url.pathname = '/ready2go';
-        MONGODB_URI = url.toString();
+try {
+    if (MONGODB_URI && MONGODB_URI.startsWith('mongodb+srv://')) {
+        const url = new URL(MONGODB_URI);
+        if (!url.pathname || url.pathname === '/') {
+            url.pathname = '/ready2go';
+            MONGODB_URI = url.toString();
+        }
     }
+} catch (err) {
+    console.error('Error parsing MONGODB_URI:', err);
 }
 
 /**
