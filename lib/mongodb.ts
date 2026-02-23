@@ -1,13 +1,21 @@
 import mongoose from 'mongoose';
 
-let MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ready2go';
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+    throw new Error(
+        'Please define the MONGODB_URI environment variable inside .env.local or your deployment settings'
+    );
+}
+
+let connectionString = MONGODB_URI;
 
 try {
-    if (MONGODB_URI && MONGODB_URI.startsWith('mongodb+srv://')) {
-        const url = new URL(MONGODB_URI);
+    if (connectionString.startsWith('mongodb+srv://')) {
+        const url = new URL(connectionString);
         if (!url.pathname || url.pathname === '/') {
             url.pathname = '/ready2go';
-            MONGODB_URI = url.toString();
+            connectionString = url.toString();
         }
     }
 } catch (err) {
@@ -37,10 +45,10 @@ async function connectDB() {
 
         console.log('Connecting to MongoDB...');
         // Obfuscate URI for logging
-        const obfuscatedUri = MONGODB_URI.replace(/:([^@]+)@/, ':****@');
+        const obfuscatedUri = connectionString.replace(/:([^@]+)@/, ':****@');
         console.log(`Using URI: ${obfuscatedUri}`);
 
-        cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+        cached.promise = mongoose.connect(connectionString, opts).then((mongoose) => {
             console.log('MongoDB connected successfully');
             return mongoose;
         }).catch((err) => {
