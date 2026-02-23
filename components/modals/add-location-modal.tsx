@@ -33,13 +33,13 @@ export function AddLocationModal({ isOpen, onClose, onAdd }: AddLocationModalPro
 
     if (!isOpen) return null
 
-    const handleAdd = () => {
+    const handleAdd = async () => {
         if (!nickname || !address) {
             alert('Please fill in all fields')
             return
         }
 
-        const coords = geocodeAddress(address)
+        const coords = await geocodeAddress(address)
 
         onAdd({
             nickname,

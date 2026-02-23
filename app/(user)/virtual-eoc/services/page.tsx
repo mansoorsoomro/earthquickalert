@@ -5,20 +5,27 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, MapPin, Phone, Hospital, ShoppingBag, CheckCircle, Siren, Activity, Info } from 'lucide-react'
+import { ArrowLeft, MapPin, Phone, Hospital, ShoppingBag, CheckCircle, Search, User, Zap, Info, LogOut } from 'lucide-react'
 
 function ServicesContent() {
     const router = useRouter()
+
+    const handleLogout = () => {
+        localStorage.removeItem('userRole')
+        localStorage.removeItem('userEmail')
+        localStorage.removeItem('userName')
+        document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+        router.push('/login')
+    }
+
     const searchParams = useSearchParams()
     const type = searchParams.get('type') || 'medical'
 
     const emergencyName = "HURRICANE ERIN"
-    const emergencyLevel = "CAT 4 - EXTREME DANGER"
+    const emergencyLevel = "CAT 3 - EXTREME DANGER"
 
     const title = type === 'medical' ? 'Medical Services' : type === 'community' ? 'Community Emergency Center' : 'Lodging & Essentials'
-    const colorClass = type === 'medical' ? 'bg-blue-600' : type === 'community' ? 'bg-slate-800' : 'bg-emerald-600'
-    const borderClass = type === 'medical' ? 'border-blue-500/30' : type === 'community' ? 'border-slate-500/30' : 'border-emerald-500/30'
-    const textClass = type === 'medical' ? 'text-blue-400' : type === 'community' ? 'text-slate-400' : 'text-emerald-400'
+    const colorClass = type === 'medical' ? 'text-blue-600' : type === 'community' ? 'text-slate-600' : 'text-emerald-600'
 
     const items = type === 'medical'
         ? [
@@ -42,44 +49,66 @@ function ServicesContent() {
     const sortedItems = [...items].sort((a, b) => (b.preferred ? 1 : 0) - (a.preferred ? 1 : 0))
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans">
-            {/* Command Center Header */}
-            <div className={`${colorClass} p-4 shadow-2xl sticky top-0 z-50 overflow-hidden`}>
-                <div className="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
-                <div className="max-w-7xl mx-auto flex items-center justify-between relative z-10">
-                    <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-white hover:bg-white/20 rounded-xl">
-                            <ArrowLeft className="w-6 h-6" />
-                        </Button>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="font-black text-xl tracking-tighter uppercase leading-none">{title}</h1>
-                                <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded font-black italic border border-white/20 uppercase tracking-widest leading-none">Intelligence Feed</span>
-                            </div>
-                            <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest opacity-80">{emergencyName} • {emergencyLevel}</p>
+        <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans">
+            {/* Light Header from Mockup */}
+            <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-slate-400 hover:bg-slate-100 rounded-xl">
+                        <ArrowLeft className="w-6 h-6" />
+                    </Button>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h1 className="font-black text-xl tracking-tighter uppercase leading-none text-slate-900 italic">{title}</h1>
+                            <span className="bg-slate-100 text-slate-400 text-[10px] px-2 py-0.5 rounded font-black italic border border-slate-200 uppercase tracking-widest leading-none">Intelligence Feed</span>
+                        </div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{emergencyName} • {emergencyLevel}</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-4 text-slate-400">
+                    <Search className="w-5 h-5" />
+                    <div className="relative">
+                        <Badge className="absolute -top-1 -right-1 p-0 w-4 h-4 flex items-center justify-center bg-red-500 border-2 border-white text-[10px]">2</Badge>
+                        <Zap className="w-5 h-5" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="text-right">
+                            <p className="text-sm font-black leading-none uppercase tracking-tighter text-slate-900 italic">Mansoor Soomro</p>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">m.soomro@eoc.gov</p>
+                        </div>
+                        <div className="w-10 h-10 bg-slate-200 rounded-full border-2 border-slate-100 flex items-center justify-center overflow-hidden">
+                            <User className="w-6 h-6 text-slate-400" />
                         </div>
                     </div>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleLogout}
+                        className="text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl"
+                        title="Logout"
+                    >
+                        <LogOut className="w-5 h-5" />
+                    </Button>
                 </div>
             </div>
 
-            {/* Metadata Awareness Bar */}
-            <div className="bg-slate-900 border-b border-slate-800 p-3">
+            {/* Metadata Awareness Bar (Light) */}
+            <div className="bg-white border-b border-slate-200 p-3 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-6">
                         <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Active Radius:</span>
-                            <Badge variant="outline" className="text-[10px] bg-slate-800 text-blue-400 border-slate-700 h-5 px-2 font-black">25 MILES</Badge>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Active Radius:</span>
+                            <Badge variant="outline" className="text-[10px] bg-slate-50 text-blue-600 border-slate-200 h-5 px-2 font-black">25 MILES</Badge>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Last Updated:</span>
-                            <span className="text-[10px] font-bold text-slate-300 italic">Just Now</span>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Last Updated:</span>
+                            <span className="text-[10px] font-bold text-slate-500 italic uppercase">Just Now</span>
                         </div>
                     </div>
                     {type === 'essentials' && (
                         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 md:pb-0">
-                            <Badge variant="outline" className="text-[9px] border-emerald-500/50 text-emerald-400 whitespace-nowrap bg-emerald-500/5 uppercase font-bold">Gluten-Free</Badge>
-                            <Badge variant="outline" className="text-[9px] border-slate-700 text-slate-400 whitespace-nowrap uppercase font-bold">Specialty Items</Badge>
-                            <Badge variant="outline" className="text-[9px] border-slate-700 text-slate-400 whitespace-nowrap uppercase font-bold">Dairy-Free</Badge>
+                            <Badge variant="outline" className="text-[9px] border-emerald-200 text-emerald-600 whitespace-nowrap bg-emerald-50 uppercase font-bold">Gluten-Free</Badge>
+                            <Badge variant="outline" className="text-[9px] border-slate-200 text-slate-400 whitespace-nowrap uppercase font-bold">Specialty Items</Badge>
+                            <Badge variant="outline" className="text-[9px] border-slate-200 text-slate-400 whitespace-nowrap uppercase font-bold">Dairy-Free</Badge>
                         </div>
                     )}
                 </div>
@@ -88,7 +117,7 @@ function ServicesContent() {
             <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {sortedItems.map((item, i) => (
-                        <Card key={i} className={`bg-slate-900/50 border-slate-800 p-6 rounded-3xl shadow-xl transition-all hover:scale-[1.02] group ${item.preferred ? 'ring-2 ring-emerald-500/50 relative overflow-hidden' : ''}`}>
+                        <Card key={i} className={`bg-white border-slate-200 p-6 rounded-3xl shadow-sm transition-all hover:scale-[1.02] group ${item.preferred ? 'ring-2 ring-emerald-500/50 relative overflow-hidden' : ''}`}>
                             {item.preferred && (
                                 <div className="absolute top-0 right-0 bg-emerald-500 px-3 py-1 rounded-bl-xl shadow-lg">
                                     <span className="text-[10px] font-black text-white uppercase italic tracking-widest">Priority Center</span>
@@ -97,53 +126,53 @@ function ServicesContent() {
                             <div className="flex flex-col h-full gap-4">
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1 space-y-1">
-                                        <h4 className="font-black text-white text-xl tracking-tight leading-none">{item.name}</h4>
-                                        <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">{item.address}</p>
+                                        <h4 className="font-black text-slate-900 text-xl tracking-tight leading-none uppercase">{item.name}</h4>
+                                        <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">{item.address}</p>
                                     </div>
-                                    <div className="bg-slate-950 px-3 py-2 rounded-2xl border border-slate-800 text-center min-w-[80px]">
-                                        <p className="text-sm text-white font-black italic">{item.wait}</p>
-                                        <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest">Status</p>
+                                    <div className="bg-slate-50 px-3 py-2 rounded-2xl border border-slate-200 text-center min-w-[80px]">
+                                        <p className="text-sm text-slate-900 font-black italic">{item.wait}</p>
+                                        <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest">Status</p>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2 py-2 border-y border-slate-800/50">
-                                    <CheckCircle className={`w-4 h-4 ${textClass}`} />
-                                    <span className={`text-xs font-black uppercase tracking-widest ${textClass}`}>{item.status}</span>
+                                <div className="flex items-center gap-2 py-2 border-y border-slate-100">
+                                    <CheckCircle className={`w-4 h-4 ${colorClass}`} />
+                                    <span className={`text-xs font-black uppercase tracking-widest ${colorClass}`}>{item.status}</span>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3 mt-auto pt-2">
-                                    <Button variant="outline" size="lg" className="h-12 border-slate-800 bg-slate-900/50 text-slate-300 hover:bg-slate-800 rounded-2xl font-bold">
-                                        <Phone className="w-4 h-4 mr-2 text-slate-500" /> Phone
+                                    <Button variant="outline" size="lg" className="h-12 border-slate-200 bg-white text-slate-600 hover:bg-slate-50 rounded-2xl font-bold uppercase text-[10px]">
+                                        <Phone className="w-4 h-4 mr-2 text-slate-400" /> Phone
                                     </Button>
-                                    <Button variant="outline" size="lg" className="h-12 border-slate-800 bg-slate-900/50 text-slate-300 hover:bg-slate-800 rounded-2xl font-bold">
-                                        <MapPin className="w-4 h-4 mr-2 text-slate-500" /> Directions
+                                    <Button variant="outline" size="lg" className="h-12 border-slate-200 bg-white text-slate-600 hover:bg-slate-50 rounded-2xl font-bold uppercase text-[10px]">
+                                        <MapPin className="w-4 h-4 mr-2 text-slate-400" /> Directions
                                     </Button>
                                 </div>
                             </div>
                         </Card>
                     ))}
 
-                    {/* Proactive Help Widget */}
-                    <Card className="bg-slate-900/20 border-dashed border-slate-800 p-6 rounded-3xl flex flex-col items-center justify-center text-center group hover:bg-slate-900/40 transition-colors">
-                        <div className="p-4 bg-slate-900 rounded-full mb-4 border border-slate-800">
-                            <Info className="w-8 h-8 text-slate-600 group-hover:text-blue-500 transition-colors" />
+                    {/* Proactive Help Widget (Light) */}
+                    <Card className="bg-slate-50 border-dashed border-slate-200 p-6 rounded-3xl flex flex-col items-center justify-center text-center group hover:bg-slate-100 transition-colors">
+                        <div className="p-4 bg-white rounded-full mb-4 border border-slate-200 shadow-sm">
+                            <Info className="w-8 h-8 text-slate-400 group-hover:text-blue-500 transition-colors" />
                         </div>
-                        <h4 className="font-bold text-slate-400 mb-2 uppercase text-xs tracking-[0.2em]">Need something else?</h4>
-                        <p className="text-xs text-slate-600 max-w-[200px] leading-relaxed mb-4 italic">
+                        <h4 className="font-black text-slate-900 mb-2 uppercase text-xs tracking-[0.2em] italic">Need something else?</h4>
+                        <p className="text-xs text-slate-400 max-w-[200px] leading-relaxed mb-4 italic font-medium">
                             Our AI is constantly indexing local resources. Contact the EOC if a facility is missing.
                         </p>
-                        <Button variant="ghost" size="sm" className="text-blue-500 font-bold hover:bg-blue-500/10">MESSAGE EOC</Button>
+                        <Button variant="ghost" size="sm" className="text-blue-600 font-black hover:bg-blue-500/10 uppercase tracking-widest text-[10px]">MESSAGE EOC</Button>
                     </Card>
                 </div>
             </main>
 
             {/* Modern High-Tech Footer */}
-            <footer className="p-8 border-t border-slate-900 bg-slate-950 flex flex-col items-center gap-4">
+            <footer className="p-8 border-t border-slate-200 bg-white flex flex-col items-center gap-4 mt-auto">
                 <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-red-600 rounded-full animate-blink"></div>
                     <p className="text-[10px] font-black text-slate-500 tracking-[0.2em]">OFFICIAL EMERGENCY BROADCAST SYSTEM • EST 2026</p>
                 </div>
-                <p className="text-[9px] text-slate-700 italic">Real-time resource validation active. Monitoring ID: SERV-SF-2026-001</p>
+                <p className="text-[9px] text-slate-400 italic font-medium">Real-time resource validation active. Monitoring ID: SERV-SF-2026-001</p>
             </footer>
         </div>
     )
@@ -151,7 +180,7 @@ function ServicesContent() {
 
 export default function ServicesPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-500 font-black tracking-widest text-sm italic animate-pulse uppercase">Syncing EOC Data Feed...</div>}>
+        <Suspense fallback={<div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-slate-400 font-black tracking-widest text-sm italic animate-pulse uppercase">Syncing EOC Data Feed...</div>}>
             <ServicesContent />
         </Suspense>
     )

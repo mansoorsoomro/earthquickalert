@@ -24,37 +24,37 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      if (email === 'admin@gmail.com' && password === 'admin123') {
-        localStorage.setItem('userRole', 'admin')
-        localStorage.setItem('userEmail', email)
-        localStorage.setItem('userName', 'Admin User')
-        document.cookie = "userRole=admin; path=/; max-age=3600"
-        router.push('/')
-      } else if (
-        (email === 'test@yopmail.com' && password === 'test123') ||
-        (email === 'test1@gmail.com' && password === 'test123') ||
-        (email === 'test2@gmail.com' && password === 'test123') ||
-        (email.includes('@') && password.length >= 6)
-      ) {
-        const role = 'user'
-        const name = email === 'test@yopmail.com' ? 'Test User' :
-          email === 'test1@gmail.com' ? 'Blue Sky User' :
-            email === 'test2@gmail.com' ? 'EOC User' :
-              email.split('@')[0]
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
 
-        localStorage.setItem('userRole', role)
-        localStorage.setItem('userEmail', email)
-        localStorage.setItem('userName', name)
-        document.cookie = `userRole=${role}; path=/; max-age=3600`
+      const data = await response.json()
 
-        if (email === 'test2@gmail.com') {
-          router.push('/virtual-eoc')
+      if (response.ok) {
+        localStorage.setItem('userRole', data.user.role)
+        localStorage.setItem('userEmail', data.user.email)
+        localStorage.setItem('userName', data.user.name || '')
+        localStorage.setItem('systemMode', data.systemMode || 'safe')
+        localStorage.setItem('isSafe', String(data.user.isSafe ?? true))
+        localStorage.setItem('userLocation', data.user.location || '')
+
+        if (data.user.role === 'admin') {
+          router.push('/')
         } else {
-          router.push('/user-dashboard')
+          // Regular user redirection based on safety status
+          if (!data.user.isSafe) {
+            router.push('/virtual-eoc')
+          } else {
+            router.push('/user-dashboard')
+          }
         }
       } else {
-        setError('Invalid email or password.')
+        setError(data.error || 'Invalid email or password.')
       }
+    } catch (err) {
+      setError('An error occurred during login. Please try again.')
     } finally {
       setLoading(false)
     }

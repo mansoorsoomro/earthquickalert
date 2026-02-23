@@ -29,7 +29,7 @@ export interface BaseAlert {
 
 export interface WeatherAlert extends BaseAlert {
     source: AlertSource.WEATHER_API;
-    weatherType: 'thunderstorm' | 'tornado' | 'hurricane' | 'flood' | 'snow' | 'heat' | 'cold' | 'wind' | 'other';
+    weatherType: 'thunderstorm' | 'tornado' | 'hurricane' | 'flood' | 'snow' | 'heat' | 'cold' | 'wind' | 'rain' | 'fog' | 'other';
     temperature?: number;
     windSpeed?: number;
     precipitation?: number;

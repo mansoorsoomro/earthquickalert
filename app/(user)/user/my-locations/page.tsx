@@ -1,78 +1,210 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { MapPin, Plus, Trash2, Edit2 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import {
+  MapPin,
+  Users,
+  Loader2,
+  Navigation,
+  Map as MapIcon,
+  User,
+  Signal,
+  Pencil,
+  Check,
+  X,
+  PlusCircle,
+  Wifi
+} from 'lucide-react'
+import { useSafety } from '@/lib/context/safety-context'
+import { useGeolocation } from '@/lib/hooks/use-geolocation'
+import { reverseGeocode } from '@/lib/services/mock-map-service'
+import { LocationSearchInput } from '@/components/ui/location-search-input'
+import { cn } from '@/lib/utils'
 
 export default function MyLocationsPage() {
-  const locations = [
-    {
-      name: 'Home',
-      address: '123 Main St, San Francisco, CA 94102',
-      type: 'home',
-      alerts: true,
-    },
-    {
-      name: 'Lincoln High School',
-      address: '456 School Ave, San Francisco, CA',
-      type: 'school',
-      alerts: true,
-    },
-    {
-      name: 'Office',
-      address: '789 Business Blvd, San Francisco, CA',
-      type: 'office',
-      alerts: false,
-    },
-  ]
+  const { familyMembers, updateFamilyMemberLocation, loading: safetyLoading } = useSafety()
+  const { location: myLocation, loading: geoLoading } = useGeolocation()
+  const [myAddress, setMyAddress] = useState<string>('Detecting location...')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editValue, setEditValue] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Geocode user location
+  useEffect(() => {
+    async function getAddress() {
+      if (myLocation) {
+        const address = await reverseGeocode(myLocation.lat, myLocation.lng)
+        setMyAddress(address)
+      } else if (!geoLoading) {
+        setMyAddress('GPS Lock Required')
+      }
+    }
+    getAddress()
+  }, [myLocation, geoLoading])
+
+  const handleEdit = (member: any) => {
+    setEditingId(member._id)
+    setEditValue(member.location || '')
+  }
+
+  const handleSave = async (id: string) => {
+    setIsSaving(true)
+    try {
+      await updateFamilyMemberLocation(id, editValue)
+      setEditingId(null)
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">My Locations</h1>
-          <p className="text-gray-600">Manage your important locations for alerts and emergency planning</p>
-        </div>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Location
-        </Button>
-      </div>
+    <main className="min-h-screen bg-slate-50/50 pb-24">
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        <header className="mb-12">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-100">
+              <MapIcon className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 uppercase">My Locations</h1>
+          </div>
+          <p className="text-slate-500 font-bold max-w-md">Manage the vital positions monitored by your safety network.</p>
+        </header>
 
-      <div className="space-y-4">
-        {locations.map((location, idx) => (
-          <Card key={idx} className="p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-4 flex-1">
-                <div className="p-3 bg-blue-50 rounded-lg flex-shrink-0">
-                  <MapPin className="w-6 h-6 text-blue-600" />
+        <section className="space-y-12">
+          {/* Section 1: User Location */}
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <Navigation className="w-4 h-4 text-blue-600" />
+              </div>
+              <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live GPS Position</h2>
+            </div>
+
+            <Card className="p-10 border-none shadow-xl shadow-slate-100 bg-white relative overflow-hidden group rounded-[2rem]">
+              <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Signal className="w-32 h-32 text-blue-900" />
+              </div>
+
+              <div className="flex flex-col md:flex-row md:items-center gap-10 relative z-10">
+                <div className="w-24 h-24 bg-blue-600 rounded-[2rem] flex items-center justify-center flex-shrink-0 shadow-xl shadow-blue-50">
+                  <User className="w-12 h-12 text-white" />
                 </div>
+
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold mb-1">{location.name}</h3>
-                  <p className="text-gray-600 text-sm mb-3">{location.address}</p>
-                  <div className="flex items-center gap-4">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded capitalize">
-                      {location.type}
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="px-3 py-1 bg-green-500 text-white text-[9px] font-black uppercase tracking-widest rounded-full flex items-center gap-1.5 shadow-sm">
+                      <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                      Live Feed
                     </span>
-                    <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={location.alerts} className="w-4 h-4" readOnly />
-                      <span>Alerts enabled</span>
-                    </label>
+                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-1">
+                      <Wifi className="w-3 h-3" />
+                      {myLocation ? `${myLocation.lat.toFixed(4)}, ${myLocation.lng.toFixed(4)}` : 'Requesting Access...'}
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-900 mb-1 tracking-tight uppercase">Your Current Position</h3>
+                  <div className="flex items-center gap-2 text-blue-600 font-bold">
+                    <MapPin className="w-4 h-4 shrink-0" />
+                    <p className="text-xl leading-tight">{geoLoading ? 'Syncing...' : myAddress}</p>
                   </div>
                 </div>
+
+                <div className="flex items-center gap-4 bg-slate-50 p-6 rounded-3xl border border-slate-100 shadow-inner">
+                  <div className="text-right">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
+                    <p className="font-bold text-slate-900 leading-tight">Optimal (GPS)</p>
+                  </div>
+                  <Signal className="w-6 h-6 text-blue-600" />
+                </div>
               </div>
-              <div className="flex gap-2 flex-shrink-0">
-                <Button variant="outline" size="sm">
-                  <Edit2 className="w-4 h-4" />
-                </Button>
-                <Button variant="outline" size="sm" className="text-red-600 hover:bg-red-50 bg-transparent">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+            </Card>
+          </div>
+
+          {/* Section 2: Family Network */}
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <Users className="w-4 h-4 text-blue-600" />
+                </div>
+                <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Family Safety Network</h2>
               </div>
             </div>
-          </Card>
-        ))}
+
+            <div className="grid gap-6">
+              {safetyLoading ? (
+                <div className="p-24 text-center">
+                  <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto" />
+                </div>
+              ) : familyMembers.length === 0 ? (
+                <Card className="p-20 text-center bg-white border-2 border-dashed border-slate-100 rounded-[2.5rem]">
+                  <Users className="w-16 h-16 text-slate-100 mx-auto mb-6" />
+                  <p className="text-slate-400 font-black uppercase tracking-widest text-xs">No family members configured</p>
+                  <p className="text-sm text-slate-300 mt-2 font-medium italic">Add members in your Emergency Plan to monitor their locations.</p>
+                </Card>
+              ) : (
+                familyMembers.map((member) => (
+                  <Card key={member._id} className="p-6 border-none shadow-lg shadow-slate-100 bg-white hover:shadow-xl transition-all duration-300 rounded-3xl group">
+                    <div className="flex items-center gap-6">
+                      <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl font-black text-slate-400 uppercase shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                        {member.name.charAt(0)}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="font-black text-slate-900 text-lg uppercase tracking-tight truncate">{member.name}</h4>
+                          <span className="px-2 py-0.5 bg-slate-100 text-[9px] font-black text-slate-400 rounded uppercase tracking-widest border border-slate-200/50">
+                            {member.relationship}
+                          </span>
+                        </div>
+
+                        {editingId === member._id ? (
+                          <div className="flex items-center gap-3 mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <LocationSearchInput
+                              value={editValue}
+                              onChange={setEditValue}
+                              placeholder="Search address..."
+                              className="flex-1"
+                              inputClassName="h-12 rounded-xl border-slate-100 bg-slate-50 font-bold text-sm"
+                              onSelect={(name: string) => setEditValue(name)}
+                            />
+                            <div className="flex gap-2 shrink-0">
+                              <Button size="icon" onClick={() => handleSave(member._id)} className="bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-50 h-12 w-12 transition-all hover:scale-110">
+                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-5 h-5" />}
+                              </Button>
+                              <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} className="rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 h-12 w-12 transition-all">
+                                <X className="w-5 h-5" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between gap-6">
+                            <div className="flex items-center gap-2 text-slate-500 font-bold text-sm min-w-0">
+                              <MapPin className="w-4 h-4 text-blue-400 shrink-0" />
+                              <p className="truncate font-medium">{member.location || 'Location Not Set'}</p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(member)}
+                              className="h-10 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 font-black text-[10px] gap-2 px-4 flex-shrink-0 uppercase tracking-widest"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                              Edit
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   )
 }

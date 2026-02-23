@@ -15,65 +15,65 @@ export default function PreparednessParagePage() {
   }
 
   const individualEvacuation = [
-    'Identify 2 evacuation routes at your home and places you frequently visit.',
-    'Develop a family communications plan, including adding contacts to the Ready2Go "Are We Safe" feature.',
-    'Identify an outdoor reunification meeting place and practice reporting to it with your family at least 2 times a year.',
-    'Create an emergency go bag with enough food and supplies to last up to 72 hours — include medicine, pets, and other unique needs.',
-    'Store important financial information such as bank accounts and insurance info in the contact section of your phone.',
+    'Identify 2 evacuation routes at your home and places you frequent',
+    'Develop a communications plan with your family to include adding your emergency contacts to Ready2Go’s are we safe feature',
+    'Identify outdoor reunification meeting place and practice reporting to your designated meeting place with your family at least 2 times a year',
+    'Create an emergency go bag with enough food and supplies to last up to 72 hours. Consider medicine, pets and other unique considerations needed for your family to sustain normal living conditions without needing assistance',
+    'Store important financial information such as bank accounts, insurance information in the contact section of your phone',
   ]
 
   const communityEvacuation = [
-    'Identify at least 2 evacuation routes from your community.',
-    'Make sure you have a full tank of gas — local stations may run out of fuel.',
-    'Take your emergency go bag with you.',
-    'If you have pets, know pet-friendly hotels.',
-    'Properly secure your house and take valuables with you.',
-    'Know where your community\'s shelters are in case you cannot evacuate.',
-    'Take pictures of your house for insurance records in case you need to report a loss.',
-    'Bookmark FEMA\'s Disaster Assistance at DisasterAssistance.gov to reference after a disaster.',
+    'Identify at least 2 evacuation routes from your community',
+    'Make sure you have a full tank of gas as local gas stations my run out of fuel',
+    'Take emergency go bag with you',
+    'If you have pets, know pet friendly hotels',
+    'Properly secure your house and take valuables with you',
+    'Know where your community’s shelters are in case you cannot evacuate',
+    'Take pictures of your house for your records in case you have to report a loss to your insurance',
+    'Bookmark FEMA’s disaster assistance to reference if you need assistance after a disaster',
   ]
 
   const shelterInPlacePrep = [
-    'Identify 2 good shelter-in-place locations — typically interior spaces away from windows or basements.',
-    'If you do not have any good options, find the most secure room in your house such as a closet or bathroom.',
-    'Do not wait for someone to tell you to shelter in place. If events outside become severe, immediately take shelter and wait until officials give the all clear.',
+    'Identify 2 good shelter in place locations',
+    'If you do not have any good options, find the most secure room in your house such as a closet or bathroom',
+    'Do not wait for someone to tell you to shelter in place. If events outside become severe, immediately take shelter, and wait until officials give the all clear',
     'Share your status with your emergency contacts via the Ready2Go app.',
   ]
 
   const activeShooterPrep = [
-    'Identify 2 evacuation routes and shelter-in-place (hiding) locations wherever you are.',
-    'Discuss the plan with your family to make sure everyone knows what to do.',
-    'Test the "Are We Safe" feature in the Ready2Go app.',
+    'Identify 2 evacuation routes and shelter in place (hiding) locations',
+    'Discuss with your family to make sure that everyone knows what to do',
+    'Test “Are We Safe” feature in Ready2Go app',
   ]
 
   const activeShooterAwareness = [
-    'Know your surroundings at all times.',
-    'Listen to your gut instinct — if it doesn\'t seem right, it probably isn\'t.',
-    'If you see something, say something. (Department of Homeland Security)',
+    'Know your surroundings',
+    'Listen to your gut instinct – if it doesn’t seem right, it probably isn’t',
+    'If you see something, say something – Department of Homeland Security',
   ]
 
   const householdPets = [
-    'Have at least 3 days\' supply of food and medicine on hand.',
-    'Microchip your pet and ensure they wear a nametag with address and phone number.',
-    'Know pet-friendly evacuation shelters in your area.',
-    'Know pet-friendly hotels in case of emergency evacuation.',
-    'Develop contingency plans within your community to ensure your pet is not left behind.',
+    'Have at least 3 days’ supply of food and medicine on hand',
+    'Microchip your pet and ensure they have a nametag, address and phone number',
+    'Know pet friendly evacuation shelters in your area',
+    'Know pet friendly hotels in case of emergency evacuation',
+    'Develop contingency plans for your pet to identify resources within your community to ensure that your pet is not left behind',
   ]
 
   const largeAnimals = [
-    'Maintain an inventory of livestock including health records.',
-    'Make sure all animals have a unique identifier at all times (ear tags, halters, tattoos, etc.).',
-    'Have at least a week of food, supplies, and medication readily available.',
-    'Make evacuation arrangements including veterinary care.',
-    'If you must leave your large animal behind, place an identifier on them (permanent marker or collar with phone number) and ensure the animal has escape routes — i.e., not locked in a barn.',
+    'Maintain an inventory of livestock to include health records',
+    'Make sure all animals have a unique identifier on them at all times such as ear tags, halters, tattoos, etc.',
+    'Have at least a week of food, supplies and medication readily available',
+    'Make evacuation arrangements to include veterinary care',
+    'If you need to leave your large animal behind, place an identifier on them such as permanent marker or collar with a phone number and ensure that the animal has escape routes (i.e. not locked in a barn)',
   ]
 
   const identityTheft = [
-    'Secure your social security card and never carry it. Only provide your SSN when absolutely necessary.',
-    'Never provide unsolicited personal information.',
-    'Review financial statements carefully and promptly report unauthorized transactions.',
-    'Enable security features on all mobile devices.',
-    'Install firewalls and anti-virus software on computers.',
+    'Secure your social security card and never carry it with you. Only provide your social security number when absolutely necessary',
+    'Never provide unsolicited personal information',
+    'Review financial statements carefully and promptly report unauthorized transactions',
+    'Enable security features on mobile devices',
+    'Install firewalls and anti-virus software on computers',
   ]
 
   const chokingSigns = [

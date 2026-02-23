@@ -75,10 +75,15 @@ export function UserSidebar() {
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="border-t border-border/50 p-4">
+      {/* Footer commented out to hide Sign Out button */}
+      {/* <div className="border-t border-border/50 p-4">
         <button
-          onClick={() => {
+          onClick={async () => {
+            try {
+              await fetch('/api/logout', { method: 'POST' })
+            } catch (error) {
+              console.error('Logout failed:', error)
+            }
             localStorage.removeItem('userRole')
             localStorage.removeItem('userEmail')
             localStorage.removeItem('userName')
@@ -89,7 +94,7 @@ export function UserSidebar() {
         >
           <span>Sign Out</span>
         </button>
-      </div>
+      </div> */}
     </div>
   )
 }

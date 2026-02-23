@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { useAlerts } from '@/lib/store/alert-store'
 import { AlertType, AlertSeverity } from '@/lib/types/emergency'
 import { useToast } from '@/hooks/use-toast'
+import { ALERT_TEMPLATES } from '@/lib/constants/alert-templates'
 
 interface SendCommunityAlertModalProps {
   isOpen: boolean
@@ -13,9 +14,8 @@ interface SendCommunityAlertModalProps {
 }
 
 export function SendCommunityAlertModal({ isOpen, onClose }: SendCommunityAlertModalProps) {
-  const { createAlert } = useAlerts()
   const { toast } = useToast()
-
+  const { createAlert } = useAlerts()
   const [alertType, setAlertType] = useState<AlertType>('severe-weather')
   const [severity, setSeverity] = useState<AlertSeverity>('warning')
   const [title, setTitle] = useState('Severe Weather Alert')
@@ -27,30 +27,48 @@ export function SendCommunityAlertModal({ isOpen, onClose }: SendCommunityAlertM
   const [coordinatorMessage, setCoordinatorMessage] = useState(
     'Emergency shelters are available at Lincoln Community Center and Riverside High School. Transportation assistance is available by calling 311. Residents in flood-prone areas should consider evacuation.'
   )
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('')
   const [showNWSAdvisory, setShowNWSAdvisory] = useState(true)
+  const [isSending, setIsSending] = useState(false)
 
   if (!isOpen) return null
+  const handleSendAlert = async () => {
+    setIsSending(true)
+    try {
+      const fullMessage = `${message}\n\n${coordinatorMessage}`
 
-  const handleSendAlert = () => {
-    const fullMessage = `${message}\n\n${coordinatorMessage}`
+      const success = await createAlert({
+        type: alertType,
+        severity,
+        title,
+        message: fullMessage,
+        zones,
+        locations,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        createdBy: 'Admin',
+        source: 'admin_manual',
+      })
 
-    createAlert({
-      type: alertType,
-      severity,
-      title,
-      message: fullMessage,
-      zones,
-      locations,
-      createdBy: localStorage.getItem('userName') || 'Admin',
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-    })
+      if (!success) {
+        throw new Error('Failed to synchronize alert with database')
+      }
 
-    toast({
-      title: 'Alert Sent Successfully',
-      description: `Community alert sent to zones ${zones.join(', ')}`,
-    })
+      toast({
+        title: 'Alert Dispatched Successfully',
+        description: `Community alert synchronized with database terminal.`,
+      })
 
-    onClose()
+      onClose()
+    } catch (error) {
+      console.error('Error sending alert:', error)
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to send community alert',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsSending(false)
+    }
   }
 
   return (
@@ -65,6 +83,31 @@ export function SendCommunityAlertModal({ isOpen, onClose }: SendCommunityAlertM
         </div>
 
         <div className="p-6 space-y-6">
+          {/* Template Selection */}
+          <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+            <label className="block text-sm font-bold text-blue-900 mb-2">Apply Template</label>
+            <select
+              value={selectedTemplate}
+              onChange={(e) => {
+                const templateId = e.target.value;
+                setSelectedTemplate(templateId);
+                if (templateId && ALERT_TEMPLATES[templateId as keyof typeof ALERT_TEMPLATES]) {
+                  const template = ALERT_TEMPLATES[templateId as keyof typeof ALERT_TEMPLATES];
+                  setAlertType(template.type);
+                  setSeverity(template.severity);
+                  setTitle(template.title);
+                  setMessage(template.message);
+                }
+              }}
+              className="w-full p-2.5 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white font-medium"
+            >
+              <option value="">Select a pre-defined template...</option>
+              {Object.entries(ALERT_TEMPLATES).map(([id, template]) => (
+                <option key={id} value={id}>{template.title}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Alert Configuration */}
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -92,9 +135,13 @@ export function SendCommunityAlertModal({ isOpen, onClose }: SendCommunityAlertM
                 className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="critical">Critical</option>
+                <option value="extreme">Extreme</option>
+                <option value="severe">Severe</option>
                 <option value="warning">Warning</option>
                 <option value="watch">Watch</option>
                 <option value="advisory">Advisory</option>
+                <option value="moderate">Moderate</option>
+                <option value="minor">Minor</option>
               </select>
             </div>
           </div>
@@ -237,10 +284,11 @@ export function SendCommunityAlertModal({ isOpen, onClose }: SendCommunityAlertM
             </Button>
             <Button
               onClick={handleSendAlert}
+              disabled={isSending}
               className="ml-auto bg-red-500 hover:bg-red-600 text-white"
             >
               <AlertTriangle className="w-4 h-4 mr-2" />
-              Send Community Alert
+              {isSending ? 'Sending Alert...' : 'Send Community Alert'}
             </Button>
           </div>
         </div>

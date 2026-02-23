@@ -13,6 +13,7 @@ export default function SignupPage() {
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [isSafe, setIsSafe] = useState(true)
     const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
@@ -22,17 +23,35 @@ export default function SignupPage() {
         setError('')
         setLoading(true)
 
-        // Simulate signup - in a real app, this would call an API
         try {
-            if (email.includes('@') && password.length >= 6) {
-                localStorage.setItem('userRole', 'user')
-                localStorage.setItem('userEmail', email)
-                localStorage.setItem('userName', name || email.split('@')[0])
-                document.cookie = `userRole=user; path=/; max-age=3600`
-                router.push('/user-dashboard')
+            const response = await fetch('/api/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password, isSafe }),
+            })
+
+            const data = await response.json()
+
+            if (response.ok) {
+                localStorage.setItem('userRole', data.user.role)
+                localStorage.setItem('userEmail', data.user.email)
+                localStorage.setItem('userName', data.user.name || '')
+                localStorage.setItem('systemMode', data.systemMode || 'safe')
+                localStorage.setItem('isSafe', String(data.user.isSafe ?? true))
+                localStorage.setItem('userLocation', data.user.location || '')
+
+                if (data.user.role === 'admin') {
+                    router.push('/')
+                } else if (!data.user.isSafe) {
+                    router.push('/virtual-eoc')
+                } else {
+                    router.push('/user-dashboard')
+                }
             } else {
-                setError('Please enter a valid email and a password with at least 6 characters.')
+                setError(data.error || 'Something went wrong. Please try again.')
             }
+        } catch (err) {
+            setError('An error occurred during signup. Please try again.')
         } finally {
             setLoading(false)
         }
@@ -170,6 +189,20 @@ export default function SignupPage() {
                                     </button>
                                 </div>
                             </div>
+
+                            {/* Safety Status Toggle */}
+                            {/* <div className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                                <input
+                                    type="checkbox"
+                                    id="isSafe"
+                                    checked={isSafe}
+                                    onChange={(e) => setIsSafe(e.target.checked)}
+                                    className="w-5 h-5 rounded border-slate-300 text-[#34385E] focus:ring-[#34385E]"
+                                />
+                                <label htmlFor="isSafe" className="text-sm font-semibold text-slate-700 cursor-pointer">
+                                    I am currently safe and in a secure location
+                                </label>
+                            </div> */}
 
                             {error && (
                                 <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-xl text-red-700 text-sm font-semibold">

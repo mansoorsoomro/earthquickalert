@@ -1,7 +1,8 @@
 // Type definitions for emergency management system
 
 export type AlertType = 'earthquake' | 'hurricane' | 'tornado' | 'flood' | 'wildfire' | 'severe-weather' | 'other'
-export type AlertSeverity = 'critical' | 'warning' | 'watch' | 'advisory'
+export type AlertSeverity = 'critical' | 'warning' | 'watch' | 'advisory' | 'extreme' | 'severe' | 'moderate' | 'minor'
+export type AlertSourceType = 'weather_api' | 'earthquake_api' | 'admin_manual' | 'nws' | 'other'
 export type EventStatus = 'active' | 'monitoring' | 'resolved' | 'archived'
 export type EOCStatus = 'inactive' | 'standby' | 'active' | 'deactivating'
 
@@ -18,6 +19,7 @@ export interface Alert {
     createdBy: string // Admin user ID
     eventId?: string // Link to emergency event
     isRead?: boolean // For user tracking
+    source?: AlertSourceType
 }
 
 export interface EmergencyEvent {

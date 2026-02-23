@@ -4,210 +4,217 @@ import React from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { AlertTriangle, Phone, Hospital, Home, ShoppingBag, Map, Wrench, CloudRain, ArrowLeft, Siren, Megaphone, Wind, Users, Activity, ExternalLink, ShieldAlert } from 'lucide-react'
-import { GoogleMap } from '@/components/google-map'
+import { Badge } from '@/components/ui/badge'
+import {
+  Phone, Hospital, Home, ShoppingBag, Map, Wrench, CloudRain,
+  Search, Bell, User, Zap, ChevronRight, AlertTriangle, Pill, Heart, Users, Shield, Hotel, Gavel, Shirt, LogOut
+} from 'lucide-react'
 
 export default function VirtualEOCPage() {
   const router = useRouter()
 
-  const emergencyName = "HURRICANE ERIN"
-  const emergencyLevel = "CAT 4 - EXTREME DANGER"
+  const handleLogout = () => {
+    localStorage.removeItem('userRole')
+    localStorage.removeItem('userEmail')
+    localStorage.removeItem('userName')
+    document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+    router.push('/login')
+  }
 
-  const menuItems = [
-    { icon: Phone, label: '911 Speed Dial', href: '/virtual-eoc/911', color: 'bg-red-600', text: 'text-white' },
-    { icon: Hospital, label: 'Medical & Pharmacies', href: '/virtual-eoc/services?type=medical', color: 'bg-blue-600', text: 'text-white' },
-    { icon: Home, label: 'Evacuation & Shelters', href: '/virtual-eoc/evacuation', color: 'bg-orange-600', text: 'text-white' },
-    { icon: ShoppingBag, label: 'Lodging & Essentials', href: '/virtual-eoc/services?type=essentials', color: 'bg-emerald-600', text: 'text-white' },
-    { icon: Map, label: 'Community Center', href: '/virtual-eoc/resources', color: 'bg-purple-600', text: 'text-white' },
-    { icon: Wrench, label: 'Emergency Maintenance', href: '/virtual-eoc/maintenance', color: 'bg-slate-600', text: 'text-white' },
-    { icon: CloudRain, label: 'Live Weather & Traffic', href: '/user-dashboard', color: 'bg-sky-600', text: 'text-white' },
+  const originalOptions = [
+    { icon: Phone, label: '911 Speed Dial', sub: 'Report location, situation & request AID', href: '/virtual-eoc/911', color: 'bg-red-50 text-red-600', iconColor: 'text-red-600' },
+    { icon: Hospital, label: 'Medical & Pharmacies', sub: 'Nearest medical facilities & ICUs', href: '/virtual-eoc/services?type=medical', color: 'bg-blue-50 text-blue-600', iconColor: 'text-blue-600' },
+    { icon: Home, label: 'Evacuation & Shelters', sub: 'Your pre-planned and live routes', href: '/virtual-eoc/evacuation', color: 'bg-orange-50 text-orange-600', iconColor: 'text-orange-600' },
+    { icon: ShoppingBag, label: 'Lodging & Essentials', sub: 'Hotels, food, and gas stations', href: '/virtual-eoc/services?type=essentials', color: 'bg-emerald-50 text-emerald-600', iconColor: 'text-emerald-600' },
+    { icon: Map, label: 'Community Center', sub: 'Red Cross & FEMA resources', href: '/virtual-eoc/resources', color: 'bg-purple-50 text-purple-600', iconColor: 'text-purple-600' },
+    { icon: Wrench, label: 'Emergency Maintenance', sub: 'Utility and repair assistance', href: '/virtual-eoc/maintenance', color: 'bg-slate-50 text-slate-600', iconColor: 'text-slate-600' },
+    { icon: CloudRain, label: 'Live Weather & Traffic', sub: 'Current conditions & alerts', href: '/user-dashboard', color: 'bg-sky-50 text-sky-600', iconColor: 'text-sky-600' },
   ]
 
-  const stats = [
-    { icon: Wind, label: 'Wind Speed', value: '145 MPH', subValue: 'Gusts to 160', color: 'text-sky-400' },
-    { icon: Users, label: 'Evacuated', value: '72%', subValue: 'Zones A & B', color: 'text-emerald-400' },
-    { icon: Activity, label: 'Incidents', value: '14 Active', subValue: 'Search & Rescue', color: 'text-orange-400' },
+  const quantifiedResources = [
+    { label: 'Pop-up Medical Clinics', count: '2 locations', icon: Pill, color: 'text-blue-500' },
+    { label: 'Private and non-profit Sector', count: '4 locations', icon: Shield, color: 'text-emerald-500' },
+    { label: 'FEMA Assistance Booths', count: '2 locations', icon: Home, color: 'text-orange-500' },
+    { label: 'Red Cross Stations', count: '3 locations', icon: Heart, color: 'text-red-500' },
+    { label: 'Family Reunification', count: '1 location', icon: Users, color: 'text-purple-500' },
   ]
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans selection:bg-red-500/30">
-      {/* High-Urgency Emergency Header */}
-      <div className="bg-red-700 p-4 shadow-2xl sticky top-0 z-50 overflow-hidden">
-        <div className="absolute inset-0 bg-red-600 animate-pulse opacity-50"></div>
-        <div className="max-w-7xl mx-auto flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-md">
-              <Siren className="w-8 h-8 text-white animate-bounce-slow" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-black text-2xl tracking-tighter uppercase leading-none">{emergencyName}</h1>
-                <span className="bg-white text-red-700 text-[10px] px-2 py-0.5 rounded font-black italic">LIVE</span>
-              </div>
-              <p className="text-xs font-bold text-red-100 uppercase tracking-widest opacity-80">{emergencyLevel}</p>
-            </div>
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans">
+      {/* Light Header from Mockup */}
+      <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div className="relative w-96">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search..."
+            className="w-full bg-slate-100 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+          />
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Badge className="absolute -top-1 -right-1 p-0 w-4 h-4 flex items-center justify-center bg-red-500 border-2 border-white text-[10px]">2</Badge>
+            <Zap className="w-5 h-5 text-slate-400" />
           </div>
           <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-4 mr-4 border-r border-white/20 pr-6">
-              <div className="text-right">
-                <p className="text-[10px] font-bold text-red-200 uppercase">Current Time</p>
-                <p className="text-sm font-black italic">15:47 PST</p>
-              </div>
+            <div className="text-right">
+              <p className="text-sm font-black leading-none uppercase tracking-tighter">Mansoor Soomro</p>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">m.soomro@eoc.gov</p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push('/user-dashboard')}
-              className="bg-transparent border-white/30 text-white hover:bg-white/10 rounded-xl"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" /> EXIT TO BLUE SKY
-            </Button>
+            <div className="w-10 h-10 bg-slate-200 rounded-full border-2 border-slate-100 flex items-center justify-center overflow-hidden">
+              <User className="w-6 h-6 text-slate-400" />
+            </div>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleLogout}
+            className="text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5" />
+          </Button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full flex flex-col lg:flex-row max-w-7xl mx-auto gap-6 p-6">
+      <div className="flex-1 overflow-auto p-8 max-w-7xl mx-auto w-full space-y-8">
+        {/* Virtual EOC Title Banner (Dark) */}
+        <div className="bg-[#1e293b] rounded-3xl p-8 shadow-xl text-white relative overflow-hidden">
+          <h1 className="text-3xl font-black tracking-tight mb-2 uppercase italic">Virtual Emergency Operations Center</h1>
+          <p className="text-slate-400 text-sm font-medium">Critical life-safety information and resources for your area — updated in real time</p>
+          <div className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col items-end gap-2">
+            <div className="bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-full flex items-center gap-2">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+              <span className="text-xs font-black text-emerald-500 uppercase tracking-widest italic">ACTIVE feed</span>
+            </div>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">SF DEP. HEAD</p>
+          </div>
+        </div>
 
-          {/* Left Column: Intelligence & Situational Awareness (Desktop Only Sidebar) */}
-          <aside className="hidden lg:flex lg:flex-col lg:w-1/3 space-y-6 overflow-hidden">
-            <Card className="flex-1 bg-slate-900 border-slate-800 shadow-2xl flex flex-col overflow-hidden rounded-3xl overflow-hidden group">
-              <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
-                <h2 className="font-black text-xs uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                  <Map className="w-3 h-3" /> Live Intelligence Map
-                </h2>
-                <ExternalLink className="w-3 h-3 text-slate-500 cursor-pointer hover:text-white transition-colors" />
-              </div>
-              <div className="flex-1 relative">
-                <GoogleMap address="Miami, FL" />
-              </div>
-            </Card>
+        {/* Hurricane Status Grid */}
+        <Card className="bg-white border-slate-200 p-8 rounded-[2rem] shadow-sm">
+          <h2 className="text-xl font-black text-slate-900 mb-2 italic uppercase tracking-tighter">Hurricane Erin - Category 3</h2>
+          <p className="text-slate-500 text-sm mb-6 max-w-3xl leading-relaxed">
+            Major hurricane approaching coastal areas. Immediate evacuation required for zones A, B, and C. Sustained winds of 115 mph with dangerous storm surge expected.
+          </p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-red-50 p-4 rounded-2xl flex flex-col items-center justify-center text-center border border-red-100">
+              <AlertTriangle className="text-red-600 w-8 h-8 mb-2" />
+              <span className="text-red-900 font-black text-xs uppercase tracking-widest mb-1">Evacuate</span>
+              <p className="text-[10px] text-red-600 font-bold uppercase">Zones A, B, & C</p>
+            </div>
+            <div className="bg-orange-50 p-4 rounded-2xl flex flex-col items-center justify-center text-center border border-orange-100">
+              <Home className="text-orange-600 w-8 h-8 mb-2" />
+              <span className="text-orange-900 font-black text-xs uppercase tracking-widest mb-1 italic">Shelter-In-Place</span>
+              <p className="text-[10px] text-orange-600 font-bold uppercase">Zone D</p>
+            </div>
+            <div className="bg-yellow-50 p-4 rounded-2xl flex flex-col items-center justify-center text-center border border-yellow-100">
+              <Map className="text-yellow-600 w-8 h-8 mb-2" />
+              <span className="text-yellow-900 font-black text-xs uppercase tracking-widest mb-1">Avoid Travel</span>
+              <p className="text-[10px] text-yellow-600 font-bold uppercase">All Areas</p>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-2xl flex flex-col items-center justify-center text-center border border-purple-100">
+              <CloudRain className="text-purple-600 w-8 h-8 mb-2" />
+              <span className="text-purple-900 font-black text-xs uppercase tracking-widest mb-1">Weather Alert</span>
+              <p className="text-[10px] text-purple-600 font-bold uppercase italic">Active</p>
+            </div>
+          </div>
+        </Card>
 
-            <Card className="bg-slate-900 border-slate-800 p-5 rounded-3xl shadow-xl space-y-4 border-t-4 border-t-sky-500/50">
-              <div className="flex items-center justify-between">
-                <h2 className="font-black text-xs uppercase tracking-widest text-slate-400">EOC Log Feed</h2>
-                <div className="w-2 h-2 bg-sky-500 rounded-full animate-ping"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            {/* Functional Menu Items (The "Options") */}
+            <section className="space-y-6">
+              <h3 className="text-lg font-black text-slate-900 px-2 uppercase tracking-tight italic">Mission Critical Services</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {originalOptions.map((btn, i) => (
+                  <Card
+                    key={i}
+                    className="p-6 rounded-3xl flex items-center gap-5 transition-all hover:scale-[1.02] cursor-pointer shadow-sm border-none bg-white group"
+                    onClick={() => router.push(btn.href)}
+                  >
+                    <div className={`p-4 rounded-2xl ${btn.color} group-hover:scale-110 transition-transform`}>
+                      <btn.icon className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-black tracking-tight leading-none mb-1 text-slate-900 uppercase">{btn.label}</h4>
+                      <p className="text-[10px] font-bold text-slate-400 leading-tight uppercase tracking-wider">{btn.sub}</p>
+                    </div>
+                  </Card>
+                ))}
               </div>
-              <div className="space-y-4 max-h-[300px] overflow-y-auto no-scrollbar">
-                {[
-                  { time: '1m ago', text: 'Zonal Evacuation completed for Sector 7' },
-                  { time: '5m ago', text: 'Search & Rescue helicopters deployed to coast' },
-                  { time: '12m ago', text: 'Shelter capacity at 85% - diverting to Sector J' },
-                  { time: '20m ago', text: 'Flash flood warning issued for inland basins' },
-                ].map((log, i) => (
-                  <div key={i} className="flex gap-3 text-xs border-l border-slate-800 pl-4 py-1">
-                    <span className="text-slate-500 font-bold whitespace-nowrap">{log.time}</span>
-                    <p className="text-slate-300">{log.text}</p>
+            </section>
+
+            {/* Activated Emergency Resources List */}
+            <section className="space-y-6">
+              <h3 className="text-lg font-black text-slate-900 px-2 uppercase tracking-tight italic">Activated Intelligence Feed</h3>
+              <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-100">
+                {quantifiedResources.map((res, i) => (
+                  <div key={i} className={`p-6 flex items-center justify-between group cursor-pointer hover:bg-slate-50 transition-colors ${i < quantifiedResources.length - 1 ? 'border-b border-slate-100' : ''}`}>
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 rounded-lg bg-slate-50">
+                        <res.icon className={`w-5 h-5 ${res.color}`} />
+                      </div>
+                      <span className="font-black text-[15px] tracking-tight uppercase">{res.label}</span>
+                    </div>
+                    <span className={`text-[11px] font-black uppercase tracking-widest ${res.color} italic`}>{res.count}</span>
                   </div>
                 ))}
               </div>
-            </Card>
-          </aside>
+            </section>
+          </div>
 
-          {/* Right Column: Mission Control & Responsive Grid */}
-          <main className="flex-1 flex flex-col space-y-6 overflow-y-auto no-scrollbar">
-
-            {/* Immediate Action Command Panel */}
-            <Card className="bg-red-950/20 border-red-500/50 p-6 shadow-2xl relative overflow-hidden rounded-3xl group">
-              <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                <ShieldAlert className="w-48 h-48 text-red-500" />
+          {/* Right Sidebar */}
+          <div className="space-y-8">
+            <Card className="p-8 border-none shadow-sm rounded-[2.5rem] bg-[#1e293b] text-white relative overflow-hidden group">
+              <CloudRain className="absolute -right-8 -top-8 w-48 h-48 text-white opacity-10 group-hover:scale-110 transition-transform" />
+              <h3 className="font-black text-[11px] uppercase tracking-[0.2em] text-slate-400 mb-6 font-sans">Sector Intelligence</h3>
+              <div className="flex items-end gap-3 mb-6 font-sans">
+                <span className="text-6xl font-black tracking-tighter">72°F</span>
+                <div className="flex flex-col mb-2">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">Partly Cloudy</span>
+                </div>
               </div>
-              <div className="relative z-10">
-                <h2 className="text-2xl font-black text-red-500 mb-2 flex items-center gap-3 italic">
-                  <Megaphone className="w-6 h-6 animate-pulse" />
-                  MANDATORY ACTION PANEL
-                </h2>
-                <p className="text-slate-300 mb-6 leading-relaxed max-w-2xl text-lg font-medium">
-                  Hurricane Erin has been upgraded to <span className="text-white font-black underline decoration-red-500 underline-offset-4">CAT 4 POWER</span>.
-                  Mandatory evacuation orders are standing for all coastal zones. Seek shelter inland by sunset.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white font-black h-16 text-xl shadow-lg border-b-4 border-red-800 active:border-b-0 active:translate-y-1 transition-all"
-                    onClick={() => router.push('/virtual-eoc/evacuation')}
-                  >
-                    VIEW EVACUATION ROUTES
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="sm:w-auto h-16 px-8 border-white/20 bg-white/5 text-white font-bold hover:bg-white/10"
-                    onClick={() => router.push('/virtual-eoc/services?type=medical')}
-                  >
-                    <Hospital className="w-5 h-5 mr-2" /> FIND NEAREST ICU
-                  </Button>
+
+              <div className="space-y-4 pt-4 border-t border-slate-700/50">
+                <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl">
+                  <div className="flex justify-between items-center mb-4">
+                    <p className="text-[10px] font-black text-red-100 uppercase tracking-widest">Active Alerts</p>
+                    <span className="bg-red-500 text-white text-[8px] px-2 py-0.5 rounded font-black italic border border-red-500/20">CRITICAL</span>
+                  </div>
+                  <ul className="text-[11px] text-slate-300 space-y-3 font-medium">
+                    <li className="flex gap-2 leading-tight"><span>•</span> Hi-South Closure due to flooding</li>
+                    <li className="flex gap-2 leading-tight"><span>•</span> Downtown: High wind zone</li>
+                    <li className="flex gap-2 leading-tight"><span>•</span> Storm surge 4-6 feet above normal</li>
+                  </ul>
                 </div>
               </div>
             </Card>
 
-            {/* Situational Awareness Metadata Widgets */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {stats.map((stat, i) => (
-                <Card key={i} className="bg-slate-900/50 border-slate-800 p-4 rounded-2xl flex items-center gap-4 group hover:bg-slate-900 transition-colors">
-                  <div className={`p-3 bg-slate-800 rounded-xl ${stat.color} group-hover:scale-110 transition-transform`}>
-                    <stat.icon className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{stat.label}</p>
-                    <p className="text-lg font-black">{stat.value}</p>
-                    <p className="text-[10px] text-slate-500 font-medium">{stat.subValue}</p>
-                  </div>
-                </Card>
-              ))}
-            </div>
-
-            {/* Emergency Service Rapid-Navigation Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              {menuItems.map((item, index) => {
-                const Icon = item.icon
-                return (
-                  <button
-                    key={index}
-                    onClick={() => item.href !== '#' && router.push(item.href)}
-                    className={`relative overflow-hidden group h-32 rounded-3xl shadow-xl transition-all hover:scale-[1.03] active:scale-[0.98] ${item.color} border border-white/10 p-6 flex flex-col justify-between items-start text-left`}
-                  >
-                    <div className="absolute top-0 right-0 p-4 opacity-20 pointer-events-none group-hover:scale-125 transition-transform">
-                      <Icon className="w-16 h-16" />
-                    </div>
-                    <div className="bg-black/10 p-2 rounded-xl backdrop-blur-sm">
-                      <Icon className={`w-6 h-6 ${item.text}`} />
-                    </div>
-                    <span className={`font-black text-sm uppercase tracking-tight ${item.text}`}>
-                      {item.label}
-                    </span>
-                  </button>
-                )
-              })}
-
-              {/* Additional Logistical Context Widget */}
-              <div className="col-span-2 lg:col-span-1 bg-slate-900 border border-slate-800 p-6 rounded-3xl flex flex-col justify-center gap-2">
-                <div className="flex items-center gap-2 text-sky-400">
-                  <Activity className="w-4 h-4" />
-                  <span className="text-[10px] font-black tracking-widest uppercase">System Integrity</span>
-                </div>
-                <h4 className="text-xl font-bold">ALL SYSTEMS GO</h4>
-                <p className="text-xs text-slate-500 leading-tight">Ready2Go proprietary AI is syncing data across all sectors.</p>
+            <section className="space-y-4">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-2 italic">Recovery Planning</h3>
+              <div className="flex flex-col gap-2">
+                <Button variant="outline" className="justify-start h-12 rounded-2xl border-slate-200 bg-white text-slate-600 font-bold uppercase text-[10px] w-full shadow-sm hover:bg-slate-50">
+                  <Hotel className="w-4 h-4 mr-3 text-purple-500" /> Recover Shelters
+                </Button>
+                <Button variant="outline" className="justify-start h-12 rounded-2xl border-slate-200 bg-white text-slate-600 font-bold uppercase text-[10px] w-full shadow-sm hover:bg-slate-50">
+                  <ShoppingBag className="w-4 h-4 mr-3 text-blue-500" /> Essential Funds
+                </Button>
+                <Button variant="outline" className="justify-start h-12 rounded-2xl border-slate-200 bg-white text-slate-600 font-bold uppercase text-[10px] w-full shadow-sm hover:bg-slate-50">
+                  <Gavel className="w-4 h-4 mr-3 text-emerald-500" /> Legal Planning
+                </Button>
               </div>
-            </div>
-
-            {/* Mobile-Only Map Link (Small screen visibility) */}
-            <Button
-              className="lg:hidden w-full h-14 bg-slate-800 text-slate-300 font-bold rounded-2xl border border-slate-700"
-              onClick={() => router.push('/virtual-eoc/resources')}
-            >
-              <Map className="w-4 h-4 mr-2" /> OPEN INTERACTIVE MAP
-            </Button>
-
-          </main>
+            </section>
+          </div>
         </div>
       </div>
 
-      {/* Modern High-Tech Footer */}
-      <footer className="p-8 border-t border-slate-900 bg-slate-950 flex flex-col items-center gap-4">
+      <footer className="p-8 border-t border-slate-200 bg-white flex flex-col items-center gap-4">
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 bg-red-600 rounded-full animate-blink"></div>
           <p className="text-[10px] font-black text-slate-500 tracking-[0.2em]">OFFICIAL EMERGENCY BROADCAST SYSTEM • EST 2026</p>
         </div>
-        <p className="text-[9px] text-slate-700 italic">This session is monitored by the Virtual EOC for training and audit purposes. Monitoring ID: EOC-SF-2026-001</p>
+        <p className="text-[9px] text-slate-400 italic font-medium">This session is monitored by the Virtual EOC for training and audit purposes. Monitoring ID: EOC-SF-2026-001</p>
       </footer>
     </div>
   )

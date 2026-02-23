@@ -53,7 +53,7 @@ interface USGSResponse {
 
 export class EarthquakeAPIService {
     private baseURL = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary';
-    private minMagnitude = 4.0; // Only show earthquakes >= 4.0 magnitude
+    private minMagnitude = 2.5; // Only show earthquakes >= 2.5 magnitude
 
     /**
      * Fetch recent earthquakes from USGS API
@@ -107,10 +107,10 @@ export class EarthquakeAPIService {
     async fetchEarthquakesByLocation(
         lat: number,
         lon: number,
-        radiusKm: number = 500
+        radiusKm: number = 1000
     ): Promise<EarthquakeAlert[]> {
         try {
-            const earthquakes = await this.fetchEarthquakes('week');
+            const earthquakes = await this.fetchEarthquakes('day');
 
             // Filter by distance from location
             return earthquakes.filter(eq => {

@@ -42,7 +42,7 @@ export function useAPIAlerts(options: UseAPIAlertsOptions = {}): UseAPIAlertsRet
             setLoading(true);
             setError(null);
 
-            const fetchedAlerts = await alertProcessor.fetchAllAlerts(location);
+            const fetchedAlerts = await alertProcessor.fetchAllAlerts(location, filters?.source);
 
             // Apply filters if provided
             const filtered = filters
@@ -56,7 +56,7 @@ export function useAPIAlerts(options: UseAPIAlertsOptions = {}): UseAPIAlertsRet
         } finally {
             setLoading(false);
         }
-    }, [location, filters]);
+    }, [location?.lat, location?.lon, filters]);
 
     // Initial fetch
     useEffect(() => {

@@ -1,9 +1,11 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { UserSidebar } from '@/components/user-sidebar'
 import { Header } from '@/components/header'
+import { useEvents } from '@/lib/store/event-store'
+import { useSafety } from '@/lib/context/safety-context'
 
 export default function UserLayout({
     children,
@@ -11,8 +13,13 @@ export default function UserLayout({
     children: React.ReactNode
 }) {
     const router = useRouter()
+    const pathname = usePathname()
+    const { getActiveEvents } = useEvents()
+    const { refreshSafetyData } = useSafety()
     const [userName, setUserName] = useState('')
     const [isLoading, setIsLoading] = useState(true)
+
+    const isVirtualEOC = pathname?.startsWith('/virtual-eoc')
 
     useEffect(() => {
         const userRole = localStorage.getItem('userRole')
@@ -28,15 +35,41 @@ export default function UserLayout({
             return
         }
 
-        if (storedName) setUserName(storedName)
-        setIsLoading(false)
-    }, [router])
+        // Emergency Auto-Redirect logic
+        const activeEvents = getActiveEvents()
+        const hasCriticalEmergency = activeEvents.some(event => event.severity === 'critical' || event.severity === 'severe')
+        const systemMode = localStorage.getItem('systemMode')
+        const isUserSafe = localStorage.getItem('isSafe') !== 'false'
 
-    const handleLogout = () => {
+        // Priority 1: If user is NOT safe, MUST show Virtual EOC
+        if (!isUserSafe && !isVirtualEOC) {
+            router.push('/virtual-eoc')
+            return
+        }
+
+        // Priority 2: System-wide danger or critical emergency
+        if ((hasCriticalEmergency || systemMode === 'danger') && !isVirtualEOC) {
+            router.push('/virtual-eoc')
+            return
+        }
+
+        if (storedName) setUserName(storedName)
+
+        // Refresh family member data on mount/layout entry
+        refreshSafetyData()
+
+        setIsLoading(false)
+    }, [router, getActiveEvents, isVirtualEOC, refreshSafetyData])
+
+    const handleLogout = async () => {
+        try {
+            await fetch('/api/logout', { method: 'POST' })
+        } catch (error) {
+            console.error('Logout failed:', error)
+        }
         localStorage.removeItem('userRole')
         localStorage.removeItem('userEmail')
         localStorage.removeItem('userName')
-        document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
         router.push('/login')
     }
 
@@ -53,10 +86,10 @@ export default function UserLayout({
 
     return (
         <div className="flex h-screen bg-background text-foreground">
-            <UserSidebar />
+            {!isVirtualEOC && <UserSidebar />}
             <div className="flex-1 flex flex-col overflow-hidden">
-                <Header userName={userName} onLogout={handleLogout} />
-                <div className="flex-1 overflow-auto">
+                {!isVirtualEOC && <Header userName={userName} onLogout={handleLogout} />}
+                <div className={`flex-1 overflow-auto ${isVirtualEOC ? 'w-full h-full' : ''}`}>
                     {children}
                 </div>
             </div>

@@ -1,15 +1,14 @@
-'use client'
-
 import { X, AlertTriangle, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { AlertSeverity } from '@/lib/types/emergency'
 
 interface AlertDetailModalProps {
   isOpen: boolean
   onClose: () => void
   alert?: {
     title: string
-    severity: 'warning' | 'alert' | 'watch'
+    severity: AlertSeverity
     description: string
     whatItMeans: string
     whatToDo: string
@@ -23,35 +22,49 @@ interface AlertDetailModalProps {
 export function AlertDetailModal({ isOpen, onClose, alert }: AlertDetailModalProps) {
   if (!isOpen || !alert) return null
 
-  const severityColors = {
-    warning: 'bg-red-50 border-red-200',
-    alert: 'bg-orange-50 border-orange-200',
+  const severityColors: Record<string, string> = {
+    critical: 'bg-red-50 border-red-200',
+    extreme: 'bg-red-50 border-red-200',
+    severe: 'bg-orange-50 border-orange-200',
+    warning: 'bg-orange-50 border-orange-200',
     watch: 'bg-yellow-50 border-yellow-200',
+    advisory: 'bg-blue-50 border-blue-200',
+    moderate: 'bg-blue-50 border-blue-200',
+    minor: 'bg-green-50 border-green-200',
   }
 
-  const severityBgColors = {
-    warning: 'bg-red-100',
-    alert: 'bg-orange-100',
+  const severityBgColors: Record<string, string> = {
+    critical: 'bg-red-100',
+    extreme: 'bg-red-100',
+    severe: 'bg-orange-100',
+    warning: 'bg-orange-100',
     watch: 'bg-yellow-100',
+    advisory: 'bg-blue-100',
+    moderate: 'bg-blue-100',
+    minor: 'bg-green-100',
+  }
+
+  const getBadgeColor = (sev: AlertSeverity) => {
+    if (sev === 'critical' || sev === 'extreme') return 'bg-red-500 text-white'
+    if (sev === 'severe' || sev === 'warning') return 'bg-orange-500 text-white'
+    if (sev === 'watch') return 'bg-yellow-500 text-white'
+    return 'bg-blue-500 text-white'
   }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className={`w-full max-w-2xl max-h-[90vh] overflow-y-auto ${severityColors[alert.severity]}`}>
+      <Card className={`w-full max-w-2xl max-h-[90vh] overflow-y-auto ${severityColors[alert.severity] || 'bg-white'}`}>
         <div className="p-6">
           {/* Header */}
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-start gap-4 flex-1">
-              <div className={`p-3 rounded-lg ${severityBgColors[alert.severity]} flex-shrink-0`}>
+              <div className={`p-3 rounded-lg ${severityBgColors[alert.severity] || 'bg-slate-100'} flex-shrink-0`}>
                 <AlertTriangle className="w-6 h-6 text-gray-800" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`px-2 py-1 rounded text-xs font-semibold ${alert.severity === 'warning' ? 'bg-red-500 text-white' :
-                      alert.severity === 'alert' ? 'bg-orange-500 text-white' :
-                        'bg-yellow-500 text-white'
-                    }`}>
-                    {alert.severity.toUpperCase()}
+                  <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest ${getBadgeColor(alert.severity)}`}>
+                    {alert.severity}
                   </span>
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900">{alert.title}</h2>

@@ -5,99 +5,87 @@ import { EmergencyEvent, EventStatus, EventTimelineItem } from '@/lib/types/emer
 
 interface EventStore {
     events: EmergencyEvent[]
-    createEvent: (event: Omit<EmergencyEvent, 'id' | 'createdAt' | 'updatedAt' | 'timeline'>) => EmergencyEvent
-    updateEvent: (eventId: string, updates: Partial<EmergencyEvent>) => void
-    addTimelineItem: (eventId: string, item: Omit<EventTimelineItem, 'id' | 'timestamp'>) => void
+    isLoading: boolean
+    error: string | null
+    createEvent: (event: Omit<EmergencyEvent, 'id' | 'createdAt' | 'updatedAt' | 'timeline'>) => Promise<EmergencyEvent | null>
+    updateEvent: (eventId: string, updates: Partial<EmergencyEvent>) => Promise<void>
+    addTimelineItem: (eventId: string, item: Omit<EventTimelineItem, 'id' | 'timestamp'>) => Promise<void>
     getActiveEvents: () => EmergencyEvent[]
     getEventById: (eventId: string) => EmergencyEvent | undefined
-    resolveEvent: (eventId: string) => void
-    deleteEvent: (eventId: string) => void
+    resolveEvent: (eventId: string) => Promise<void>
+    deleteEvent: (eventId: string) => Promise<void>
+    refreshEvents: () => Promise<void>
+    fetchEvents: () => Promise<void>
 }
 
 const EventContext = createContext<EventStore | undefined>(undefined)
 
 export function EventProvider({ children }: { children: React.ReactNode }) {
     const [events, setEvents] = useState<EmergencyEvent[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
-    // Load events from localStorage on mount
-    useEffect(() => {
-        const stored = localStorage.getItem('emergency-events')
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored)
-                // Convert date strings back to Date objects
-                const eventsWithDates = parsed.map((event: any) => ({
-                    ...event,
-                    createdAt: new Date(event.createdAt),
-                    updatedAt: new Date(event.updatedAt),
-                    resolvedAt: event.resolvedAt ? new Date(event.resolvedAt) : undefined,
-                    timeline: event.timeline.map((item: any) => ({
-                        ...item,
-                        timestamp: new Date(item.timestamp),
-                    })),
-                }))
-                setEvents(eventsWithDates)
-            } catch (error) {
-                console.error('Failed to load events:', error)
+    const fetchEvents = useCallback(async () => {
+        setIsLoading(true)
+        setError(null)
+        try {
+            const res = await fetch('/api/events')
+            if (res.ok) {
+                const data = await res.json()
+                setEvents(data)
+            } else {
+                setError('Failed to load events')
             }
+        } catch (err) {
+            console.error('Fetch events error:', err)
+            setError('Network error: Failed to connect to server')
+        } finally {
+            setIsLoading(false)
         }
     }, [])
 
-    // Save events to localStorage whenever they change
     useEffect(() => {
-        localStorage.setItem('emergency-events', JSON.stringify(events))
-    }, [events])
+        fetchEvents()
+    }, [fetchEvents])
 
-    const createEvent = useCallback((eventData: Omit<EmergencyEvent, 'id' | 'createdAt' | 'updatedAt' | 'timeline'>): EmergencyEvent => {
-        const now = new Date()
-        const newEvent: EmergencyEvent = {
-            ...eventData,
-            id: `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            createdAt: now,
-            updatedAt: now,
-            timeline: [
-                {
-                    id: `timeline-${Date.now()}`,
-                    timestamp: now,
-                    action: 'Event Created',
-                    description: `${eventData.type} event created: ${eventData.title}`,
-                    user: eventData.createdBy,
-                },
-            ],
+    const createEvent = useCallback(async (eventData: Omit<EmergencyEvent, 'id' | 'createdAt' | 'updatedAt' | 'timeline'>): Promise<EmergencyEvent | null> => {
+        try {
+            const res = await fetch('/api/events', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(eventData)
+            })
+            if (res.ok) {
+                const newEvent = await res.json()
+                setEvents(prev => [newEvent, ...prev])
+                return newEvent
+            }
+            return null
+        } catch (err) {
+            console.error('Create event error:', err)
+            return null
         }
-
-        setEvents(prev => [newEvent, ...prev])
-        return newEvent
     }, [])
 
-    const updateEvent = useCallback((eventId: string, updates: Partial<EmergencyEvent>) => {
-        setEvents(prev =>
-            prev.map(event =>
-                event.id === eventId
-                    ? { ...event, ...updates, updatedAt: new Date() }
-                    : event
-            )
-        )
-    }, [])
-
-    const addTimelineItem = useCallback((eventId: string, item: Omit<EventTimelineItem, 'id' | 'timestamp'>) => {
-        const timelineItem: EventTimelineItem = {
-            ...item,
-            id: `timeline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            timestamp: new Date(),
+    const updateEvent = useCallback(async (eventId: string, updates: Partial<EmergencyEvent>) => {
+        // For simplicity, we just update the status/resolvedAt for now via a specific resolving logic Or re-fetch
+        try {
+            const res = await fetch(`/api/events/${eventId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates)
+            })
+            if (res.ok) {
+                await fetchEvents()
+            }
+        } catch (err) {
+            console.error('Update event error:', err)
         }
+    }, [fetchEvents])
 
-        setEvents(prev =>
-            prev.map(event =>
-                event.id === eventId
-                    ? {
-                        ...event,
-                        timeline: [...event.timeline, timelineItem],
-                        updatedAt: new Date(),
-                    }
-                    : event
-            )
-        )
+    const addTimelineItem = useCallback(async (eventId: string, item: Omit<EventTimelineItem, 'id' | 'timestamp'>) => {
+        // Implementation for timeline updates via API
+        console.log('Timeline updates to follow in next iteration')
     }, [])
 
     const getActiveEvents = useCallback((): EmergencyEvent[] => {
@@ -105,30 +93,33 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     }, [events])
 
     const getEventById = useCallback((eventId: string): EmergencyEvent | undefined => {
-        return events.find(event => event.id === eventId)
+        return events.find(event => event.id === eventId || (event as any)._id === eventId)
     }, [events])
 
-    const resolveEvent = useCallback((eventId: string) => {
-        setEvents(prev =>
-            prev.map(event =>
-                event.id === eventId
-                    ? {
-                        ...event,
-                        status: 'resolved' as EventStatus,
-                        resolvedAt: new Date(),
-                        updatedAt: new Date(),
-                    }
-                    : event
-            )
-        )
-    }, [])
+    const resolveEvent = useCallback(async (eventId: string) => {
+        await updateEvent(eventId, {
+            status: 'resolved' as EventStatus,
+            resolvedAt: new Date()
+        })
+    }, [updateEvent])
 
-    const deleteEvent = useCallback((eventId: string) => {
-        setEvents(prev => prev.filter(event => event.id !== eventId))
+    const deleteEvent = useCallback(async (eventId: string) => {
+        try {
+            const res = await fetch(`/api/events?id=${eventId}`, {
+                method: 'DELETE'
+            })
+            if (res.ok) {
+                setEvents(prev => prev.filter(event => event.id !== eventId && (event as any)._id !== eventId))
+            }
+        } catch (err) {
+            console.error('Delete event error:', err)
+        }
     }, [])
 
     const value: EventStore = {
         events,
+        isLoading,
+        error,
         createEvent,
         updateEvent,
         addTimelineItem,
@@ -136,6 +127,8 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
         getEventById,
         resolveEvent,
         deleteEvent,
+        refreshEvents: fetchEvents,
+        fetchEvents
     }
 
     return <EventContext.Provider value={value}>{children}</EventContext.Provider>

@@ -1,23 +1,46 @@
 'use client'
-
-import { useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { GISEOCActivatedModal } from '@/components/modals/gis-eoc-activated-modal'
 import { Zap, TreePine, Droplets, AlertTriangle, MapPin, Clock, User, Plus, CheckCircle, Wifi } from 'lucide-react'
 
+import dynamic from 'next/dynamic'
+import { EmergencyResource } from '@/lib/types/emergency'
+
+// Dynamically import LeafletMap to avoid SSR issues
+const LeafletMap = dynamic(() => import('@/components/leaflet-map'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-96 bg-slate-100 animate-pulse flex items-center justify-center rounded-lg border border-slate-200">
+      <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Loading Map Engine...</p>
+    </div>
+  ),
+})
+
 type FeedItem = {
-  id: number
+  id: string
   type: string
   icon: React.ElementType
   iconColor: string
   bgColor: string
   title: string
   location: string
+  lat?: number
+  lng?: number
   reportedBy: string
   time: string
   status: string
   source: 'AI Feed' | 'End User'
+}
+
+type ReportItem = {
+  id: string
+  name: string
+  category: string
+  date: string
+  file: string
+  status: string
 }
 
 export default function GISMappingPage() {
@@ -25,127 +48,153 @@ export default function GISMappingPage() {
   const [showReportForm, setShowReportForm] = useState(false)
   const [newReport, setNewReport] = useState({ type: 'Road Closure', location: '', description: '' })
   const [submitted, setSubmitted] = useState(false)
-  const [feedItems, setFeedItems] = useState<FeedItem[]>([
-    {
-      id: 1,
-      type: 'Power Outage',
-      icon: Zap,
-      iconColor: 'text-yellow-600',
-      bgColor: 'bg-yellow-50 border-yellow-200',
-      title: 'Power Outage – Sector 7-B',
-      location: '2400 Oak Ridge Ave',
-      reportedBy: 'ComEd AI Feed',
-      time: '2 min ago',
-      status: 'Active',
-      source: 'AI Feed',
-    },
-    {
-      id: 2,
-      type: 'Street Closure',
-      icon: AlertTriangle,
-      iconColor: 'text-red-600',
-      bgColor: 'bg-red-50 border-red-200',
-      title: 'Road Closed – Flood Debris',
-      location: 'Main St & River Rd Intersection',
-      reportedBy: 'End User: J. Martinez',
-      time: '8 min ago',
-      status: 'Active',
-      source: 'End User',
-    },
-    {
-      id: 3,
-      type: 'Water Main Leak',
-      icon: Droplets,
-      iconColor: 'text-blue-600',
-      bgColor: 'bg-blue-50 border-blue-200',
-      title: 'Water Main Break',
-      location: '850 W Madison St',
-      reportedBy: 'SCADA AI Feed',
-      time: '14 min ago',
-      status: 'Crew Dispatched',
-      source: 'AI Feed',
-    },
-    {
-      id: 4,
-      type: 'Downed Tree',
-      icon: TreePine,
-      iconColor: 'text-green-700',
-      bgColor: 'bg-green-50 border-green-200',
-      title: 'Downed Tree Blocking Road',
-      location: '120 N Elm Ave',
-      reportedBy: 'End User: K. Thompson',
-      time: '22 min ago',
-      status: 'Active',
-      source: 'End User',
-    },
-    {
-      id: 5,
-      type: 'Power Outage',
-      icon: Zap,
-      iconColor: 'text-yellow-600',
-      bgColor: 'bg-yellow-50 border-yellow-200',
-      title: 'Power Outage – Industrial District',
-      location: '3100 S Pulaski Rd',
-      reportedBy: 'ComEd AI Feed',
-      time: '31 min ago',
-      status: 'Crew En Route',
-      source: 'AI Feed',
-    },
-  ])
+  const [feedItems, setFeedItems] = useState<FeedItem[]>([])
+  const [reports, setReports] = useState<ReportItem[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const reports = [
-    {
-      id: 1,
-      name: 'Javier Waters',
-      category: 'Road Closures',
-      date: '20/Dec/2025',
-      file: 'Road_Closure_0421.pdf',
-      status: 'Review',
-    },
-    {
-      id: 2,
-      name: 'Frankie Kilback',
-      category: 'Structural Damage',
-      date: '19/Dec/2025',
-      file: 'Structural_Damage_0420.pdf',
-      status: 'Reviewed',
-    },
-  ]
+  const fetchIncidents = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch('/api/incidents')
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success && data.data) {
+          // Map backend incidents to UI FeedItems
+          const mappedItems = data.data.map((inc: any) => {
+            const iconMap: Record<string, React.ElementType> = {
+              'Road Closure': AlertTriangle,
+              'Downed Tree': TreePine,
+              'Water Main Leak': Droplets,
+              'Power Outage': Zap,
+            }
+            const colorMap: Record<string, { iconColor: string; bgColor: string }> = {
+              'Road Closure': { iconColor: 'text-red-600', bgColor: 'bg-red-50 border-red-200' },
+              'Downed Tree': { iconColor: 'text-green-700', bgColor: 'bg-green-50 border-green-200' },
+              'Water Main Leak': { iconColor: 'text-blue-600', bgColor: 'bg-blue-50 border-blue-200' },
+              'Power Outage': { iconColor: 'text-yellow-600', bgColor: 'bg-yellow-50 border-yellow-200' },
+            }
 
-  const handleSubmitReport = () => {
+            // Simple time formatter for display
+            const timeStr = new Date(inc.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+            return {
+              id: inc.id,
+              type: inc.type,
+              icon: iconMap[inc.type] || AlertTriangle,
+              iconColor: colorMap[inc.type]?.iconColor || 'text-gray-600',
+              bgColor: colorMap[inc.type]?.bgColor || 'bg-gray-50 border-gray-200',
+              title: inc.title,
+              location: inc.location,
+              lat: inc.lat,
+              lng: inc.lng,
+              reportedBy: inc.reportedBy,
+              time: `Reported at ${timeStr}`,
+              status: inc.status,
+              source: inc.source,
+            }
+          })
+          setFeedItems(mappedItems)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load incidents', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchReports = async () => {
+    try {
+      const res = await fetch('/api/field-reports')
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success && data.data) {
+          setReports(data.data)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load reports', err)
+    }
+  }
+
+  // Load initial feeds
+  useEffect(() => {
+    fetchIncidents()
+    fetchReports()
+    const interval = setInterval(() => {
+      fetchIncidents()
+      fetchReports()
+    }, 60000) // refresh every 60s
+    return () => clearInterval(interval)
+  }, [])
+
+  // Map FeedItems to Leaflet map resources
+  const mapResources = useMemo(() => {
+    return feedItems
+      .filter(item => item.lat && item.lng)
+      .map(item => ({
+        id: item.id,
+        name: item.title,
+        type: 'other',
+        location: { lat: item.lat!, lng: item.lng!, address: item.location },
+        distance: 0,
+        status: item.status === 'Resolved' ? 'available' : 'limited'
+      } as EmergencyResource))
+  }, [feedItems])
+
+  const handleUpdateReportStatus = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'Review' ? 'Reviewed' : 'Review'
+
+    // Optimistic UI update
+    setReports(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r))
+
+    try {
+      const res = await fetch('/api/field-reports', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status: newStatus })
+      })
+
+      if (!res.ok) {
+        // Revert on failure
+        setReports(prev => prev.map(r => r.id === id ? { ...r, status: currentStatus } : r))
+      }
+    } catch (err) {
+      console.error('Failed to update report status', err)
+      // Revert on failure
+      setReports(prev => prev.map(r => r.id === id ? { ...r, status: currentStatus } : r))
+    }
+  }
+
+  const handleSubmitReport = async () => {
     if (!newReport.location) return
-    const iconMap: Record<string, React.ElementType> = {
-      'Road Closure': AlertTriangle,
-      'Downed Tree': TreePine,
-      'Water Main Leak': Droplets,
-      'Power Outage': Zap,
+
+    try {
+      const res = await fetch('/api/incidents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: newReport.type,
+          location: newReport.location,
+          description: newReport.description,
+          reportedBy: 'End User: You', // In a real app, pick from session
+          source: 'End User'
+        })
+      })
+
+      if (res.ok) {
+        setSubmitted(true)
+        fetchIncidents() // Refresh feed
+
+        setTimeout(() => {
+          setSubmitted(false)
+          setShowReportForm(false)
+          setNewReport({ type: 'Road Closure', location: '', description: '' })
+        }, 2000)
+      }
+    } catch (err) {
+      console.error('Failed to submit report', err)
     }
-    const colorMap: Record<string, { iconColor: string; bgColor: string }> = {
-      'Road Closure': { iconColor: 'text-red-600', bgColor: 'bg-red-50 border-red-200' },
-      'Downed Tree': { iconColor: 'text-green-700', bgColor: 'bg-green-50 border-green-200' },
-      'Water Main Leak': { iconColor: 'text-blue-600', bgColor: 'bg-blue-50 border-blue-200' },
-      'Power Outage': { iconColor: 'text-yellow-600', bgColor: 'bg-yellow-50 border-yellow-200' },
-    }
-    const newItem: FeedItem = {
-      id: Date.now(),
-      type: newReport.type,
-      icon: iconMap[newReport.type] || AlertTriangle,
-      iconColor: colorMap[newReport.type]?.iconColor || 'text-gray-600',
-      bgColor: colorMap[newReport.type]?.bgColor || 'bg-gray-50 border-gray-200',
-      title: `${newReport.type}${newReport.description ? ' – ' + newReport.description : ''}`,
-      location: newReport.location,
-      reportedBy: 'End User: You',
-      time: 'Just now',
-      status: 'Submitted',
-      source: 'End User',
-    }
-    setFeedItems(prev => [newItem, ...prev])
-    setSubmitted(true)
-    setTimeout(() => {
-      setSubmitted(false)
-      setShowReportForm(false)
-      setNewReport({ type: 'Road Closure', location: '', description: '' })
-    }, 2000)
   }
 
   return (
@@ -157,41 +206,21 @@ export default function GISMappingPage() {
 
       <Card className="p-6">
         <h2 className="text-lg font-bold mb-4">No EOC Activated</h2>
-        <div className="w-full h-96 bg-gray-200 rounded-lg flex items-center justify-center mb-4 relative">
-          <svg className="w-full h-full" viewBox="0 0 800 400" style={{ background: '#f0f0f0' }}>
-            {/* Basic map representation */}
-            <rect x="50" y="50" width="700" height="300" fill="#e0f2fe" stroke="#0284c7" strokeWidth="2" />
-
-            {/* Water features */}
-            <path d="M 100 200 Q 200 150, 300 200 T 500 200" fill="none" stroke="#0284c7" strokeWidth="3" opacity="0.6" />
-
-            {/* Green areas (parks) */}
-            <circle cx="150" cy="120" r="30" fill="#86efac" opacity="0.6" />
-            <circle cx="650" cy="150" r="40" fill="#86efac" opacity="0.6" />
-
-            {/* Pink areas (buildings) */}
-            <rect x="200" y="100" width="50" height="50" fill="#f8bbd0" opacity="0.5" />
-            <rect x="350" y="150" width="60" height="40" fill="#f8bbd0" opacity="0.5" />
-            <rect x="600" y="250" width="70" height="50" fill="#f8bbd0" opacity="0.5" />
-
-            {/* Markers */}
-            <circle cx="300" cy="200" r="8" fill="#fbbf24" />
-            <circle cx="450" cy="250" r="8" fill="#3b82f6" />
-            <circle cx="550" cy="180" r="8" fill="#10b981" />
-            <circle cx="200" cy="300" r="8" fill="#fbbf24" />
-
-            {/* Popup */}
-            <rect x="350" y="250" width="180" height="80" fill="white" stroke="#333" strokeWidth="1" rx="4" />
-            <text x="365" y="270" fontSize="14" fontWeight="bold">Traffic Accident</text>
-            <text x="365" y="290" fontSize="12">Use caution. Monitor</text>
-            <text x="365" y="290" dy="15" fontSize="12">for updates.</text>
-            <circle cx="515" cy="255" r="6" fill="none" stroke="#666" strokeWidth="2" />
-          </svg>
+        <div className="w-full h-[400px] border border-gray-200 rounded-lg overflow-hidden relative shadow-sm z-0">
+          <LeafletMap
+            center={{ lat: 41.8781, lng: -87.6298 }} // Default center (Chicago)
+            resources={mapResources}
+            zoom={11}
+          />
         </div>
 
-        <div className="text-center text-gray-600 text-sm">
-          <p>Interactive map showing incident locations and details</p>
-          <p className="mt-1">Click on markers to view incident information</p>
+        <div className="text-center text-gray-500 text-xs font-semibold uppercase tracking-widest mt-4 flex items-center justify-center gap-4">
+          <span className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-red-500 shadow-sm border border-red-200"></span> Active Hazards
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-blue-500 shadow-sm border border-blue-200"></span> Current Position
+          </span>
         </div>
       </Card>
 
@@ -286,7 +315,7 @@ export default function GISMappingPage() {
         </div>
       </Card>
 
-      <Card className="p-6">
+      {/* <Card className="p-6">
         <h2 className="text-lg font-bold mb-4">Interactive Reporting Management</h2>
 
         <div className="overflow-x-auto">
@@ -309,10 +338,10 @@ export default function GISMappingPage() {
                   <td className="py-3 px-4 text-sm text-blue-600">{report.file}</td>
                   <td className="py-3 px-4 text-sm">
                     <Button
-                      onClick={() => setIsModalOpen(true)}
+                      onClick={() => handleUpdateReportStatus(report.id, report.status)}
                       className={`${report.status === 'Review'
                         ? 'bg-gray-800 hover:bg-gray-900 text-white'
-                        : 'bg-gray-200 text-gray-700'
+                        : 'bg-green-100/50 hover:bg-green-100 text-green-700 font-semibold'
                         }`} size="sm">
                       {report.status}
                     </Button>
@@ -322,7 +351,7 @@ export default function GISMappingPage() {
             </tbody>
           </table>
         </div>
-      </Card>
+      </Card> */}
 
       <GISEOCActivatedModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </main>

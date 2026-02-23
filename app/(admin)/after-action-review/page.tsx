@@ -5,8 +5,43 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Flame, AlertTriangle, Clock, Brain, ThumbsUp, BookOpen, Plus, CheckCircle } from 'lucide-react'
 
-export default function AfterActionReviewPage() {
+const INCIDENTS = {
+  tornado_april: {
+    name: 'Tornado Warning 04/23',
+    type: 'Tornado',
+    duration: '14:10 – 15:45',
+    insights: 12,
+    events: [
+      { id: 1, time: '02:15 PM', type: 'Alert Issued', title: 'Tornado Warning Issued', description: 'NWS issued tornado warning for Springfield metro area. Siren protocols activated.', color: 'red' },
+      { id: 2, time: '02:22 PM', type: 'Responder Action', title: 'Police/Fire Units Deployed', description: 'Emergency personnel dispatched to high-risk zones for traffic control and spotter duty.', color: 'blue' },
+      { id: 3, time: '02:30 PM', type: 'System Update', title: 'Shelters Activated', description: 'Virtual EOC triggered automated shelter-in-place instructions to all residents.', color: 'purple' },
+      { id: 4, time: '03:45 PM', type: 'System Update', title: 'Warning Expired', description: 'Dangerous weather has passed. Damage assessment teams mobilized.', color: 'purple' },
+    ],
+    aiInsights: [
+      { id: 'T-001', category: 'Compliance', description: '92% of residents acknowledged shelter-in-place alert within 2 min.', time: '15:50', status: 'Completed' },
+      { id: 'T-002', category: 'Efficiency', description: 'Siren activation delayed by 45s due to manual override check.', time: '16:05', status: 'Pending' },
+    ]
+  },
+  fire_sector7: {
+    name: 'Fire Alert Sector 7-B',
+    type: 'Urban Fire',
+    duration: '08:15 – 22:47',
+    insights: 8,
+    events: [
+      { id: 1, time: '08:15 AM', type: 'Alert Issued', title: 'Initial Fire Alert Detected', description: 'Automated system detected smoke and heat signatures in Sector 7-B.', color: 'red' },
+      { id: 2, time: '08:22 AM', type: 'Responder Action', title: 'Fire Unit 3 Dispatched', description: 'Primary response team deployed with 12 personnel and 2 engines.', color: 'blue' },
+      { id: 3, time: '08:35 AM', type: 'Responder Action', title: 'Evacuation Order Issued', description: 'Mandatory evacuation for 2.3 mile radius.', color: 'blue' },
+      { id: 4, time: '10:47 PM', type: 'Citizen Report', title: 'Incident Contained - All Clear', description: '100% containment confirmed. Residents cleared to return.', color: 'green' },
+    ],
+    aiInsights: [
+      { id: 'F-001', category: 'Response Time', description: 'Fire Ops delayed 5 min due to blocked hydrants in Sector 7.', time: '23:00', status: 'Addressed' },
+    ]
+  }
+}
 
+export default function AfterActionReviewPage() {
+  const [selectedIncident, setSelectedIncident] = useState<keyof typeof INCIDENTS>('tornado_april')
+  const [isSyncing, setIsSyncing] = useState(false)
   const [wentWellItems, setWentWellItems] = useState([
     'Early alert dissemination reached 96% of impacted residents within 3 minutes.',
     'Inter-agency coordination between Fire, Police, and OEM was seamless.',
@@ -21,6 +56,16 @@ export default function AfterActionReviewPage() {
   const [savedWW, setSavedWW] = useState(false)
   const [savedLL, setSavedLL] = useState(false)
 
+  const currentIncident = INCIDENTS[selectedIncident]
+
+  const syncData = () => {
+    setIsSyncing(true)
+    setTimeout(() => {
+      setIsSyncing(false)
+      // In a real app, this would fetch updated AI data
+    }, 1500)
+  }
+
   const addWentWell = () => {
     if (newWentWell.trim()) {
       setWentWellItems(prev => [...prev, newWentWell.trim()])
@@ -33,82 +78,6 @@ export default function AfterActionReviewPage() {
       setNewLesson('')
     }
   }
-
-  const timelineEvents = [
-    {
-      id: 1,
-      time: '08:15 AM',
-      type: 'Alert Issued',
-      title: 'Initial Fire Alert Detected',
-      description: 'Automated system detected smoke and heat signatures in Sector 7-B. Emergency protocols activated.',
-      color: 'red',
-    },
-    {
-      id: 2,
-      time: '08:22 AM',
-      type: 'Responder Action',
-      title: 'Fire Unit 3 Dispatched',
-      description: 'Primary response team deployed with 12 personnel and 2 engines. ETA: 7 minutes.',
-      color: 'blue',
-    },
-    {
-      id: 3,
-      time: '08:28 AM',
-      type: 'Citizen Report',
-      title: 'Multiple 911 Calls Received',
-      description: '47 citizen reports confirming fire spread. Evacuation requests from residential areas.',
-      color: 'green',
-    },
-    {
-      id: 4,
-      time: '08:35 AM',
-      type: 'Responder Action',
-      title: 'Evacuation Order Issued',
-      description: 'Mandatory evacuation for 2.3 mile radius. Shelter locations broadcast via emergency alert system.',
-      color: 'blue',
-    },
-    {
-      id: 5,
-      time: '09:12 AM',
-      type: 'System Update',
-      title: 'Resource Allocation Updated',
-      description: 'AI system reallocated 3 additional units based on wind pattern analysis and spread prediction.',
-      color: 'purple',
-    },
-    {
-      id: 6,
-      time: '11:45 AM',
-      type: 'Responder Action',
-      title: 'Aerial Support Deployed',
-      description: '2 helicopters with water drops initiated. Ground crews report 40% containment achieved.',
-      color: 'blue',
-    },
-    {
-      id: 7,
-      time: '10:47 PM',
-      type: 'Citizen Report',
-      title: 'Incident Contained - All Clear',
-      description: '100% containment confirmed. Residents cleared to return. Post-incident assessment initiated.',
-      color: 'green',
-    },
-  ]
-
-  const aiInsights = [
-    {
-      id: '001',
-      category: 'Response Time',
-      description: 'Fire Ops delayed 5 min',
-      time: '14:45',
-      status: 'Pending',
-    },
-    {
-      id: '002',
-      category: 'Resource Allocation',
-      description: 'Additional medical team recommended',
-      time: '14:42',
-      status: 'Addressed',
-    },
-  ]
 
   const getTypeColor = (type: string) => {
     const colors: Record<string, string> = {
@@ -132,9 +101,30 @@ export default function AfterActionReviewPage() {
 
   return (
     <main className="p-6 space-y-6">
-      <div className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded">
-        <h1 className="text-3xl font-bold mb-2">After Action Review (AAR)</h1>
-        <p className="text-gray-600">Analyze incident response performance, review AI-generated insights, and monitor task execution timelines.</p>
+      <div className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">After Action Review (AAR)</h1>
+          <p className="text-gray-600">Timeline, AI generated using data from incident except for lessons learned and what went well.</p>
+        </div>
+        <div className="flex gap-3">
+          <select
+            value={selectedIncident}
+            onChange={(e) => setSelectedIncident(e.target.value as any)}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+          >
+            {Object.entries(INCIDENTS).map(([key, val]) => (
+              <option key={key} value={key}>{val.name}</option>
+            ))}
+          </select>
+          <Button
+            onClick={syncData}
+            disabled={isSyncing}
+            className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+          >
+            <Brain className={`w-4 h-4 ${isSyncing ? 'animate-pulse' : ''}`} />
+            {isSyncing ? 'Syncing AI Data...' : 'Sync with AI'}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
@@ -142,7 +132,7 @@ export default function AfterActionReviewPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm text-gray-600">Incident Name</p>
-              <p className="text-xl font-bold mt-1">Tornado Warning 04/23</p>
+              <p className="text-xl font-bold mt-1">{currentIncident.name}</p>
             </div>
             <Flame className="w-6 h-6 text-blue-500" />
           </div>
@@ -152,7 +142,7 @@ export default function AfterActionReviewPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm text-gray-600">Incident Type</p>
-              <p className="text-xl font-bold mt-1">Tornado</p>
+              <p className="text-xl font-bold mt-1">{currentIncident.type}</p>
             </div>
             <AlertTriangle className="w-6 h-6 text-orange-500" />
           </div>
@@ -162,7 +152,7 @@ export default function AfterActionReviewPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm text-gray-600">Duration</p>
-              <p className="text-xl font-bold mt-1">14:10 – 15:45</p>
+              <p className="text-xl font-bold mt-1">{currentIncident.duration}</p>
             </div>
             <Clock className="w-6 h-6 text-purple-500" />
           </div>
@@ -171,8 +161,8 @@ export default function AfterActionReviewPage() {
         <Card className="p-4">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total AI Insights Generated</p>
-              <p className="text-xl font-bold mt-1">12</p>
+              <p className="text-sm text-gray-600">AI Insights Generated</p>
+              <p className="text-xl font-bold mt-1">{currentIncident.insights}</p>
             </div>
             <Brain className="w-6 h-6 text-green-500" />
           </div>
@@ -181,14 +171,14 @@ export default function AfterActionReviewPage() {
 
       <Card className="p-6">
         <h2 className="text-lg font-bold mb-6">Event Timeline</h2>
-        <p className="text-sm text-gray-600 mb-6">Chronological view of all incident events</p>
+        <p className="text-sm text-gray-600 mb-6">Chronological view of all incident events – AI Generated</p>
 
         <div className="relative">
           {/* Timeline line */}
           <div className="absolute left-6 top-0 bottom-0 w-1 bg-gray-200"></div>
 
           <div className="space-y-8">
-            {timelineEvents.map((event) => {
+            {currentIncident.events.map((event) => {
               const color = getTypeColor(event.type)
               return (
                 <div key={event.id} className="pl-20">
@@ -257,7 +247,7 @@ export default function AfterActionReviewPage() {
               </tr>
             </thead>
             <tbody>
-              {aiInsights.map((insight, idx) => (
+              {currentIncident.aiInsights.map((insight, idx) => (
                 <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="py-3 px-4 text-sm font-medium">{insight.id}</td>
                   <td className="py-3 px-4 text-sm">{insight.category}</td>

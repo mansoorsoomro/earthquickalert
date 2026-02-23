@@ -25,6 +25,7 @@ import {
     DollarSign,
     Wrench,
     X,
+    Brain,
 } from 'lucide-react'
 
 type TabType = 'admin' | 'declarations' | 'sitrep' | 'responders' | 'nonprofits' | 'businesses'
@@ -208,36 +209,73 @@ function DeclarationsTab() {
 
 function SitRepTab() {
     const [notes, setNotes] = useState('')
+    const [isGenerating, setIsGenerating] = useState(false)
+    const [sitRep, setSitRep] = useState({
+        incidentName: 'Tornado Warning – Springfield Area',
+        period: 'Dec 20, 2025 · 14:00 – 16:00',
+        situation: 'Active tornado warning in effect. EOC activated. Shelters opened at Civic Center and Madison HS.',
+        actions: 'Alerts sent to 12,450 residents. Fire and Police units deployed. Evacuation routes established.',
+        resources: 'Shelter B: 450/600 occupied. Food distribution active. Medical team on standby.',
+        nextSteps: 'Monitor NWS for warning expiry. Prepare recovery phase briefing for 17:00.'
+    })
+
+    const generateAI = () => {
+        setIsGenerating(true)
+        setTimeout(() => {
+            setSitRep({
+                incidentName: 'Hurricane Helene Response',
+                period: 'Feb 23, 2026 · 08:00 – 10:00',
+                situation: 'Category 3 Hurricane impact imminent. Storm surge warnings in effect for all coastal sectors.',
+                actions: 'Mandatory evacuations completed for Zones A & B. National Guard staged at Springfield Armory.',
+                resources: 'Shelters A-D at 100% capacity. Supplemental power generators deployed to Springfield General Hospital.',
+                nextSteps: 'Coordinate with State OEM for aerial damage assessment post-landfall. Monitor river levels for flash flooding.'
+            })
+            setIsGenerating(false)
+        }, 1200)
+    }
+
     return (
         <div className="space-y-6">
             <Card className="p-6">
-                <h2 className="text-lg font-bold mb-2">Situational Report Builder</h2>
-                <p className="text-sm text-gray-600 mb-6">Build and distribute situational reports to all active responders. AI pre-fills fields based on incident data; you can edit before sending.</p>
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 className="text-lg font-bold mb-1">Situational Report Builder</h2>
+                        <p className="text-sm text-gray-600">Build and distribute situational reports to all active responders. AI pre-fills fields based on incident data; you can edit before sending.</p>
+                    </div>
+                    <Button
+                        onClick={generateAI}
+                        disabled={isGenerating}
+                        className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                    >
+                        <Brain className={`w-4 h-4 ${isGenerating ? 'animate-pulse' : ''}`} />
+                        {isGenerating ? 'Generating...' : 'AI Pre-fill'}
+                    </Button>
+                </div>
 
                 <div className="grid grid-cols-2 gap-6 mb-6">
                     <div>
                         <label className="block text-sm font-semibold mb-1">Incident Name</label>
-                        <input type="text" defaultValue="Tornado Warning – Springfield Area" className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                        <input type="text" value={sitRep.incidentName} onChange={e => setSitRep({ ...sitRep, incidentName: e.target.value })} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">Report Period</label>
-                        <input type="text" defaultValue="Dec 20, 2025 · 14:00 – 16:00" className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                        <input type="text" value={sitRep.period} onChange={e => setSitRep({ ...sitRep, period: e.target.value })} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">Current Situation</label>
-                        <textarea rows={3} defaultValue="Active tornado warning in effect. EOC activated. Shelters opened at Civic Center and Madison HS." className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                        <textarea rows={3} value={sitRep.situation} onChange={e => setSitRep({ ...sitRep, situation: e.target.value })} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">Actions Taken</label>
-                        <textarea rows={3} defaultValue="Alerts sent to 12,450 residents. Fire and Police units deployed. Evacuation routes established." className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                        <textarea rows={3} value={sitRep.actions} onChange={e => setSitRep({ ...sitRep, actions: e.target.value })} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">Resource Status</label>
-                        <textarea rows={3} defaultValue="Shelter B: 450/600 occupied. Food distribution active. Medical team on standby." className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                        <textarea rows={3} value={sitRep.resources} onChange={e => setSitRep({ ...sitRep, resources: e.target.value })} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">Next Steps / Priorities</label>
-                        <textarea rows={3} defaultValue="Monitor NWS for warning expiry. Prepare recovery phase briefing for 17:00." className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                        <textarea rows={3} value={sitRep.nextSteps} onChange={e => setSitRep({ ...sitRep, nextSteps: e.target.value })} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                     </div>
                 </div>
 

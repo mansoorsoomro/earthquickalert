@@ -12,21 +12,28 @@ export default function AdminLayout({
 }) {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(true)
+    const [userName, setUserName] = useState('')
 
     useEffect(() => {
         const userRole = localStorage.getItem('userRole')
+        const storedName = localStorage.getItem('userName')
         if (userRole !== 'admin') {
             router.push('/login')
         } else {
+            if (storedName) setUserName(storedName)
             setIsLoading(false)
         }
     }, [router])
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        try {
+            await fetch('/api/logout', { method: 'POST' })
+        } catch (error) {
+            console.error('Logout failed:', error)
+        }
         localStorage.removeItem('userRole')
         localStorage.removeItem('userEmail')
         localStorage.removeItem('userName')
-        document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
         router.push('/login')
     }
 
@@ -45,7 +52,7 @@ export default function AdminLayout({
         <div className="flex h-screen bg-background text-foreground">
             <Sidebar />
             <div className="flex-1 flex flex-col overflow-hidden">
-                <Header userName="Admin User" onLogout={handleLogout} />
+                <Header userName={userName || "Admin User"} onLogout={handleLogout} />
                 <div className="flex-1 overflow-auto">
                     {children}
                 </div>

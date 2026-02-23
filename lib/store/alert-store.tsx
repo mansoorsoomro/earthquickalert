@@ -1,11 +1,14 @@
 'use client'
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
-import { Alert, AlertType, AlertSeverity } from '@/lib/types/emergency'
+import { Alert } from '@/lib/types/emergency'
 
 interface AlertStore {
     alerts: Alert[]
-    createAlert: (alert: Omit<Alert, 'id' | 'createdAt'>) => Alert
+    isLoading: boolean
+    error: string | null
+    createAlert: (alert: Omit<Alert, 'id' | 'createdAt'>) => Promise<Alert | null>
+    fetchAlerts: () => Promise<void>
     getAlertsByLocation: (locations: string[]) => Alert[]
     getAlertsByZone: (zones: string[]) => Alert[]
     markAlertAsRead: (alertId: string) => void
@@ -17,52 +20,79 @@ const AlertContext = createContext<AlertStore | undefined>(undefined)
 
 export function AlertProvider({ children }: { children: React.ReactNode }) {
     const [alerts, setAlerts] = useState<Alert[]>([])
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
-    // Load alerts from localStorage on mount
-    useEffect(() => {
-        const stored = localStorage.getItem('adminAlerts')
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored)
-                // Convert date strings back to Date objects
-                const alertsWithDates = parsed.map((alert: any) => ({
-                    ...alert,
-                    createdAt: new Date(alert.createdAt),
-                    expiresAt: alert.expiresAt ? new Date(alert.expiresAt) : undefined,
-                }))
-                setAlerts(alertsWithDates)
-            } catch (error) {
-                console.error('Failed to load alerts:', error)
+    const fetchAlerts = useCallback(async () => {
+        setIsLoading(true)
+        setError(null)
+        try {
+            const res = await fetch('/api/alerts/community')
+            if (res.ok) {
+                const data = await res.json()
+                if (data.success) {
+                    // Map DB alerts to the Alert type
+                    const mappedAlerts: Alert[] = data.data.map((item: any) => ({
+                        id: item._id || item.id,
+                        type: item.type || 'other',
+                        severity: item.severity,
+                        title: item.title,
+                        message: item.description,
+                        zones: item.affectedAreas || [],
+                        locations: item.locations || [],
+                        createdAt: new Date(item.timestamp || item.createdAt),
+                        expiresAt: item.expiresAt ? new Date(item.expiresAt) : undefined,
+                        createdBy: item.adminName || 'Admin',
+                        eventId: item.eventId,
+                        isRead: item.isRead || false,
+                    }))
+                    setAlerts(mappedAlerts)
+                }
+            } else {
+                setError('Failed to fetch community alerts')
             }
+        } catch (err) {
+            console.error('Fetch alerts error:', err)
+            setError('Network error: Failed to connect to server')
+        } finally {
+            setIsLoading(false)
         }
     }, [])
 
-    // Save alerts to localStorage whenever they change
     useEffect(() => {
-        localStorage.setItem('adminAlerts', JSON.stringify(alerts))
-    }, [alerts])
+        fetchAlerts()
+        const interval = setInterval(fetchAlerts, 60000) // Auto refresh every minute
+        return () => clearInterval(interval)
+    }, [fetchAlerts])
 
-    const createAlert = useCallback((alertData: Omit<Alert, 'id' | 'createdAt'>): Alert => {
-        const newAlert: Alert = {
-            ...alertData,
-            id: `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            createdAt: new Date(),
-        }
-
-        setAlerts(prev => [newAlert, ...prev])
-
-        // Simulate notification
-        if (typeof window !== 'undefined' && 'Notification' in window) {
-            if (Notification.permission === 'granted') {
-                new Notification(newAlert.title, {
-                    body: newAlert.message,
-                    icon: '/logo.png',
+    const createAlert = useCallback(async (alertData: Omit<Alert, 'id' | 'createdAt'>): Promise<Alert | null> => {
+        try {
+            const res = await fetch('/api/alerts/community', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    severity: alertData.severity,
+                    title: alertData.title,
+                    description: alertData.message,
+                    affectedAreas: alertData.zones,
+                    expiresAt: alertData.expiresAt,
+                    eventId: alertData.eventId,
                 })
-            }
-        }
+            })
 
-        return newAlert
-    }, [])
+            if (res.ok) {
+                const data = await res.json()
+                if (data.success) {
+                    await fetchAlerts()
+                    return data.data
+                }
+            }
+            return null
+        } catch (err) {
+            console.error('Create alert error:', err)
+            return null
+        }
+    }, [fetchAlerts])
 
     const getAlertsByLocation = useCallback((locations: string[]): Alert[] => {
         return alerts.filter(alert =>
@@ -90,6 +120,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
     }, [])
 
     const deleteAlert = useCallback((alertId: string) => {
+        // Implement DELETE if needed in API, for now just update local state
         setAlerts(prev => prev.filter(alert => alert.id !== alertId))
     }, [])
 
@@ -99,7 +130,10 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
 
     const value: AlertStore = {
         alerts,
+        isLoading,
+        error,
         createAlert,
+        fetchAlerts,
         getAlertsByLocation,
         getAlertsByZone,
         markAlertAsRead,

@@ -7,9 +7,43 @@ interface Coordinates {
     lng: number
 }
 
-// Mock geocoding - convert address to coordinates
-export function geocodeAddress(address: string): Coordinates {
-    // Simulate geocoding with consistent results for common addresses
+// Real geocoding - convert address to coordinates using OpenStreetMap Nominatim
+export async function geocodeAddress(address: string): Promise<Coordinates> {
+    if (!address) return { lat: 37.7749, lng: -122.4194 }; // Default to SF if empty
+
+    try {
+        const url = `/api/geocode?address=${encodeURIComponent(address)}`;
+
+        // Add timeout to prevent hanging - increased to 10s
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            if (response.status !== 404) {
+                console.warn(`Geocoding API responded with status: ${response.status}`);
+            }
+            throw new Error('Geocoding failed');
+        }
+
+        const data = await response.json();
+        if (data && data.lat && data.lng) {
+            return {
+                lat: data.lat,
+                lng: data.lng
+            };
+        }
+    } catch (error: any) {
+        if (error.name === 'AbortError') {
+            console.error('Geocoding request timed out');
+        } else {
+            console.error('Geocoding error:', error);
+        }
+    }
+
+    // Fallback simulated geocoding
     const hash = address.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
     return {
         lat: 37.7749 + (hash % 100) / 1000, // San Francisco area
@@ -17,9 +51,34 @@ export function geocodeAddress(address: string): Coordinates {
     }
 }
 
-// Mock reverse geocoding - convert coordinates to address
-export function reverseGeocode(lat: number, lng: number): string {
-    return `${Math.floor(Math.abs(lat * 1000))} Main St, San Francisco, CA 94102`
+// Real reverse geocoding - convert coordinates to address using our API proxy
+export async function reverseGeocode(lat: number, lng: number): Promise<string> {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased to 10s
+
+        const response = await fetch(`/api/reverse-geocode?lat=${lat}&lng=${lng}`, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            if (response.status !== 404) {
+                console.warn(`Reverse geocoding API responded with status: ${response.status}`);
+            }
+            throw new Error('Reverse geocoding failed');
+        }
+
+        const data = await response.json();
+        return data.name || data.address?.city || 'Unknown Area';
+    } catch (error: any) {
+        if (error.name === 'AbortError') {
+            console.error(`Reverse geocoding timed out for ${lat},${lng}`);
+        } else {
+            console.error('Reverse geocoding error:', error);
+        }
+        return `Location (${lat.toFixed(2)}, ${lng.toFixed(2)})`; // Better fallback than hardcoded address
+    }
 }
 
 // Calculate distance between two coordinates (Haversine formula)

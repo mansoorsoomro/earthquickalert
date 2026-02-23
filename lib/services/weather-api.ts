@@ -1,6 +1,7 @@
 // Weather API Service - OpenWeatherMap Integration
 
-import { WeatherAlert, AlertSeverity, AlertSource } from '@/lib/types/api-alerts';
+import { WeatherAlert as APIWeatherAlert, AlertSeverity as APIAlertSeverity, AlertSource } from '@/lib/types/api-alerts';
+import { WeatherData, DayForecast, WeatherAlert } from '@/lib/types/emergency';
 
 interface OpenWeatherAlert {
     sender_name: string;
@@ -35,15 +36,48 @@ interface OpenWeatherResponse {
 }
 
 export class WeatherAPIService {
-    private apiKey: string;
-    private baseURL = 'https://api.openweathermap.org/data/3.0/onecall';
+    private baseURL = 'https://api.open-meteo.com/v1/forecast';
 
-    constructor(apiKey?: string) {
-        // Use environment variable or provided key
-        this.apiKey = apiKey || process.env.WEATHER_API_KEY || '';
+    /**
+     * Fetch full weather data (current + forecast)
+     */
+    async fetchFullWeatherData(lat: number, lon: number): Promise<WeatherData> {
+        try {
+            const url = `${this.baseURL}?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,visibility&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=7`;
 
-        if (!this.apiKey) {
-            console.warn('Weather API key not configured. Using mock data.');
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`Weather API error: ${response.status}`);
+            const data = await response.json();
+
+            const current = data.current;
+            const daily = data.daily;
+
+            const weatherData: WeatherData = {
+                location: 'Current Location', // This will be updated by the caller using reverse geocode
+                current: {
+                    temp: Math.round(current.temperature_2m),
+                    feelsLike: Math.round(current.apparent_temperature),
+                    condition: this.getWeatherTitleFromCode(current.weather_code),
+                    humidity: current.relative_humidity_2m,
+                    windSpeed: Math.round(current.wind_speed_10m),
+                    visibility: Math.round(current.visibility / 1000), // Convert meters to km or miles
+                    icon: this.getWeatherIcon(current.weather_code)
+                },
+                forecast: daily.time.map((time: string, i: number) => ({
+                    date: new Date(time),
+                    high: Math.round(daily.temperature_2m_max[i]),
+                    low: Math.round(daily.temperature_2m_min[i]),
+                    condition: this.getWeatherTitleFromCode(daily.weather_code[i]),
+                    precipitation: daily.precipitation_probability_max[i],
+                    icon: this.getWeatherIcon(daily.weather_code[i])
+                })),
+                alerts: this.synthesizeAlerts(current.weather_code, current.temperature_2m)
+            };
+
+            return weatherData;
+        } catch (error) {
+            console.error('Error fetching full weather data:', error);
+            throw error;
         }
     }
 
@@ -52,14 +86,10 @@ export class WeatherAPIService {
      * @param lat - Latitude
      * @param lon - Longitude
      */
-    async fetchWeatherAlerts(lat: number, lon: number): Promise<WeatherAlert[]> {
+    async fetchWeatherAlerts(lat: number, lon: number): Promise<APIWeatherAlert[]> {
         try {
-            if (!this.apiKey) {
-                // Return mock data if no API key
-                return this.getMockWeatherAlerts(lat, lon);
-            }
-
-            const url = `${this.baseURL}?lat=${lat}&lon=${lon}&exclude=minutely,hourly,daily&appid=${this.apiKey}&units=metric`;
+            // Open-Meteo current weather + basic variables
+            const url = `${this.baseURL}?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&timezone=auto`;
 
             const response = await fetch(url, {
                 method: 'GET',
@@ -72,21 +102,41 @@ export class WeatherAPIService {
                 throw new Error(`Weather API error: ${response.status} ${response.statusText}`);
             }
 
-            const data: OpenWeatherResponse = await response.json();
+            const data = await response.json();
 
-            // Transform weather alerts
-            const alerts: WeatherAlert[] = [];
+            // Transform Open-Meteo current data into our WeatherAlert format
+            // Since Open-Meteo doesn't provide "alerts" in the free core tier easily (requires separate API), 
+            // we'll synthesize a status alert based on current conditions
+            const current = data.current;
+            const weatherCode = current.weather_code;
+            const temp = current.temperature_2m;
 
-            if (data.alerts && data.alerts.length > 0) {
-                for (const alert of data.alerts) {
-                    alerts.push(this.transformToAlert(alert, data));
-                }
-            }
+            const severity = this.calculateSeverityFromCode(weatherCode, temp);
+            const weatherType = this.determineWeatherTypeFromCode(weatherCode);
+            const description = this.generateDescriptionFromCode(weatherCode, temp, current.wind_speed_10m);
 
-            return alerts;
+            const alert: APIWeatherAlert = {
+                id: `weather-${Date.now()}-${lat}-${lon}`,
+                source: AlertSource.WEATHER_API,
+                severity: severity as any,
+                title: this.getWeatherTitleFromCode(weatherCode),
+                description,
+                timestamp: new Date().toISOString(),
+                expiresAt: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+                weatherType,
+                temperature: temp,
+                windSpeed: current.wind_speed_10m,
+                humidity: current.relative_humidity_2m,
+                precipitation: current.precipitation,
+                coordinates: { lat, lon },
+                affectedAreas: ['Current Location'],
+            };
+
+            return [alert];
         } catch (error) {
             console.error('Error fetching weather data:', error);
-            throw error;
+            // Fallback to mock if API fails
+            return this.getMockWeatherAlerts(lat, lon);
         }
     }
 
@@ -95,9 +145,9 @@ export class WeatherAPIService {
      */
     async fetchWeatherAlertsForLocations(
         locations: Array<{ lat: number; lon: number; name: string }>
-    ): Promise<WeatherAlert[]> {
+    ): Promise<APIWeatherAlert[]> {
         try {
-            const allAlerts: WeatherAlert[] = [];
+            const allAlerts: APIWeatherAlert[] = [];
 
             for (const location of locations) {
                 const alerts = await this.fetchWeatherAlerts(location.lat, location.lon);
@@ -111,108 +161,102 @@ export class WeatherAPIService {
         }
     }
 
-    /**
-     * Transform OpenWeather alert to WeatherAlert
-     */
-    private transformToAlert(alert: OpenWeatherAlert, data: OpenWeatherResponse): WeatherAlert {
-        const severity = this.calculateSeverity(alert.event, alert.tags);
-        const weatherType = this.determineWeatherType(alert.event);
+    private getWeatherIcon(code: number): string {
+        if (code === 0) return 'sun';
+        if (code <= 3) return 'cloud';
+        if (code <= 48) return 'cloud'; // Fog
+        if (code <= 67) return 'cloud-rain';
+        if (code <= 77) return 'cloud-snow';
+        if (code <= 82) return 'cloud-rain';
+        if (code <= 86) return 'cloud-snow';
+        if (code >= 95) return 'cloud-lightning';
+        return 'sun';
+    }
 
-        return {
-            id: `weather-${alert.start}-${data.lat}-${data.lon}`,
-            source: AlertSource.WEATHER_API,
-            severity,
-            title: alert.event,
-            description: alert.description,
-            timestamp: new Date(alert.start * 1000).toISOString(),
-            expiresAt: new Date(alert.end * 1000).toISOString(),
-            weatherType,
-            temperature: data.current?.temp,
-            windSpeed: data.current?.wind_speed,
-            humidity: data.current?.humidity,
-            coordinates: {
-                lat: data.lat,
-                lon: data.lon,
-            },
-            affectedAreas: [alert.sender_name],
-        };
+    private synthesizeAlerts(code: number, temp: number): WeatherAlert[] {
+        const alerts: WeatherAlert[] = [];
+        if (code >= 95) {
+            alerts.push({
+                id: 'w-alert-1',
+                type: 'Severe Thunderstorm',
+                severity: 'severe',
+                headline: 'Thunderstorm Warning',
+                description: 'Severe thunderstorms detected in the area. Seek shelter.',
+                start: new Date(),
+                end: new Date(Date.now() + 2 * 60 * 60 * 1000)
+            });
+        } else if (temp > 35) {
+            alerts.push({
+                id: 'w-alert-heat',
+                type: 'Excessive Heat',
+                severity: 'moderate',
+                headline: 'Heat Advisory',
+                description: 'High temperatures expected. Stay hydrated.',
+                start: new Date(),
+                end: new Date(Date.now() + 8 * 60 * 60 * 1000)
+            });
+        }
+        return alerts;
     }
 
     /**
-     * Calculate severity based on event type and tags
+     * WMO Weather interpretation codes (WW)
+     * https://open-meteo.com/en/docs
      */
-    private calculateSeverity(event: string, tags: string[]): AlertSeverity {
-        const eventLower = event.toLowerCase();
-
-        // Extreme severity
-        if (
-            eventLower.includes('tornado') ||
-            eventLower.includes('hurricane') ||
-            eventLower.includes('extreme')
-        ) {
-            return AlertSeverity.EXTREME;
-        }
-
-        // Severe
-        if (
-            eventLower.includes('severe') ||
-            eventLower.includes('warning') ||
-            tags.includes('Extreme')
-        ) {
-            return AlertSeverity.SEVERE;
-        }
-
-        // High
-        if (
-            eventLower.includes('flood') ||
-            eventLower.includes('storm') ||
-            tags.includes('Severe')
-        ) {
-            return AlertSeverity.HIGH;
-        }
-
-        // Moderate
-        if (
-            eventLower.includes('watch') ||
-            eventLower.includes('advisory') ||
-            tags.includes('Moderate')
-        ) {
-            return AlertSeverity.MODERATE;
-        }
-
-        // Low
-        return AlertSeverity.LOW;
+    private calculateSeverityFromCode(code: number, temp: number): APIAlertSeverity {
+        if (code >= 95) return APIAlertSeverity.SEVERE; // Thunderstorms
+        if (code >= 71) return APIAlertSeverity.HIGH;   // Snow
+        if (code >= 51) return APIAlertSeverity.MODERATE; // Drizzle/Rain
+        if (temp > 35 || temp < -10) return APIAlertSeverity.HIGH; // Extreme temps
+        return APIAlertSeverity.INFO;
     }
 
-    /**
-     * Determine weather type from event name
-     */
-    private determineWeatherType(event: string): WeatherAlert['weatherType'] {
-        const eventLower = event.toLowerCase();
-
-        if (eventLower.includes('tornado')) return 'tornado';
-        if (eventLower.includes('hurricane') || eventLower.includes('typhoon')) return 'hurricane';
-        if (eventLower.includes('flood')) return 'flood';
-        if (eventLower.includes('snow') || eventLower.includes('blizzard')) return 'snow';
-        if (eventLower.includes('heat')) return 'heat';
-        if (eventLower.includes('cold') || eventLower.includes('freeze')) return 'cold';
-        if (eventLower.includes('wind')) return 'wind';
-        if (eventLower.includes('thunder') || eventLower.includes('storm')) return 'thunderstorm';
-
+    private determineWeatherTypeFromCode(code: number): APIWeatherAlert['weatherType'] {
+        if (code >= 95) return 'thunderstorm';
+        if (code >= 71) return 'snow';
+        if (code >= 61) return 'rain';
+        if (code >= 51) return 'rain'; // Drizzle
+        if (code >= 45) return 'fog'; // Fog
         return 'other';
+    }
+
+    private getWeatherTitleFromCode(code: number): string {
+        if (code === 0) return 'Sunny';
+        if (code <= 3) return 'Partly Cloudy';
+        if (code <= 48) return 'Foggy';
+        if (code <= 55) return 'Drizzle';
+        if (code <= 65) return 'Rainy';
+        if (code <= 75) return 'Snowy';
+        if (code <= 82) return 'Rain Showers';
+        if (code <= 86) return 'Snow Showers';
+        if (code >= 95) return 'Thunderstorm';
+        return 'Fair';
+    }
+
+    private generateDescriptionFromCode(code: number, temp: number, wind: number): string {
+        let desc = `Current temperature is ${temp}°C with wind speeds of ${wind} km/h. `;
+
+        if (code >= 95) desc += 'Expect severe thunderstorms. Seek shelter if necessary.';
+        else if (code >= 71) desc += 'Significant snowfall expected. Use caution on roads.';
+        else if (code >= 61) desc += 'Heavy rain detected. Watch for local flooding.';
+        else if (code >= 51) desc += 'Light rain/drizzle. Visibility may be reduced.';
+        else if (code >= 45) desc += 'Foggy conditions. Drive safely.';
+        else desc += 'Weather conditions are currently stable.';
+
+        return desc;
     }
 
     /**
      * Get mock weather alerts for testing
      */
-    private getMockWeatherAlerts(lat: number, lon: number): WeatherAlert[] {
+    private getMockWeatherAlerts(lat: number, lon: number): APIWeatherAlert[] {
         return [
             {
                 id: `mock-weather-${Date.now()}`,
                 source: AlertSource.WEATHER_API,
-                severity: AlertSeverity.HIGH,
-                title: 'Severe Thunderstorm Warning',
-                description: 'Severe thunderstorms with heavy rain, strong winds, and possible hail expected in your area. Seek shelter immediately.',
+                severity: APIAlertSeverity.HIGH as any,
+                title: 'Severe Thunderstorm Warning (Offline)',
+                description: 'Service temporarily unavailable. Showing cached/mock data. Severe thunderstorms expected.',
                 timestamp: new Date().toISOString(),
                 expiresAt: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
                 weatherType: 'thunderstorm',

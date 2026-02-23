@@ -37,7 +37,7 @@ export const menuItems = [
 export const bottomItems = [
   // { icon: Settings, label: 'Settings', href: '/virtual-eoc-settings' },
   { icon: HelpCircle, label: 'Help', href: '#' },
-  // { icon: LogOut, label: 'Log out', href: '#' },
+  { icon: LogOut, label: 'Log out', href: '#' },
 ]
 
 export function Sidebar() {
@@ -97,6 +97,32 @@ export function Sidebar() {
               <button
                 key={item.label}
                 onClick={() => setShowHelpModal(true)}
+                className={cn(
+                  'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors',
+                  'text-sidebar-foreground hover:bg-sidebar-accent'
+                )}
+              >
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm">{item.label}</span>
+              </button>
+            )
+          }
+
+          if (item.label === 'Log out') {
+            return (
+              <button
+                key={item.label}
+                onClick={async () => {
+                  try {
+                    await fetch('/api/logout', { method: 'POST' })
+                  } catch (error) {
+                    console.error('Logout failed:', error)
+                  }
+                  localStorage.removeItem('userRole')
+                  localStorage.removeItem('userEmail')
+                  localStorage.removeItem('userName')
+                  router.push('/login')
+                }}
                 className={cn(
                   'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors',
                   'text-sidebar-foreground hover:bg-sidebar-accent'

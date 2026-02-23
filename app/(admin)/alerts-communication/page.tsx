@@ -1,12 +1,14 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertTriangle, Cloud, AlertCircle, Smartphone, MessageSquare, Mail, Zap } from 'lucide-react'
+import { AlertTriangle, Cloud, AlertCircle, Smartphone, MessageSquare, Mail, Zap, Loader2, RefreshCw, MapPin } from 'lucide-react'
 import { AlertDetailModal } from '@/components/AlertDetailModal'
 import { Switch } from '@/components/ui/switch'
+import { Alert as APIAlert, AlertSeverity, AlertSource } from '@/lib/types/api-alerts'
+import { cn } from '@/lib/utils'
 
 export default function AlertsCommunicationPage() {
   const [notificationPrefs, setNotificationPrefs] = useState<Record<string, boolean>>({
@@ -14,6 +16,32 @@ export default function AlertsCommunicationPage() {
     sms: true,
     email: false,
   })
+
+  const [alerts, setAlerts] = useState<APIAlert[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchUserAlerts = useCallback(async () => {
+    try {
+      setLoading(true)
+      const res = await fetch('/api/alerts/users')
+      if (res.ok) {
+        const data = await res.json()
+        setAlerts(data.data || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch user alerts', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchUserAlerts()
+    const interval = setInterval(fetchUserAlerts, 60000) // Poll every 60s
+    return () => clearInterval(interval)
+  }, [fetchUserAlerts])
+
+  const refresh = fetchUserAlerts
 
   const [selectedAlert, setSelectedAlert] = useState<any>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -25,86 +53,41 @@ export default function AlertsCommunicationPage() {
     }))
   }
 
-  const alerts = [
-    {
-      id: 1,
-      type: 'Warning',
-      icon: AlertTriangle,
-      typeIcon: '⚠️',
-      severity: 'red',
-      title: 'Tornado Watch',
-      location: 'Cook County, DuPage County',
-      expiry: '3:45 PM',
-      issuedTime: '12 min ago',
-      buttonColor: 'red',
-      buttonLabel: 'Take Action',
-    },
-    {
-      id: 2,
-      type: 'Warning',
-      icon: Zap,
-      typeIcon: '⚡',
-      severity: 'orange',
-      title: 'Severe Tornado Warning',
-      location: 'Lake County, McHenry County',
-      expiry: '4:15 PM',
-      issuedTime: '45 min ago',
-      buttonColor: 'orange',
-      buttonLabel: 'Get Prepared',
-    },
-    {
-      id: 3,
-      type: 'Watch',
-      icon: Cloud,
-      typeIcon: '☁️',
-      severity: 'yellow',
-      title: 'Blizzard Watch',
-      location: 'Will County, Kankakee County',
-      expiry: '8:00 PM',
-      issuedTime: '2 hours ago',
-      buttonColor: 'red',
-      buttonLabel: 'Take Action',
-    },
-  ]
-
-  const getBgColorClass = (severity: string) => {
-    const colors = {
-      red: 'bg-red-50',
-      orange: 'bg-amber-50',
-      yellow: 'bg-yellow-50',
+  const getAlertIcon = (source: AlertSource) => {
+    switch (source) {
+      case AlertSource.WEATHER_API: return Cloud
+      case AlertSource.EARTHQUAKE_API: return Zap
+      default: return AlertTriangle
     }
-    return colors[severity as keyof typeof colors] || 'bg-gray-50'
   }
 
-  const getBorderColorClass = (severity: string) => {
-    const colors = {
-      red: 'border-red-100',
-      orange: 'border-amber-100',
-      yellow: 'border-yellow-100',
+  const getTypeIconStr = (source: AlertSource) => {
+    switch (source) {
+      case AlertSource.WEATHER_API: return '☁️'
+      case AlertSource.EARTHQUAKE_API: return '⚡'
+      default: return '⚠️'
     }
-    return colors[severity as keyof typeof colors] || 'border-gray-100'
   }
 
-  const getTypeTagClass = (severity: string) => {
-    const colors = {
-      red: 'bg-red-100 text-red-700',
-      orange: 'bg-amber-100 text-amber-700',
-      yellow: 'bg-yellow-100 text-yellow-700',
+  const getSeverityStyles = (severity: AlertSeverity) => {
+    switch (severity) {
+      case AlertSeverity.EXTREME: return { bg: 'bg-red-50', border: 'border-red-100', tag: 'bg-red-100 text-red-700', btn: 'bg-red-600 hover:bg-red-700 text-white' }
+      case AlertSeverity.SEVERE: return { bg: 'bg-amber-50', border: 'border-amber-100', tag: 'bg-amber-100 text-amber-700', btn: 'bg-orange-600 hover:bg-orange-700 text-white' }
+      case AlertSeverity.HIGH: return { bg: 'bg-amber-50', border: 'border-amber-100', tag: 'bg-amber-100 text-amber-700', btn: 'bg-orange-600 hover:bg-orange-700 text-white' }
+      case AlertSeverity.MODERATE: return { bg: 'bg-yellow-50', border: 'border-yellow-100', tag: 'bg-yellow-100 text-yellow-700', btn: 'bg-yellow-600 hover:bg-yellow-700 text-white' }
+      default: return { bg: 'bg-gray-50', border: 'border-gray-100', tag: 'bg-gray-100 text-gray-700', btn: 'bg-gray-600 hover:bg-gray-700 text-white' }
     }
-    return colors[severity as keyof typeof colors] || 'bg-gray-100 text-gray-700'
-  }
-
-  const getButtonClass = (color: string) => {
-    const colors = {
-      red: 'bg-red-600 hover:bg-red-700 text-white',
-      orange: 'bg-orange-600 hover:bg-orange-700 text-white',
-      yellow: 'bg-yellow-600 hover:bg-yellow-700 text-white',
-    }
-    return colors[color as keyof typeof colors] || 'bg-gray-600 hover:bg-gray-700'
   }
 
   const handleAlertClick = (alert: any) => {
-    setSelectedAlert(alert)
+    // Transform API alert to match modal's expected format if needed
+    setSelectedAlert({
+      ...alert,
+      location: alert.affectedAreas?.join(', ') || 'Unknown Location',
+      issuedTime: new Date(alert.timestamp).toLocaleTimeString(),
+      expiry: alert.expiresAt ? new Date(alert.expiresAt).toLocaleTimeString() : 'N/A',
+      type: alert.source === AlertSource.WEATHER_API ? 'Weather Alert' : alert.source === AlertSource.EARTHQUAKE_API ? 'Earthquake Alert' : 'System Alert'
+    })
     setIsDetailModalOpen(true)
   }
 
@@ -115,9 +98,20 @@ export default function AlertsCommunicationPage() {
   return (
 
     <main className="p-6 space-y-6">
-      <div className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded">
-        <h1 className="text-3xl font-bold mb-2">Alerts & Communication</h1>
-        <p className="text-gray-600">Stay informed and prepared with real-time emergency alerts delivered directly from the National Weather Service. This system checks for updates every minute, ensuring you receive the most current weather watches and warnings as they happen.</p>
+      <div className="flex justify-between items-start gap-4 border-l-4 border-blue-500 bg-blue-50 p-4 rounded">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Alerts & Communication</h1>
+          <p className="text-gray-600">Stay informed and prepared with real-time emergency alerts delivered directly from the National Weather Service. This system checks for updates every minute, ensuring you receive the most current weather watches and warnings as they happen.</p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => refresh()}
+          disabled={loading}
+          className="bg-white whitespace-nowrap gap-2 font-bold uppercase tracking-widest text-xs"
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          Sync NWS
+        </Button>
       </div>
 
       <Alert className="bg-blue-50 border-blue-200">
@@ -127,38 +121,65 @@ export default function AlertsCommunicationPage() {
         </AlertDescription>
       </Alert>
 
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 space-y-4">
-          {alerts.map((alert) => {
-            return (
-              <Card key={alert.id} className={`border ${getBorderColorClass(alert.severity)} ${getBgColorClass(alert.severity)} p-6`}>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-semibold ${getTypeTagClass(alert.severity)}`}>
-                        <span>{alert.typeIcon}</span>
-                        {alert.type}
-                      </span>
-                      <span className="text-xs text-gray-500 ml-auto">Issued {alert.issuedTime}</span>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-4">
+          {loading && alerts.length === 0 ? (
+            <div className="p-12 text-center bg-white rounded-xl border-2 border-dashed border-gray-200">
+              <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-4" />
+              <p className="font-bold text-gray-500">Establishing Link with NWS...</p>
+            </div>
+          ) : alerts.length === 0 ? (
+            <div className="p-12 text-center bg-gray-50 rounded-xl border border-gray-200">
+              <Cloud className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No Active Warnings</h3>
+              <p className="text-gray-500">The National Weather Service reports clear conditions for scanned sectors.</p>
+            </div>
+          ) : (
+            alerts.map((alert) => {
+              const styles = getSeverityStyles(alert.severity)
+              const Icon = getAlertIcon(alert.source)
+              const typeLabel = alert.source === AlertSource.WEATHER_API ? 'Weather' : alert.source === AlertSource.EARTHQUAKE_API ? 'Geological' : 'Admin'
+
+              return (
+                <Card key={alert.id} className={cn(`border p-6 shadow-sm transition-all hover:shadow-md`, styles.border, styles.bg)}>
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className={cn(`inline-flex items-center gap-1.5 px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest`, styles.tag)}>
+                          <span>{getTypeIconStr(alert.source)}</span>
+                          {typeLabel} {alert.severity}
+                        </span>
+                        <span className="text-xs font-bold text-gray-400 ml-auto uppercase tracking-widest">
+                          {new Date(alert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <h3 className="font-black text-xl mb-2 text-gray-900 uppercase tracking-tight leading-tight">{alert.title}</h3>
+                      <p className="text-sm font-medium text-gray-700 mb-3 line-clamp-2">{alert.description}</p>
+
+                      <div className="flex flex-wrap items-center gap-3 text-[10px] font-black uppercase tracking-widest text-gray-500">
+                        <div className="flex items-center gap-1.5 bg-white/50 px-2 py-1 rounded border border-gray-200/50">
+                          <MapPin className="w-3.5 h-3.5 text-blue-500" />
+                          <span className="truncate max-w-[150px]">{alert.affectedAreas?.[0] || 'Regional Coverage'}</span>
+                        </div>
+                        {alert.expiresAt && (
+                          <div className="flex items-center gap-1.5 bg-white/50 px-2 py-1 rounded border border-gray-200/50">
+                            <span className="text-red-500">⏱</span>
+                            <span>Exp: {new Date(alert.expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <h3 className="font-bold text-xl mb-2 text-gray-900">{alert.title}</h3>
-                    <p className="text-sm text-gray-700 mb-3">{alert.location}</p>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                      <span>⏱</span>
-                      <span>Expires {alert.expiry}</span>
-                    </div>
+                    <Button
+                      className={cn(`text-xs font-black uppercase tracking-widest w-full sm:w-auto h-10 px-6 shrink-0`, styles.btn)}
+                      onClick={() => handleAlertClick(alert)}
+                    >
+                      Assess Threat
+                    </Button>
                   </div>
-                  <Button
-                    className={`${getButtonClass(alert.buttonColor)} text-sm font-semibold ml-4 flex-shrink-0`}
-                    size="sm"
-                    onClick={() => handleAlertClick(alert)}
-                  >
-                    {alert.buttonLabel}
-                  </Button>
-                </div>
-              </Card>
-            )
-          })}
+                </Card>
+              )
+            })
+          )}
         </div>
 
         <div className="space-y-6">

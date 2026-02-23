@@ -12,24 +12,30 @@ export class AlertProcessor {
      * Fetch all alerts from all sources
      */
     async fetchAllAlerts(
-        location?: { lat: number; lon: number }
+        location?: { lat: number; lon: number },
+        sources?: AlertSource[]
     ): Promise<Alert[]> {
         try {
             const allAlerts: Alert[] = [];
+            const fetchAll = !sources || sources.length === 0;
 
             // Fetch earthquake alerts
-            try {
-                const earthquakeAlerts = location
-                    ? await earthquakeAPI.fetchEarthquakesByLocation(location.lat, location.lon, 500)
-                    : await earthquakeAPI.fetchEarthquakes('day', 4.0);
-
-                allAlerts.push(...earthquakeAlerts);
-            } catch (error) {
-                console.error('Error fetching earthquake alerts:', error);
+            if (fetchAll || sources?.includes(AlertSource.EARTHQUAKE_API)) {
+                try {
+                    if (location) {
+                        const earthquakeAlerts = await earthquakeAPI.fetchEarthquakesByLocation(location.lat, location.lon, 500);
+                        allAlerts.push(...earthquakeAlerts);
+                    } else {
+                        const earthquakeAlerts = await earthquakeAPI.fetchEarthquakes('day', 4.0);
+                        allAlerts.push(...earthquakeAlerts);
+                    }
+                } catch (error) {
+                    console.error('Error fetching earthquake alerts:', error);
+                }
             }
 
             // Fetch weather alerts
-            if (location) {
+            if (location && (fetchAll || sources?.includes(AlertSource.WEATHER_API))) {
                 try {
                     const weatherAlerts = await weatherAPI.fetchWeatherAlerts(location.lat, location.lon);
                     allAlerts.push(...weatherAlerts);
@@ -38,9 +44,33 @@ export class AlertProcessor {
                 }
             }
 
-            // Load admin alerts from localStorage
-            const adminAlerts = this.getAdminAlerts();
-            allAlerts.push(...adminAlerts);
+            // Fetch community alerts from DB
+            if (fetchAll || sources?.includes(AlertSource.ADMIN_MANUAL)) {
+                try {
+                    const res = await fetch('/api/alerts/community');
+                    if (res.ok) {
+                        const communityData = await res.json();
+                        if (communityData.success) {
+                            const dbAlerts = communityData.data.map((alert: any) => ({
+                                id: alert._id || alert.id,
+                                source: AlertSource.ADMIN_MANUAL,
+                                severity: alert.severity as AlertSeverity,
+                                title: alert.title,
+                                description: alert.description,
+                                timestamp: alert.timestamp || alert.createdAt,
+                                expiresAt: alert.expiresAt,
+                                affectedAreas: alert.affectedAreas,
+                                adminName: alert.adminName,
+                                priority: alert.priority,
+                                isRead: false,
+                            }));
+                            allAlerts.push(...dbAlerts);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error fetching community alerts:', error);
+                }
+            }
 
             // Sort by timestamp (newest first)
             allAlerts.sort((a, b) =>

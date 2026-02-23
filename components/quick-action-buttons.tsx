@@ -28,7 +28,7 @@ export function QuickActionButtons({
   const actions = [
     {
       icon: Bell,
-      label: 'Send Community Alert',
+      label: 'Send Alert',
       color: 'bg-blue-600 hover:bg-blue-700',
       onClick: () => setIsAlertModalOpen(true),
     },
@@ -46,7 +46,7 @@ export function QuickActionButtons({
         <h3 className="font-semibold text-sm mb-4">Quick Action Buttons</h3>
 
         <div className="bg-gray-50 rounded-lg p-4">
-          <p className="text-sm text-gray-600 mb-4">Pending Items</p>
+          {/* <p className="text-sm text-gray-600 mb-4">Pending Items</p> */}
           <div className="flex flex-wrap gap-3">
             {actions.map((action, idx) => {
               const Icon = action.icon
