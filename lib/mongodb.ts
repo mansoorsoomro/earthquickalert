@@ -1,9 +1,11 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ready2go';
+let MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ready2go';
 
-if (!MONGODB_URI) {
-    throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+if (MONGODB_URI.startsWith('mongodb+srv://') && !MONGODB_URI.includes('/', 14)) {
+    // If it's a sub-domain URI like cluster0.mongodb.net/ (with no DB name)
+    // Append the default DB name
+    MONGODB_URI = MONGODB_URI.endsWith('/') ? `${MONGODB_URI}ready2go` : `${MONGODB_URI}/ready2go`;
 }
 
 /**
