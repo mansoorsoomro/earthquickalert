@@ -2,26 +2,6 @@ import mongoose from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!MONGODB_URI) {
-    throw new Error(
-        'Please define the MONGODB_URI environment variable inside .env.local or your deployment settings'
-    );
-}
-
-let connectionString = MONGODB_URI;
-
-try {
-    if (connectionString.startsWith('mongodb+srv://')) {
-        const url = new URL(connectionString);
-        if (!url.pathname || url.pathname === '/') {
-            url.pathname = '/ready2go';
-            connectionString = url.toString();
-        }
-    }
-} catch (err) {
-    console.error('Error parsing MONGODB_URI:', err);
-}
-
 /**
  * Global is used here to maintain a cached connection across hot reloads
  * in development. This prevents connections growing exponentially
@@ -36,6 +16,26 @@ if (!cached) {
 async function connectDB() {
     if (cached.conn) {
         return cached.conn;
+    }
+
+    if (!MONGODB_URI) {
+        throw new Error(
+            'Please define the MONGODB_URI environment variable inside .env.local or your deployment settings'
+        );
+    }
+
+    let connectionString = MONGODB_URI;
+
+    try {
+        if (connectionString.startsWith('mongodb+srv://')) {
+            const url = new URL(connectionString);
+            if (!url.pathname || url.pathname === '/') {
+                url.pathname = '/ready2go';
+                connectionString = url.toString();
+            }
+        }
+    } catch (err) {
+        console.error('Error parsing MONGODB_URI:', err);
     }
 
     if (!cached.promise) {
