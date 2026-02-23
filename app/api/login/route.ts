@@ -9,7 +9,16 @@ import SystemStatus from '@/models/SystemStatus';
 export async function POST(req: NextRequest) {
     try {
         await connectDB();
-        const { email, password } = await req.json();
+
+        let body;
+        try {
+            body = await req.json();
+        } catch (e) {
+            console.error('Failed to parse request body:', e);
+            return NextResponse.json({ error: 'Invalid JSON message' }, { status: 400 });
+        }
+
+        const { email, password } = body;
 
         // Find user and include password field
         const user = await User.findOne({ email }).select('+password');
@@ -66,8 +75,15 @@ export async function POST(req: NextRequest) {
         });
 
         return response;
-    } catch (error) {
-        console.error('Login error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    } catch (error: any) {
+        console.error('Login error detailed:', {
+            message: error.message,
+            stack: error.stack,
+            cause: error.cause
+        });
+        return NextResponse.json({
+            error: 'Internal server error',
+            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+        }, { status: 500 });
     }
 }
