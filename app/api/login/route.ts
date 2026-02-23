@@ -83,7 +83,8 @@ export async function POST(req: NextRequest) {
         });
         return NextResponse.json({
             error: 'Internal server error',
-            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+            message: error.message,
+            stack: error.stack
         }, { status: 500 });
     }
 }
