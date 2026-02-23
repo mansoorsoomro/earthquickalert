@@ -7,6 +7,7 @@ import { cookies } from 'next/headers';
 import SystemStatus from '@/models/SystemStatus';
 
 export async function POST(req: NextRequest) {
+    console.log('Login API request received at', new Date().toISOString());
     try {
         await connectDB();
 
