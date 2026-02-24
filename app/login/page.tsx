@@ -174,7 +174,7 @@ export default function LoginPage() {
                     <span>Processing...</span>
                   </div>
                 ) : (
-                  'Sign In'
+                  'Sign In to Dashboard'
                 )}
               </Button>
             </form>
