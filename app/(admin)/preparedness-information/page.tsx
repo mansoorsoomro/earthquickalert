@@ -105,7 +105,7 @@ export default function PreparednessParagePage() {
           Several types of emergencies could warrant an evacuation — from an impending hurricane (known emergency) where you have a few days to prepare, to an immediate spontaneous emergency such as a wildfire. Consider the following actions to prepare.
         </p>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="p-6">
             <h3 className="text-lg font-bold mb-4">Individual Evacuation</h3>
             <div className="space-y-3">
@@ -196,7 +196,7 @@ export default function PreparednessParagePage() {
         <h2 className="text-xl font-bold mb-1">Active Shooter</h2>
         <p className="text-sm text-gray-600 mb-4">Active shooter events are an unfortunate reality. Be informed and be prepared.</p>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="p-6">
             <h3 className="text-lg font-bold mb-3">Stay Aware</h3>
             <div className="space-y-2 mb-6">
@@ -254,7 +254,7 @@ export default function PreparednessParagePage() {
         <h2 className="text-xl font-bold mb-1">Emergency Planning for Pets</h2>
         <p className="text-sm text-gray-600 mb-4">Regardless of the type of animal you have, many are considered part of the family. Take the following steps to keep them safe.</p>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="p-6">
             <h3 className="text-lg font-bold mb-1">Household Pets</h3>
             <p className="text-xs text-gray-500 mb-4">Dogs, cats, birds, and other companion animals</p>
@@ -313,7 +313,7 @@ export default function PreparednessParagePage() {
       </div>
 
       {/* ── Identity Theft & Choking ── */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-6">
           <h3 className="text-lg font-bold mb-2">Personal Identity Theft</h3>
           <p className="text-sm text-gray-600 mb-4">
@@ -378,7 +378,7 @@ export default function PreparednessParagePage() {
       {/* ── Additional Resources ── */}
       <Card className="p-6">
         <h3 className="text-lg font-bold mb-4">Additional Resources</h3>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <a href="https://www.ready.gov" target="_blank" rel="noreferrer" className="p-4 rounded-lg bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors">
             <p className="font-semibold text-blue-700">Ready.gov</p>
             <p className="text-sm text-gray-600">Federal preparedness info &amp; evacuation guidance</p>

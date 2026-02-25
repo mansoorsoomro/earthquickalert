@@ -99,7 +99,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right Side: Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12 bg-slate-50/50">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 lg:p-12 bg-slate-50/50">
         <div className="w-full max-w-md">
           {/* Mobile Logo (Visible on Mobile) */}
           <div className="lg:hidden text-center mb-10 flex flex-col items-center">
@@ -113,7 +113,7 @@ export default function LoginPage() {
             </h1>
           </div>
 
-          <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 p-8 lg:p-10 border border-slate-100 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 p-6 sm:p-8 lg:p-10 border border-slate-100 animate-in fade-in slide-in-from-bottom-8 duration-700">
             <div className="mb-10 text-center lg:text-left">
               <h2 className="text-3xl font-bold text-slate-900 mb-3">Welcome Back</h2>
               <p className="text-slate-500 font-medium">Please sign in to your dashboard</p>

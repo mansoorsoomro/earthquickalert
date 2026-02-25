@@ -46,7 +46,7 @@ export function Sidebar() {
   const [showHelpModal, setShowHelpModal] = useState(false)
 
   return (
-    <div className="w-72 bg-sidebar text-sidebar-foreground flex flex-col h-full border-r border-border">
+    <div className="hidden md:flex w-72 bg-sidebar text-sidebar-foreground flex-col h-full border-r border-border">
       {/* Logo Section */}
       <div className="p-6 border-b border-border/50 flex flex-col items-center">
         <Image

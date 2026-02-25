@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Bell, Search, LogOut, Menu, X, Users } from 'lucide-react'
 import { menuItems } from '@/components/sidebar'
+import { menuItems as userMenuItems } from '@/components/user-sidebar'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
@@ -138,7 +139,7 @@ export function Header({ userName = 'Admin User', onLogout }: HeaderProps) {
             </div>
 
             <nav className="space-y-2">
-              {menuItems.map((item) => {
+              {(userRole === 'admin' ? menuItems : userMenuItems).map((item) => {
                 const Icon = item.icon
                 return (
                   <Link

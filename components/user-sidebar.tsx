@@ -19,7 +19,7 @@ import Image from 'next/image'
 import logo from '../public/logo.png'
 import Link from 'next/link'
 
-const menuItems = [
+export const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/user-dashboard' },
   { icon: Users, label: 'Are We Safe?', href: '/user/are-we-safe' },
   { icon: LifeBuoy, label: 'Emergency Resources', href: '/user/resources' },
@@ -36,7 +36,7 @@ export function UserSidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="w-72 bg-sidebar text-sidebar-foreground flex flex-col h-full border-r border-border">
+    <div className="hidden md:flex w-72 bg-sidebar text-sidebar-foreground flex-col h-full border-r border-border">
       {/* Logo Section */}
       <div className="p-6 border-b border-border/50 flex flex-col items-center">
         <Image

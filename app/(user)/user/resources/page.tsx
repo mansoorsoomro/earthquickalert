@@ -158,22 +158,32 @@ function ResourcesContent() {
                     <LeafletMap center={userLocation} resources={resources} zoom={13} />
                 </div>
 
-                {/* Toggle Button - Floating Right */}
                 <Button
                     onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                     className={cn(
-                        "absolute top-8 transition-all duration-500 z-30 shadow-2xl rounded-2xl h-11 w-11 p-0 flex items-center justify-center",
-                        "bg-white hover:bg-slate-50 border border-slate-100 text-slate-900 hover:text-blue-600",
-                        isSidebarOpen ? "right-[37rem]" : "right-8"
+                        "absolute transition-all duration-500 z-30 shadow-2xl rounded-2xl h-11 w-11 p-0 flex items-center justify-center bg-white hover:bg-slate-50 border border-slate-100 text-slate-900 hover:text-blue-600",
+                        // Mobile positioning: bottom middle
+                        "bottom-6 left-1/2 -translate-x-1/2 md:top-8 md:bottom-auto md:translate-x-0 md:left-auto",
+                        // Desktop right positioning
+                        isSidebarOpen ? "md:right-[37rem]" : "md:right-8"
                     )}
                 >
-                    {isSidebarOpen ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+                    <div className="hidden md:block">
+                        {isSidebarOpen ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+                    </div>
+                    <div className="block md:hidden">
+                        <MapIcon className="w-5 h-5" />
+                    </div>
                 </Button>
 
-                {/* Tactical Intel Panel - Full Height Right Aligned */}
+                {/* Tactical Intel Panel - Full Height Right Aligned Desktop / Full Width Bottom Mobile */}
                 <div className={cn(
-                    "absolute top-0 bottom-0 w-[36rem] bg-white/95 backdrop-blur-xl rounded-l-[2.5rem] border-l border-slate-100 shadow-2xl flex flex-col overflow-hidden hidden md:flex z-20 transition-all duration-500",
-                    isSidebarOpen ? "right-0 opacity-100" : "-right-full opacity-0 pointer-events-none"
+                    "absolute bg-white/95 backdrop-blur-xl border-slate-100 shadow-2xl flex flex-col overflow-hidden z-20 transition-all duration-500",
+                    // Mobile styles: bottom up sheet
+                    "left-0 right-0 bottom-0 rounded-t-[2.5rem] border-t h-[60vh] md:h-auto",
+                    // Desktop styles: fixed right side
+                    "md:left-auto md:top-0 md:bottom-0 md:w-[36rem] md:rounded-l-[2.5rem] md:rounded-tr-none md:border-t-0 md:border-l",
+                    isSidebarOpen ? "translate-y-0 md:translate-y-0 md:right-0 opacity-100" : "translate-y-full md:translate-y-0 md:-right-full opacity-0 pointer-events-none"
                 )}>
                     <div className="p-6 border-b border-slate-50 bg-slate-50/30">
                         <div className="flex justify-between items-center mb-1">
