@@ -103,8 +103,10 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Mobile Logo (Visible on Mobile) */}
           <div className="lg:hidden text-center mb-10 flex flex-col items-center">
-            <img
-              src="/logo.png"
+            <Image
+              src={logo}
+              width={180}
+              height={100}
               alt="Ready2Go Logo"
               className="w-[100px] h-auto mb-4"
             />
