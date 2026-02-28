@@ -154,25 +154,22 @@ export function GISMap() {
   )
 
   return (
-    <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white h-[600px] flex flex-col relative group">
+    <Card className="border border-slate-100 shadow-sm rounded-2xl overflow-hidden bg-white h-[600px] flex flex-col relative">
       {/* Header Area */}
-      <div className="p-6 border-b border-slate-100 bg-white/80 backdrop-blur-md z-20 flex justify-between items-center transition-all">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200">
-            <Activity className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Emergency Impact Map</h2>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Global Surveillance Ops Active</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Badge className="bg-slate-100 text-slate-900 border-none font-black text-[9px] uppercase tracking-tighter rounded-lg px-3 py-1">
-            {citizens.length} Nodes Online
-          </Badge>
+      <div className="p-6 border-b border-slate-50 bg-white flex justify-between items-center transition-all">
+        <h2 className="text-xl font-bold text-slate-900">GIS Impact Map</h2>
+        <div className="flex gap-6">
+          {['Citizens', 'Responders', 'City Leaders', 'Infrastructure'].map((tab) => (
+            <button
+              key={tab}
+              className={cn(
+                "text-xs font-bold transition-colors",
+                tab === 'Citizens' ? "text-blue-500" : "text-slate-400 hover:text-slate-600"
+              )}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
       </div>
 

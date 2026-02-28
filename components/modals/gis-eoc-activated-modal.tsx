@@ -1,9 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { X, MapPin, CheckCircle } from 'lucide-react'
+import { X, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import dynamic from 'next/dynamic'
+import { cn } from '@/lib/utils'
+
+const LeafletMap = dynamic(() => import('@/components/leaflet-map'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-80 bg-slate-50 animate-pulse flex items-center justify-center rounded-lg border border-slate-100">
+      <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Loading Map Engine...</p>
+    </div>
+  ),
+})
 
 interface GISEOCActivatedModalProps {
   isOpen: boolean
@@ -22,7 +33,7 @@ const citizenReports = [
   {
     name: 'Elvira Davis',
     time: '5 Minutes ago',
-    location: '626 Jerrold Stravenue, Gloverburgh 76058',
+    location: '626 Jerrold Stravenue, Cloverburgh 76058',
     status: 'pending' as const,
   },
   {
@@ -39,158 +50,102 @@ export function GISEOCActivatedModal({ isOpen, onClose }: GISEOCActivatedModalPr
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-4xl bg-white rounded-lg shadow-lg">
-        <div className="p-6 relative">
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-600" />
-          </button>
-
-          {/* Header and Title */}
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">EOC Activated View</h2>
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+      <Card className="w-full max-w-4xl bg-white rounded-xl shadow-2xl overflow-hidden border-none animate-in fade-in zoom-in duration-300">
+        <div className="p-6 sm:p-8 space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-extrabold text-[#111827]">EOC Activated View</h2>
+            <button
+              onClick={onClose}
+              className="p-1.5 hover:bg-slate-100 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5 text-slate-400" />
+            </button>
           </div>
 
-          {/* Map Layer Tabs */}
-          <div className="mb-4 flex gap-2 pb-3 border-b border-gray-200">
+          {/* Layer Tabs */}
+          <div className="flex flex-wrap gap-1.5">
             {mapLayers.map((layer) => (
               <button
                 key={layer}
                 onClick={() => setActiveLayer(layer)}
-                className={`px-3 py-1 rounded-md font-semibold text-xs whitespace-nowrap transition-all ${
+                className={cn(
+                  "px-4 py-2 rounded-lg font-bold text-[11px] transition-all",
                   activeLayer === layer
-                    ? 'bg-gray-800 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+                    ? "bg-[#2D3142] text-white shadow-md shadow-slate-900/10"
+                    : "bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]"
+                )}
               >
                 {layer}
               </button>
             ))}
           </div>
 
-          {/* Main Content - Map only */}
-          <div className="w-full">
-            {/* Interactive Map */}
-            <div className="w-full h-64 bg-gray-100 rounded-lg border border-gray-300 relative overflow-hidden mb-4">
-              {/* Detailed map visualization */}
-              <svg className="w-full h-full" viewBox="0 0 1200 400" style={{ background: '#f5f5f5' }}>
-                {/* Base map */}
-                <rect x="0" y="0" width="1200" height="400" fill="#f0f0f0" />
-                
-                {/* Streets/roads */}
-                <line x1="50" y1="0" x2="50" y2="400" stroke="#d0d0d0" strokeWidth="8" />
-                <line x1="150" y1="0" x2="150" y2="400" stroke="#d0d0d0" strokeWidth="8" />
-                <line x1="250" y1="0" x2="250" y2="400" stroke="#d0d0d0" strokeWidth="8" />
-                <line x1="350" y1="0" x2="350" y2="400" stroke="#d0d0d0" strokeWidth="8" />
-                <line x1="450" y1="0" x2="450" y2="400" stroke="#d0d0d0" strokeWidth="8" />
-                <line x1="550" y1="0" x2="550" y2="400" stroke="#d0d0d0" strokeWidth="8" />
-                <line x1="650" y1="0" x2="650" y2="400" stroke="#d0d0d0" strokeWidth="8" />
-                <line x1="750" y1="0" x2="750" y2="400" stroke="#d0d0d0" strokeWidth="8" />
-                <line x1="850" y1="0" x2="850" y2="400" stroke="#d0d0d0" strokeWidth="8" />
-                <line x1="950" y1="0" x2="950" y2="400" stroke="#d0d0d0" strokeWidth="8" />
-                <line x1="1050" y1="0" x2="1050" y2="400" stroke="#d0d0d0" strokeWidth="8" />
-
-                {/* Horizontal streets */}
-                <line x1="0" y1="50" x2="1200" y2="50" stroke="#d0d0d0" strokeWidth="8" />
-                <line x1="0" y1="120" x2="1200" y2="120" stroke="#d0d0d0" strokeWidth="8" />
-                <line x1="0" y1="200" x2="1200" y2="200" stroke="#d0d0d0" strokeWidth="8" />
-                <line x1="0" y1="280" x2="1200" y2="280" stroke="#d0d0d0" strokeWidth="8" />
-                <line x1="0" y1="360" x2="1200" y2="360" stroke="#d0d0d0" strokeWidth="8" />
-
-                {/* River/Water feature */}
-                <path d="M 100 300 Q 200 250, 350 200 Q 450 150, 550 100 Q 700 50, 900 30 L 900 400 L 100 400 Z" fill="#87ceeb" opacity="0.5" />
-                
-                {/* Green areas (parks) */}
-                <circle cx="100" cy="80" r="30" fill="#86efac" opacity="0.8" />
-                <circle cx="1000" cy="100" r="40" fill="#86efac" opacity="0.8" />
-                <polygon points="650,350 700,330 720,380" fill="#86efac" opacity="0.8" />
-
-                {/* Pink incident zones with red centers */}
-                {[
-                  { x: 300, y: 150 },
-                  { x: 380, y: 200 },
-                  { x: 450, y: 170 },
-                  { x: 520, y: 240 },
-                ].map((zone, idx) => (
-                  <g key={`zone-${idx}`}>
-                    <circle cx={zone.x} cy={zone.y} r="35" fill="#f8bbd0" opacity="0.6" />
-                    <circle cx={zone.x} cy={zone.y} r="10" fill="#d32f2f" opacity="0.8" />
-                  </g>
-                ))}
-
-                {/* Taxi/transport markers */}
-                {[
-                  { x: 80, y: 120 },
-                  { x: 200, y: 180 },
-                  { x: 400, y: 280 },
-                  { x: 550, y: 350 },
-                  { x: 700, y: 120 },
-                  { x: 850, y: 200 },
-                  { x: 950, y: 300 },
-                  { x: 1100, y: 250 },
-                ].map((marker, idx) => (
-                  <g key={`marker-${idx}`}>
-                    <rect x={marker.x - 8} y={marker.y - 8} width="16" height="16" fill="#fbbf24" rx="2" />
-                    <text x={marker.x} y={marker.y + 4} fontSize="10" fontWeight="bold" textAnchor="middle" fill="#000">🚕</text>
-                  </g>
-                ))}
-
-                {/* Label text */}
-                <text x="150" y="30" fontSize="12" fill="#666" fontWeight="bold">Amboy Rd</text>
-                <text x="20" y="200" fontSize="12" fill="#666" fontWeight="bold">Genessee Ave</text>
-              </svg>
+          {/* Map Container */}
+          <div className="w-full h-[350px] rounded-lg overflow-hidden border border-slate-100 shadow-sm relative">
+            <LeafletMap
+              center={{ lat: 41.8781, lng: -87.6298 }}
+              resources={[]} // Modal map usually has specific layers
+              zoom={13}
+            />
+            {/* Simulation of the red circles from the design */}
+            <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
+              <div className="relative w-full h-full opacity-40">
+                <div className="absolute top-[10%] left-[35%] w-12 h-12 bg-red-400 rounded-full blur-sm border border-red-500/20" />
+                <div className="absolute top-[25%] left-[28%] w-16 h-16 bg-red-400 rounded-full blur-sm border border-red-500/20" />
+                <div className="absolute top-[35%] left-[40%] w-20 h-20 bg-red-400 rounded-full blur-sm border border-red-500/20" />
+                <div className="absolute top-[55%] left-[28%] w-14 h-14 bg-red-400 rounded-full blur-sm border border-red-500/20" />
+                <div className="absolute top-[45%] left-[32%] w-10 h-10 bg-red-400 rounded-full blur-sm border border-red-500/20" />
+              </div>
             </div>
+          </div>
 
-            {/* Citizen Reports Below Map - Full Width */}
-            <div className="space-y-4">
-              {citizenReports.map((report, idx) => (
-                <div key={idx} className="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0">
-                  <div className="flex items-start justify-between gap-4">
-                    {/* Left side - Name and Time */}
-                    <div className="flex-shrink-0">
-                      <p className="font-bold text-gray-900 text-sm">{report.name}</p>
-                      <p className="text-xs text-gray-500 mt-1">{report.time}</p>
-                    </div>
-
-                    {/* Middle - Location */}
-                    <div className="flex-1">
-                      <div className="flex items-start gap-2">
-                        <MapPin className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" />
-                        <p className="text-xs text-gray-600">{report.location}</p>
-                      </div>
-                    </div>
-
-                    {/* Right side - Actions */}
-                    <div className="flex-shrink-0">
-                      {report.status === 'verified' ? (
-                        <span className="px-4 py-1 bg-gray-100 text-gray-600 rounded text-xs font-semibold">
-                          Verified
-                        </span>
-                      ) : (
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 text-xs h-8 font-semibold"
-                          >
-                            Deny
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="bg-gray-800 hover:bg-gray-900 text-white px-4 text-xs h-8 font-semibold"
-                          >
-                            Verify
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+          {/* Verification Rows */}
+          <div className="space-y-2.5">
+            {citizenReports.map((report, idx) => (
+              <div
+                key={idx}
+                className="grid grid-cols-[1.2fr_1.8fr_auto] items-center gap-6 p-4 bg-[#F8F9FB] rounded-xl hover:shadow-sm transition-all"
+              >
+                <div>
+                  <p className="font-extrabold text-[#111827] text-base leading-none mb-1">{report.name}</p>
+                  <p className="text-[12px] font-bold text-[#64748B]">{report.time}</p>
                 </div>
-              ))}
-            </div>
+
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="w-4 h-4 text-[#2D3142] mt-0.5 flex-shrink-0" />
+                  <p className="text-[12px] font-bold text-[#475569] leading-tight max-w-[280px]">
+                    {report.location}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2.5 min-w-[160px] justify-end">
+                  {report.status === 'verified' ? (
+                    <Button
+                      disabled
+                      className="w-full bg-[#E2E8F0] text-[#64748B] font-bold text-[12px] h-9 border-none rounded-lg"
+                    >
+                      Verified
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        variant="ghost"
+                        className="bg-[#E2E8F0]/50 hover:bg-[#E2E8F0] text-[#64748B] font-bold text-[12px] h-9 px-6 rounded-lg"
+                      >
+                        Deny
+                      </Button>
+                      <Button
+                        className="bg-[#2D3142] hover:bg-[#1A1D29] text-white font-bold text-[12px] h-9 px-6 rounded-lg"
+                      >
+                        Verify
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </Card>

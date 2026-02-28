@@ -7,8 +7,9 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Info, ExternalLink } from 'lucide-react'
+import { Info, ExternalLink, AlertCircle } from 'lucide-react'
 import { DamageReportModal } from '@/components/modals/damage-report-modal'
+import { cn } from '@/lib/utils'
 
 interface AlertDetailModalProps {
     isOpen: boolean
@@ -222,282 +223,120 @@ export function AlertDetailModal({ isOpen, onClose, onCheckIn, alert }: AlertDet
     return (
         <>
             <Dialog open={isOpen} onOpenChange={onClose}>
-                <DialogContent className="max-w-2xl p-0 overflow-hidden border-none rounded-lg">
-                    {/* Visually Hidden Title for Accessibility */}
+                <DialogContent className="max-w-xl w-[95vw] sm:w-full p-0 overflow-hidden border-none sm:rounded-[2rem] rounded-2xl shadow-2xl">
                     <DialogTitle className="sr-only">{alert.title} Alert</DialogTitle>
 
                     {/* Header */}
-                    <div className={`${getHeaderColor(alert.severity)} p-6 text-white relative`}>
-                        <p className="text-sm font-medium opacity-90 mb-2">Action Required</p>
-                        <h1 className="text-4xl font-bold mb-3">{alert.title}</h1>
-                        <div className="flex items-center gap-4 text-sm opacity-90">
-                            <span>{alert.location}</span>
-                            <span>•</span>
-                            <span>Issued {alert.issuedTime}</span>
-                            <span>•</span>
-                            <span>⏱ Expires {alert.expiry}</span>
+                    <div className={cn("p-6 sm:p-8 text-white relative", getHeaderColor(alert.severity))}>
+                        <button
+                            onClick={onClose}
+                            className="absolute top-4 right-4 sm:top-6 sm:right-6 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors z-10"
+                        >
+                            <span className="text-xl leading-none">×</span>
+                        </button>
+
+                        <div className="space-y-3 sm:space-y-4">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Action Required</p>
+                            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter leading-none">{alert.title}</h1>
+
+                            <div className="flex flex-wrap items-center gap-y-2 gap-x-3 sm:gap-x-4 text-[10px] sm:text-[11px] font-bold opacity-90">
+                                <span className="bg-white/10 px-2 py-1 rounded">{alert.location}</span>
+                                <span className="flex items-center gap-1.5 capitaize">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-white/50" />
+                                    Issued {alert.issuedTime}
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-white/50" />
+                                    ⏱ Expires {alert.expiry}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Content */}
-                    <div className="p-8 space-y-6 bg-white overflow-y-auto max-h-[70vh]">
-                        {/* What This Means */}
-                        <section>
-                            <h2 className="font-bold text-xl mb-3 text-gray-900">What This Means</h2>
-                            <p className="text-sm text-gray-600 leading-relaxed">
-                                {content.meaning}
-                            </p>
-                        </section>
-
-                        {/* What You Need To Do Now */}
-                        <section className="bg-red-100 p-6 rounded-xl border border-red-200">
-                            <h3 className="font-bold text-lg mb-4 text-gray-900">What You Need To Do Now</h3>
-                            <ul className="space-y-3">
-                                {content.actions.map((action, index) => (
-                                    <li key={index} className="flex gap-3 text-sm text-gray-700">
-                                        <span className="flex-shrink-0 text-gray-900 font-semibold">✓</span>
-                                        <span>{action}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </section>
-
-                        {/* Preparedness Tip */}
-                        <section className="flex gap-4">
-                            <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0">
-                                <Info className="w-6 h-6 text-white" />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="font-bold text-base mb-1 text-gray-900">Preparedness Tip</h3>
-                                <p className="text-sm text-gray-600 leading-relaxed">
-                                    {content.tip}
+                    {/* Scrollable Content Container */}
+                    <div className="bg-[#F8F9FB] max-h-[85vh] sm:max-h-[75vh] overflow-y-auto">
+                        <div className="p-4 sm:p-8 space-y-6">
+                            {/* What to know */}
+                            <section className="bg-white p-5 sm:p-6 sm:rounded-3xl rounded-2xl shadow-sm border border-gray-100">
+                                <h2 className="font-extrabold text-lg mb-2 sm:mb-3 text-gray-900">What to know</h2>
+                                <p className="text-sm font-medium text-gray-500 leading-relaxed">
+                                    {content.meaning}
                                 </p>
-                            </div>
-                        </section>
+                            </section>
 
-                        {/* Safety Check-in */}
-                        <section className="bg-blue-50 p-6 rounded-xl border border-blue-100">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <h3 className="font-bold text-base text-gray-900">Safety Check-in</h3>
-                                    <p className="text-sm text-gray-600">Mark yourself safe to notify your team.</p>
+                            {/* Most Important To Know */}
+                            <section className="bg-red-50 p-5 sm:p-6 sm:rounded-3xl rounded-2xl border border-red-100/50 shadow-sm shadow-red-500/5">
+                                <h3 className="font-black text-sm uppercase tracking-widest mb-4 text-red-900">Most Important To Know</h3>
+                                <ul className="space-y-4">
+                                    {content.actions.map((action, index) => (
+                                        <li key={index} className="flex gap-3 sm:gap-4 text-sm font-bold text-red-800/80 leading-snug">
+                                            <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 text-[10px] text-red-600 mt-0.5">
+                                                ✓
+                                            </div>
+                                            <span>{action}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </section>
+
+                            {/* Preparedness Tip */}
+                            <div className="flex gap-4 p-4 bg-white sm:rounded-[2rem] rounded-2xl border border-gray-100 shadow-sm">
+                                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-500 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-red-500/20">
+                                    <AlertCircle className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                                 </div>
-                                <Button
-                                    onClick={onCheckIn}
-                                    className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-6 h-10"
-                                >
-                                    Check-in Now
+                                <div className="flex-1 pt-0.5 sm:pt-1">
+                                    <h3 className="font-black text-[10px] uppercase tracking-widest mb-1 text-gray-400">Preparedness Tip</h3>
+                                    <p className="text-sm font-extrabold text-gray-900 leading-tight">
+                                        {content.tip}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Safety Checklist */}
+                            <section className="bg-white p-5 sm:p-6 sm:rounded-3xl rounded-2xl shadow-sm border border-gray-100">
+                                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                    <h3 className="font-extrabold text-lg text-gray-900">Safety Checklist</h3>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">Mark Safe</span>
+                                </div>
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 gap-4">
+                                        <div className="flex items-center gap-3 w-full sm:w-auto">
+                                            <div className="w-2 h-2 rounded-full bg-green-500" />
+                                            <span className="text-sm font-bold text-gray-900">Safety Check-in</span>
+                                        </div>
+                                        <Button
+                                            onClick={onCheckIn}
+                                            className="bg-green-600 hover:bg-green-700 text-white text-[11px] font-black uppercase tracking-widest w-full sm:w-auto px-6 h-9 rounded-xl shadow-lg shadow-green-500/20"
+                                        >
+                                            Check-in
+                                        </Button>
+                                    </div>
+                                    <p className="text-[10px] text-center font-bold text-gray-400 uppercase tracking-widest">Mark yourself safe to notify your organization</p>
+                                </div>
+                            </section>
+
+                            {/* Official Source */}
+                            <footer className="flex items-center justify-between p-2">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                                        🌍
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-black text-gray-900 uppercase">National Weather Service</p>
+                                        <p className="text-[10px] font-bold text-gray-400">Official Alert • Updated 2m ago</p>
+                                    </div>
+                                </div>
+                                <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 gap-2">
+                                    Official Source <ExternalLink className="w-3.5 h-3.5" />
                                 </Button>
-                            </div>
-
-                        </section>
-
-                        {/* Resources & Assistance - Dynamic by Severity */}
-                        {(() => {
-                            const level = getSeverityLevel(alert.severity, alert.title)
-                            return (
-                                <section className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="font-bold text-base text-gray-900">Resources & Assistance</h3>
-                                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${level === 4 ? 'bg-red-100 text-red-700' :
-                                                level === 3 ? 'bg-orange-100 text-orange-700' :
-                                                    level === 2 ? 'bg-yellow-100 text-yellow-700' :
-                                                        'bg-gray-100 text-gray-600'
-                                            }`}>
-                                            {level === 4 ? '🔴 Catastrophic Event' : level === 3 ? '🟠 Major Event' : level === 2 ? '🟡 Intermediate Event' : '🟢 Localized Event'}
-                                        </span>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-
-                                        {/* Always visible: Report Damage */}
-                                        <Button
-                                            variant="outline"
-                                            className="h-auto py-3 justify-start gap-3 border-gray-300 hover:bg-gray-50 hover:text-blue-600"
-                                            onClick={() => setIsDamageModalOpen(true)}
-                                        >
-                                            <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><path d="M12 18v-4" /><path d="M8 18v-2" /><path d="M16 18v-6" /></svg>
-                                            </div>
-                                            <div className="text-left">
-                                                <div className="font-semibold text-gray-900">Report Damage</div>
-                                                <div className="text-xs text-gray-500 font-normal">Submit photos & details</div>
-                                            </div>
-                                        </Button>
-
-                                        {/* Always visible: Contact Virtual EOC */}
-                                        <Button
-                                            variant="outline"
-                                            className="h-auto py-3 justify-start gap-3 border-gray-300 hover:bg-gray-50 hover:text-purple-600"
-                                            onClick={() => window.open('/virtual-eoc', '_blank')}
-                                        >
-                                            <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-                                            </div>
-                                            <div className="text-left">
-                                                <div className="font-semibold text-gray-900">Contact Virtual EOC</div>
-                                                <div className="text-xs text-gray-500 font-normal">Talk to emergency support</div>
-                                            </div>
-                                        </Button>
-
-                                        {/* Intermediate+ (level >= 2): Shelter & Live Updates */}
-                                        {level >= 2 && (
-                                            <Button
-                                                variant="outline"
-                                                className="h-auto py-3 justify-start gap-3 border-gray-300 hover:bg-gray-50 hover:text-green-600"
-                                                onClick={() => window.open('/shelters', '_blank')}
-                                            >
-                                                <div className="p-2 bg-green-100 rounded-lg text-green-600">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18" /><path d="M5 21V7l8-4 8 4v14" /><path d="M9 10a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" /></svg>
-                                                </div>
-                                                <div className="text-left">
-                                                    <div className="font-semibold text-gray-900">Find Shelter</div>
-                                                    <div className="text-xs text-gray-500 font-normal">Locations & capacity</div>
-                                                </div>
-                                            </Button>
-                                        )}
-
-                                        {level >= 2 && (
-                                            <Button
-                                                variant="outline"
-                                                className="h-auto py-3 justify-start gap-3 border-gray-300 hover:bg-gray-50 hover:text-indigo-600"
-                                                onClick={() => window.open('/live-updates', '_blank')}
-                                            >
-                                                <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
-                                                </div>
-                                                <div className="text-left">
-                                                    <div className="font-semibold text-gray-900">Live Coordinator Updates</div>
-                                                    <div className="text-xs text-gray-500 font-normal">10-min interval briefings</div>
-                                                </div>
-                                            </Button>
-                                        )}
-
-                                        {/* Major+ (level >= 3): Medical, Evacuation Routes */}
-                                        {level >= 3 && (
-                                            <Button
-                                                variant="outline"
-                                                className="h-auto py-3 justify-start gap-3 border-gray-300 hover:bg-gray-50 hover:text-red-600"
-                                                onClick={() => window.open('/medical', '_blank')}
-                                            >
-                                                <div className="p-2 bg-red-100 rounded-lg text-red-600">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 19H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3" /><path d="M16 5h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-3" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
-                                                </div>
-                                                <div className="text-left">
-                                                    <div className="font-semibold text-gray-900">Medical & Pharmacy</div>
-                                                    <div className="text-xs text-gray-500 font-normal">Open sites & pop-up clinics</div>
-                                                </div>
-                                            </Button>
-                                        )}
-
-                                        {level >= 3 && (
-                                            <Button
-                                                variant="outline"
-                                                className="h-auto py-3 justify-start gap-3 border-gray-300 hover:bg-gray-50 hover:text-orange-600"
-                                                onClick={() => window.open('/evacuation', '_blank')}
-                                            >
-                                                <div className="p-2 bg-orange-100 rounded-lg text-orange-600">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 8 12 12 14 14" /><line x1="15" y1="9" x2="19" y2="5" /><polyline points="15 5 19 5 19 9" /></svg>
-                                                </div>
-                                                <div className="text-left">
-                                                    <div className="font-semibold text-gray-900">Evacuation Routes</div>
-                                                    <div className="text-xs text-gray-500 font-normal">Real-time route guidance</div>
-                                                </div>
-                                            </Button>
-                                        )}
-
-                                        {level >= 3 && (
-                                            <Button
-                                                variant="outline"
-                                                className="h-auto py-3 justify-start gap-3 border-gray-300 hover:bg-gray-50 hover:text-yellow-700"
-                                                onClick={() => window.open('/fema-resources', '_blank')}
-                                            >
-                                                <div className="p-2 bg-yellow-100 rounded-lg text-yellow-700">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
-                                                </div>
-                                                <div className="text-left">
-                                                    <div className="font-semibold text-gray-900">FEMA & State Resources</div>
-                                                    <div className="text-xs text-gray-500 font-normal">Assistance & relief programs</div>
-                                                </div>
-                                            </Button>
-                                        )}
-
-                                        {/* Catastrophic (level === 4): Pet Refuge, Reunification, Donations */}
-                                        {level >= 4 && (
-                                            <Button
-                                                variant="outline"
-                                                className="h-auto py-3 justify-start gap-3 border-gray-300 hover:bg-gray-50 hover:text-pink-600"
-                                                onClick={() => window.open('/pet-refuge', '_blank')}
-                                            >
-                                                <div className="p-2 bg-pink-100 rounded-lg text-pink-600">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
-                                                </div>
-                                                <div className="text-left">
-                                                    <div className="font-semibold text-gray-900">Pet Refuge Centers</div>
-                                                    <div className="text-xs text-gray-500 font-normal">Safe locations for animals</div>
-                                                </div>
-                                            </Button>
-                                        )}
-
-                                        {level >= 4 && (
-                                            <Button
-                                                variant="outline"
-                                                className="h-auto py-3 justify-start gap-3 border-gray-300 hover:bg-gray-50 hover:text-teal-600"
-                                                onClick={() => window.open('/reunification', '_blank')}
-                                            >
-                                                <div className="p-2 bg-teal-100 rounded-lg text-teal-600">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                                                </div>
-                                                <div className="text-left">
-                                                    <div className="font-semibold text-gray-900">Family Reunification</div>
-                                                    <div className="text-xs text-gray-500 font-normal">Find & reconnect with family</div>
-                                                </div>
-                                            </Button>
-                                        )}
-
-                                        {level >= 4 && (
-                                            <Button
-                                                variant="outline"
-                                                className="h-auto py-3 justify-start gap-3 border-gray-300 hover:bg-gray-50 hover:text-emerald-600 md:col-span-2"
-                                                onClick={() => window.open('/donations', '_blank')}
-                                            >
-                                                <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
-                                                </div>
-                                                <div className="text-left">
-                                                    <div className="font-semibold text-gray-900">Donations & Volunteer Info</div>
-                                                    <div className="text-xs text-gray-500 font-normal">Support recovery efforts</div>
-                                                </div>
-                                            </Button>
-                                        )}
-
-                                    </div>
-                                </section>
-                            )
-                        })()}
-
-
-
-                        {/* NWS Footer */}
-                        <footer className="flex items-center justify-between pt-4 border-t border-gray-200">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <span className="text-lg">🌍</span>
-                                </div>
-                                <div>
-                                    <p className="text-sm font-bold text-gray-900">National Weather Service</p>
-                                    <p className="text-xs text-gray-500">Official Alert = Updated 3 min ago</p>
-                                </div>
-                            </div>
-                            <Button variant="outline" size="sm" className="text-sm h-10 flex items-center gap-2 border-gray-300">
-                                View Official NWS Update <ExternalLink className="w-4 h-4" />
-                            </Button>
-                        </footer>
+                            </footer>
+                        </div>
                     </div>
                 </DialogContent>
             </Dialog>
             <DamageReportModal isOpen={isDamageModalOpen} onClose={() => setIsDamageModalOpen(false)} />
         </>
     )
+
 }
 

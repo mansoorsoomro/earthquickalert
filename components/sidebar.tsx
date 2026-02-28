@@ -35,7 +35,7 @@ export const menuItems = [
 ]
 
 export const bottomItems = [
-  // { icon: Settings, label: 'Settings', href: '/virtual-eoc-settings' },
+  { icon: Settings, label: 'Settings', href: '/virtual-eoc-settings' },
   { icon: HelpCircle, label: 'Help', href: '#' },
   { icon: LogOut, label: 'Log out', href: '#' },
 ]

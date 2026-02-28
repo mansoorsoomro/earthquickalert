@@ -7,6 +7,10 @@ import { CommunicationsCenter } from '@/components/communications-center'
 import { QuickActionButtons } from '@/components/quick-action-buttons'
 import { SendCommunityAlertModal } from '@/components/modals/send-community-alert-modal'
 import { ActiveEmergencyEventsModal } from '@/components/modals/active-emergency-events-modal'
+import { ThreatMonitoring } from '@/components/threat-monitoring'
+import { VirtualEOCOperations } from '@/components/virtual-eoc-operations'
+import { PreparednessTasks } from '@/components/preparedness-tasks'
+import { FirstResponderTools } from '@/components/first-responder-tools'
 
 export default function Dashboard() {
   const [showSendAlertModal, setShowSendAlertModal] = useState(false)
@@ -14,30 +18,49 @@ export default function Dashboard() {
 
   return (
     <div className="flex-1 overflow-auto bg-slate-50">
-      <main className="p-6 space-y-6 max-w-7xl mx-auto">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-              <span className="text-white font-bold">📡</span>
+      <main className="p-6 space-y-6 max-w-[1600px] mx-auto">
+        {/* Dashboard Header */}
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center shadow-lg shadow-red-200">
+                <span className="text-white text-xl font-bold">🚨</span>
+              </div>
+              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 uppercase">Emergency Operations Dashboard</h1>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">Emergency Admin Terminal</h1>
+            <p className="text-slate-500 font-medium ml-13">Civilian monitoring and multi-hazard response coordination terminal interface system.</p>
           </div>
-          <p className="text-slate-500">Real-time hazard monitoring and citizen communication portal.</p>
         </div>
 
+        {/* Stats Cards Row */}
         <DashboardStats />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <GISMap />
           </div>
-          <div className="space-y-6">
+          <div>
+            <ThreatMonitoring />
+          </div>
+
+          <div>
+            <FirstResponderTools />
+          </div>
+          <div>
+            <VirtualEOCOperations />
+          </div>
+          <div>
+            <CommunicationsCenter />
+          </div>
+
+          <div className="lg:col-span-3">
+            <PreparednessTasks />
+          </div>
+
+          <div className="lg:col-span-3">
             <QuickActionButtons
               onSendAlert={() => setShowSendAlertModal(true)}
               onOpenEvents={() => setShowEventsModal(true)}
-            />
-            <CommunicationsCenter
-              onSendAlert={() => setShowSendAlertModal(true)}
             />
           </div>
         </div>

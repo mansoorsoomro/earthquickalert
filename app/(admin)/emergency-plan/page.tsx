@@ -3,21 +3,26 @@
 import React, { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Switch } from '@/components/ui/switch'
 import { Edit } from 'lucide-react'
 
 const PLANS: Record<string, { label: string; overview: string; steps: string[] }> = {
   hurricane_warning: {
     label: 'Hurricane Warning',
-    overview: 'Your geographic area is currently under a hurricane warning. This means hurricane conditions are expected to impact your location within 36 hours.',
+    overview: 'Your geographic area is currently under a hurricane warning. Conditions are expected to impact your location within 36 hours.',
     steps: [
-      'Complete storm preparations: secure your home, fill your car up with gas, purchase extra food/water',
-      'Immediately evacuate the threatened area if impacted community orders an evacuation order',
-      'If you choose to stay, anticipate loss of power and/or water',
-      'Bookmark FEMA’s disaster assistance (https://www.disasterassistance.gov/) link to reference if your property incurs damage',
-      'Take photos before and after photos and save all receipts for insurance purposes',
-      'Be prepared to be self-sufficient for up to 72 hours post impact',
+      'Complete storm preparations – secure doors, windows, and loose items; fill your car with gas; purchase extra food and water.',
+      'Be prepared to be self-sufficient for up to 72 hours post impact.',
+      'Follow evacuation orders immediately if issued by local authorities.',
+      'If staying at home, anticipate loss of power, water, and communications.',
+      'Take photos of property and possessions before the storm and save receipts for insurance purposes.',
+      'Secure important documents – passports, insurance papers, medical records in waterproof bags.',
+      'Prepare an emergency kit – first aid, flashlight, batteries, medications, hygiene products, and blankets.',
+      'Stay informed – monitor local news, weather updates, and community alerts.',
+      'Have a family communication plan – designate a meeting place and emergency contacts.',
+      'Check on neighbors, especially the elderly or those with special needs.',
+      'Safeguard pets – ensure you have food, water, and shelter for animals.',
+      'Keep emergency contact numbers handy, including local authorities, hospitals, and disaster assistance.',
+      'Bookmark FEMA\'s disaster assistance: https://www.disasterassistance.gov for post-storm support.',
     ],
   },
   hurricane_watch: {
@@ -145,72 +150,101 @@ export default function EmergencyPlanPage() {
   }
 
   return (
-    <main className="p-6 space-y-6">
-      <div className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded">
-        <h1 className="text-3xl font-bold mb-2">Emergency Plan</h1>
-        <p className="text-gray-600">This will be the community’s emergency plan. Recommend transitioning away from individual emergency plans and shift to just in time actions to take.</p>
+    <main className="p-6 space-y-6 max-w-[1200px] mx-auto min-h-screen">
+      {/* Header Container */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm relative overflow-hidden p-6 md:px-8 md:py-7">
+        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-slate-900" />
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Emergency Plan</h1>
+        <p className="text-slate-600 text-[15px]">Timely guidance and just-in-time actions for your community during emergencies.</p>
       </div>
 
-      <Card className="p-6">
-        <h2 className="text-lg font-bold mb-4">Emergency Overview</h2>
-        <div className="flex items-start justify-between">
-          <Alert className="bg-red-50 border-red-200 w-full">
-            <AlertDescription className="text-red-800">
-              {currentPlan.overview}
-            </AlertDescription>
-          </Alert>
-          <button aria-label="Edit overview" className="ml-3 inline-flex items-center justify-center p-2 rounded-md border border-gray-200 bg-white hover:bg-gray-50">
-            <Edit className="w-4 h-4 text-gray-600" />
+      {/* Overview Container */}
+      <Card className="p-6 md:p-8 border border-slate-200 shadow-sm rounded-xl">
+        <h2 className="text-xl font-bold text-slate-900 mb-6">Emergency Overview</h2>
+
+        <div className="bg-red-50 border border-red-300 rounded-lg p-4 flex items-center justify-between text-slate-700">
+          <p className="font-medium text-[15px] max-w-[90%]">{currentPlan.overview}</p>
+          <button className="text-slate-500 hover:text-slate-800 transition-colors p-1" aria-label="Edit overview">
+            <Edit className="w-5 h-5" />
           </button>
         </div>
       </Card>
 
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold">Actionable Safety Steps</h2>
-          <div className="flex items-center gap-4">
+      {/* Actionable Safety Steps Container */}
+      <Card className="p-6 md:p-8 border border-slate-200 shadow-sm rounded-xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+          <h2 className="text-xl font-bold text-slate-900">Actionable Safety Steps</h2>
+
+          <div className="flex items-center gap-4 flex-wrap">
             <select
               value={selectedPlan}
               onChange={(e) => {
                 setSelectedPlan(e.target.value)
                 setCheckedItems({})
               }}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              className="border border-slate-200 rounded-md py-1.5 px-3 text-sm text-slate-700 bg-white outline-none focus:border-slate-400"
             >
               {Object.entries(PLANS).map(([id, plan]) => (
                 <option key={id} value={id}>{plan.label}</option>
               ))}
             </select>
 
-            <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+            <select className="border border-slate-200 rounded-md py-1.5 px-3 text-sm text-slate-700 bg-white outline-none focus:border-slate-400">
               <option>Audience Selection</option>
             </select>
 
-            <div className="flex items-center gap-2">
-              <span className="text-sm">AI Assistance</span>
-              <Switch checked={aiAssistance} onCheckedChange={(v) => setAiAssistance(!!v)} aria-label="AI Assistance" />
+            <div className="flex items-center gap-3 ml-2">
+              <span className="text-[13px] font-bold text-slate-900">AI Assistance</span>
+              <button
+                onClick={() => setAiAssistance(!aiAssistance)}
+                className={`w-11 h-6 rounded-full relative transition-colors ${aiAssistance ? 'bg-slate-700' : 'bg-slate-300'}`}
+                aria-label="Toggle AI Assistance"
+              >
+                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${aiAssistance ? 'left-6' : 'left-1'}`} />
+              </button>
             </div>
           </div>
         </div>
-        <div className="space-y-3">
-          {currentPlan.steps.map((step, index) => (
-            <label key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-md cursor-pointer hover:bg-gray-100">
-              <input
-                type="checkbox"
-                checked={checkedItems[index] || false}
-                onChange={() => toggleCheck(index)}
-                className="mt-1 w-4 h-4 border-gray-300 rounded"
-              />
-              <span className={checkedItems[index] ? 'line-through text-gray-500' : 'text-gray-700'}>
+
+        <div className="space-y-3 mb-8">
+          {currentPlan.steps.map((step, idx) => (
+            <label
+              key={idx}
+              className="flex items-start gap-3 p-3.5 bg-slate-50 hover:bg-slate-100/50 transition-colors group cursor-pointer"
+            >
+              <div className="relative flex items-start mt-0.5">
+                <input
+                  type="checkbox"
+                  checked={checkedItems[idx] || false}
+                  onChange={() => toggleCheck(idx)}
+                  className="peer appearance-none w-4 h-4 min-w-[1rem] border-2 border-slate-400 rounded-sm bg-white checked:bg-slate-700 checked:border-slate-700 transition-colors cursor-pointer"
+                />
+                <svg
+                  className="absolute inset-0 w-4 h-4 text-white pointer-events-none opacity-0 peer-checked:opacity-100"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <p className={`text-[14px] leading-snug transition-colors ${checkedItems[idx] ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
                 {step}
-              </span>
+              </p>
             </label>
           ))}
         </div>
 
-        <div className="mt-6 flex justify-end gap-3">
-          <Button className="bg-white border border-gray-200 text-gray-700">Add</Button>
-          <Button className="bg-slate-800 text-white">Send</Button>
+        <div className="flex justify-end gap-3 pt-4">
+          <Button variant="secondary" className="px-8 bg-slate-200 text-slate-700 hover:bg-slate-300 font-semibold border-0">
+            Add
+          </Button>
+          <Button className="px-8 bg-[#2d325a] hover:bg-[#1a1d36] text-white font-semibold">
+            Send
+          </Button>
         </div>
       </Card>
     </main>

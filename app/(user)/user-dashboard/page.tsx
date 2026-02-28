@@ -2,479 +2,327 @@
 
 import React, { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Bell, MapPin, MapPinOff, AlertTriangle, Cloud, Navigation, ShieldCheck, Zap, Info, RefreshCw, Users, UserCheck, UserX, FileText } from 'lucide-react'
+import {
+  ArrowRight, Users, Star, MapPin, Home, Briefcase,
+  Cloud, AlertTriangle, ChevronRight, Hospital, Pill, Bed, Coffee, DollarSign, Car,
+  Activity, Map
+} from 'lucide-react'
 import Link from 'next/link'
-import { useAPIAlerts } from '@/lib/hooks/use-api-alerts'
-import { AlertSource, EarthquakeAlert, WeatherAlert } from '@/lib/types/api-alerts'
-
 import { useGeolocation } from '@/lib/hooks/use-geolocation'
 import { useSafety } from '@/lib/context/safety-context'
 import { SafeCheckInModal } from '@/components/modals/safe-check-in-modal'
-import { ResourcesMapSection } from '@/components/resources-map-section'
-import { geocodeAddress, reverseGeocode } from '@/lib/services/mock-map-service'
+import { reverseGeocode } from '@/lib/services/mock-map-service'
 import { cn } from '@/lib/utils'
 
 export default function UserDashboard() {
   const router = useRouter()
-  const { location: geoLoc, loading: locLoading, error: locError } = useGeolocation()
-  const {
-    myStatus,
-    updateMyStatus,
-    familyMembers,
-    verifyFamilySafety,
-    loading: safetyLoading,
-    syncLocation,
-    isSyncing,
-    lastSyncedLocation,
-    lastSyncedTime
-  } = useSafety()
+  const { location: geoLoc, loading: locLoading } = useGeolocation()
+  const { verifyFamilySafety } = useSafety()
 
   const [isSafeCheckInOpen, setIsSafeCheckInOpen] = useState(false)
-  const [userProfile, setUserProfile] = useState<{ name: string, email: string, location: string } | null>(null)
-  const [isInitializingProfile, setIsInitializingProfile] = useState(true)
-  const [resolvedLocation, setResolvedLocation] = useState<{ lat: number, lon: number } | undefined>(undefined)
   const [geoLocName, setGeoLocName] = useState<string | null>(null)
 
-  // Default location (San Francisco) - fallback
-  const fallbackLocation = useMemo(() => ({ lat: 37.7749, lon: -122.4194 }), [])
-
-  // Load profile and check location on mount
   useEffect(() => {
-    const name = localStorage.getItem('userName') || ''
-    const email = localStorage.getItem('userEmail') || ''
-    const location = localStorage.getItem('userLocation') || ''
-
-    setUserProfile({ name, email, location })
-
-    setUserProfile({ name, email, location })
-
-    // Trigger individual safety verification for family members on dashboard mount
     verifyFamilySafety()
-    setIsInitializingProfile(false)
   }, [verifyFamilySafety])
 
-  // Use geolocation if available, otherwise use saved location (geocoded), else fallback
   useEffect(() => {
     const fetchLocation = async () => {
-      if (isInitializingProfile || locLoading) return // Wait for true location source
-
+      if (locLoading) return
       if (geoLoc) {
-        setResolvedLocation({ lat: geoLoc.lat, lon: geoLoc.lng })
         try {
           const name = await reverseGeocode(geoLoc.lat, geoLoc.lng)
           setGeoLocName(name)
         } catch (error) {
           console.error("Failed to reverse geocode live location:", error)
         }
-        return
       }
-
-      setResolvedLocation(fallbackLocation)
     }
-
     fetchLocation()
-  }, [isInitializingProfile, locLoading, geoLoc, userProfile?.location, fallbackLocation])
+  }, [locLoading, geoLoc])
 
-  // Fetch all alerts with auto-refresh every 30 seconds
-  const { alerts, loading, unreadCount, refresh } = useAPIAlerts({
-    location: resolvedLocation,
-    autoRefresh: true,
-    refreshInterval: 30000,
-  })
+  const locations = [
+    { id: '1', name: 'Current Location', address: geoLocName || 'San Francisco, CA 94102', icon: MapPin, active: true },
+    { id: '2', name: 'Home', address: '123 Main St, San Francisco, CA', icon: Home, active: false },
+    { id: '3', name: 'Lincoln High School', address: '456 School Ave, San Francisco, CA', icon: Briefcase, active: false },
+    { id: '4', name: 'Office', address: '789 Business Blvd, San Francisco, CA', icon: Briefcase, active: false },
+    { id: '5', name: 'Office', address: '789 Business Blvd, San Francisco, CA', icon: Briefcase, active: false },
+  ]
 
-  const isContextLoading = isInitializingProfile || locLoading || loading
+  const alertFilters = [
+    { label: 'Weather', icon: Cloud, color: 'text-blue-500 bg-blue-50' },
+    { label: 'News', icon: Map, color: 'text-purple-500 bg-purple-50' },
+    { label: 'Nearby Emergencies', icon: AlertTriangle, color: 'text-red-500 bg-red-50' },
+    { label: 'Community Updates', icon: Users, color: 'text-green-500 bg-green-50' },
+  ]
 
-  // Separate alerts by source
-  const earthquakeAlerts = alerts.filter(a => a.source === AlertSource.EARTHQUAKE_API).slice(0, 5)
-  const weatherAlerts = alerts.filter(a => a.source === AlertSource.WEATHER_API).slice(0, 3)
-  const adminAlerts = alerts.filter(a => a.source === AlertSource.ADMIN_MANUAL).slice(0, 2)
+  const nearbyResources = [
+    { label: 'Hospitals', dist: '0.8 mi away', icon: Hospital, color: 'text-red-500 bg-red-50' },
+    { label: 'Pharmacies', dist: '0.3 mi away', icon: Pill, color: 'text-green-500 bg-green-50' },
+    { label: 'Lodging', dist: '1.2 mi away', icon: Bed, color: 'text-blue-500 bg-blue-50' },
+    { label: 'Food & Essentials', dist: '0.5 mi away', icon: Coffee, color: 'text-orange-500 bg-orange-50' },
+    { label: 'Financial Services', dist: '0.4 mi away', icon: DollarSign, color: 'text-purple-500 bg-purple-50' },
+    { label: 'Traffic Status', dist: 'Clear', icon: Car, color: 'text-yellow-500 bg-yellow-50' },
+  ]
 
-  // Get weather info from latest weather alert
-  const latestWeather = weatherAlerts[0]
-  const weatherTemp = latestWeather && 'temperature' in latestWeather ? (latestWeather as any).temperature : 72
-  const weatherCondition = latestWeather && 'weatherType' in latestWeather
-    ? (latestWeather as any).weatherType.charAt(0).toUpperCase() + (latestWeather as any).weatherType.slice(1)
-    : 'Clear'
-
-  // Weather Safety Advice Helper
-  const getWeatherAdvice = (condition: string) => {
-    const c = condition.toLowerCase()
-    if (c.includes('heat')) return 'Excessive Heat: Stay hydrated and avoid outdoor activities.'
-    if (c.includes('cold') || c.includes('snow') || c.includes('freeze')) return 'Freezing: Bundle up and check on pets/elderly.'
-    if (c.includes('storm') || c.includes('rain') || c.includes('flood')) return 'Stormy: Monitor local alerts and avoid flooded roads.'
-    if (c.includes('wind') || c.includes('tornado') || c.includes('hurricane')) return 'High Winds: Secure loose objects and stay indoors.'
-    if (c.includes('fire') || c.includes('smoke')) return 'Air Quality: Keep windows closed and avoid exertion.'
-    return 'Conditions are stable. Have a great day!'
-  }
-
-  const weatherAdvice = getWeatherAdvice(weatherCondition)
-
-  // Safety Status Helpers
-  const isSafe = myStatus === 'SAFE' || myStatus === 'true'
-  const isDanger = myStatus === 'DANGER' || myStatus === 'false'
-
-  // Automated Safety Check for Dashboard
-  const familySafeCount = useMemo(() => {
-    return familyMembers.filter(member => {
-      return member.status === 'SAFE' || member.status === 'true'
-    }).length
-  }, [familyMembers])
-
-  const allFamilySafe = familyMembers.length > 0 && familySafeCount === familyMembers.length
-
-  // Global Risk Reasons for Dashboard (Derived from individual verified statuses)
-  const activeRisks = useMemo(() => {
-    const risks = new Set<string>()
-    familyMembers.forEach(m => {
-      if ((m.status === 'false' || m.status === 'DANGER') && m.statusReason) {
-        risks.add(m.statusReason)
-      }
-    })
-    return Array.from(risks).join(' & ')
-  }, [familyMembers])
+  const newsItems = [
+    { title: 'Highway 101 Closure This Weekend', category: 'Traffic', time: '2 hours ago', img: 'https://images.unsplash.com/photo-1510442650500-93217e634e4c?w=600&h=400&fit=crop' },
+    { title: 'Free Health Screening Event', category: 'Community', time: '5 hours ago', img: 'https://images.unsplash.com/photo-1511673319455-2117e221146c?w=600&h=400&fit=crop' },
+    { title: 'Emergency Drill Scheduled', category: 'Safety', time: '1 day ago', img: 'https://images.unsplash.com/photo-1541888946425-d81bb19440f4?w=600&h=400&fit=crop' },
+  ]
 
   return (
-    <main className="flex-1 overflow-auto bg-slate-50 relative">
+    <div className="flex-1 overflow-auto bg-white p-6 md:p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
 
-      <div className="max-w-7xl mx-auto w-full px-6 py-8 space-y-8">
-
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">Personal Safety Portal</h1>
-              {geoLoc ? (
-                <div className="flex items-center gap-1 text-[10px] font-black text-green-700 bg-green-100 px-2 py-0.5 rounded-full border border-green-200 italic animate-pulse">
-                  <RefreshCw className="w-3 h-3" /> TRAVEL MODE ACTIVE
-                </div>
-              ) : (
-                <div className="flex items-center gap-1 text-[10px] font-black text-red-700 bg-red-100 px-2 py-0.5 rounded-full border border-red-200 italic">
-                  <AlertTriangle className="w-3 h-3" /> GEOLOCATOR OFF
-                </div>
-              )}
+        {/* Banner Section */}
+        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#2196F3] to-[#42A5F5] h-[160px] flex flex-col justify-center px-10 shadow-sm">
+          <div className="relative z-10 max-w-2xl">
+            <h1 className="text-3xl font-bold mb-2 text-white">Ready2Go – Stay Prepared & Protected</h1>
+            <p className="text-blue-50 text-sm font-medium opacity-90">Your personalized safety tools, alerts, and preparedness resources — all in one place.</p>
+          </div>
+          <div className="absolute bottom-6 right-8 flex items-center gap-4">
+            <div className="bg-[#E0F2F1] text-teal-700 rounded-full px-4 py-1.5 flex items-center gap-2 shadow-sm border border-teal-100">
+              <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></div>
+              <span className="text-[11px] font-bold uppercase tracking-wider">All Clear</span>
             </div>
-            <p className="text-slate-500 font-medium">
-              Welcome back, <span className="font-bold text-slate-900 capitalize">{userProfile?.name}</span>! Monitoring {geoLoc ? `Live: ${geoLocName || `${geoLoc.lat.toFixed(4)}, ${geoLoc.lng.toFixed(4)}`}` : userProfile?.location || 'your area'}.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className={cn(
-                "gap-2 font-bold h-10 px-4 rounded-xl border-slate-200 bg-white shadow-sm transition-all",
-                isSyncing && "opacity-50 cursor-not-allowed"
-              )}
-              onClick={() => syncLocation()}
-              disabled={isSyncing || !geoLoc}
-            >
-              <RefreshCw className={cn("w-4 h-4 text-green-600", isSyncing && "animate-spin")} />
-              {isSyncing ? "Syncing..." : "Sync Live Location"}
-            </Button>
-            <Button variant="outline" className="gap-2 font-bold h-10 px-4 rounded-xl border-slate-200 bg-white shadow-sm" onClick={() => router.push('/user/plan')}>
-              <FileText className="w-4 h-4 text-blue-600" />
-              My Emergency Plan
-            </Button>
-          </div>
-        </div>
-
-        {/* Sync Status Banner */}
-        {lastSyncedTime && (
-          <div className="text-[10px] font-bold text-slate-400 mt-2 flex items-center gap-1 uppercase tracking-wider">
-            <Navigation className="w-3 h-3" />
-            Last Shared with Command Center: {lastSyncedTime.toLocaleTimeString()} ({lastSyncedLocation})
-          </div>
-        )}
-
-        {/* Location Denied Alert Banner */}
-        {!geoLoc && !locLoading && locError && (
-          <div className="flex items-start gap-4 bg-amber-50 border border-amber-300 text-amber-900 rounded-2xl p-4 shadow-sm">
-            <div className="p-2 bg-amber-100 rounded-xl flex-shrink-0">
-              <MapPinOff className="w-5 h-5 text-amber-600" />
+            <div className="text-right">
+              <span className="block text-[10px] text-blue-100 font-semibold uppercase tracking-tight opacity-80">Last Updated</span>
+              <span className="text-xs font-bold text-white tracking-tight">12:45 PM EST</span>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-black text-sm uppercase tracking-wide">Location Access Denied</p>
-              <p className="text-xs font-medium text-amber-800 mt-0.5">
-                Emergency Context and Resources Map are using your saved address instead of your live GPS position.
-                For accurate nearby resources and alerts, please enable location access in your browser.
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                // Re-request permission by triggering the browser prompt
-                navigator.geolocation?.getCurrentPosition(() => window.location.reload(), () => { })
-              }}
-              className="flex-shrink-0 text-[10px] font-black uppercase tracking-widest bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg transition-colors"
-            >
-              Enable Location
-            </button>
           </div>
-        )}
+        </section>
 
-        {/* Safety & Status Section (Main Content) */}
+        {/* Top 3 Cards Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-          {/* My Safety Status */}
-          <Card className={`md:col-span-3 p-8 border-slate-200 shadow-sm flex flex-col justify-between relative overflow-hidden transition-colors ${isDanger ? 'bg-red-50 border-red-200' : 'bg-white rounded-3xl'}`}>
-            <div className="absolute top-0 right-0 p-4 opacity-5">
-              <ShieldCheck className="w-32 h-32" />
+          <Link href="/user/active-shooter" className="block group border-l-4 border-l-[#F87171] bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+            <div className="flex justify-between items-start mb-4">
+              <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center text-red-500">
+                <Activity className="w-5 h-5" />
+              </div>
+              <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-colors" />
             </div>
             <div>
-              <div className="flex justify-between items-start mb-4">
-                <h2 className={`text-2xl font-extrabold mb-2 ${isDanger ? 'text-red-900' : 'text-slate-900'}`}>
-                  {isDanger ? 'Emergency Assistance Requested' : 'Safety Check-In'}
-                </h2>
-                {isDanger && <span className="px-3 py-1 bg-red-100 text-red-700 font-bold rounded-full text-xs animate-pulse">LIVE ALERT</span>}
-              </div>
-              <p className={`${isDanger ? 'text-red-700' : 'text-slate-500'} mb-6 font-medium`}>
-                {isDanger ? 'Your status is set to "NEED HELP". Location shared with emergency contacts.' : 'Are you safe? Check in to notify your emergency contacts and community.'}
-              </p>
+              <h3 className="text-[16px] font-bold text-gray-900 mb-1">Active Shooter Response</h3>
+              <p className="text-gray-500 text-[13px] leading-relaxed">Guided steps + direct 911 call with location sharing</p>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 z-10">
-              <Button
-                className={`h-14 font-black text-lg shadow-lg rounded-2xl transition-all ${isSafe ? 'bg-green-700 ring-4 ring-green-200' : 'bg-green-600 hover:bg-green-700'} text-white`}
-                onClick={() => setIsSafeCheckInOpen(true)}
-              >
-                <UserCheck className="w-6 h-6 mr-2" />
-                {isSafe ? 'MARKED SAFE' : 'I AM SAFE'}
-              </Button>
-              <Button
-                className={`h-14 font-black text-lg shadow-lg rounded-2xl transition-all ${isDanger ? 'bg-red-700 ring-4 ring-red-200' : 'bg-red-600 hover:bg-red-700'} text-white`}
-                onClick={() => {
-                  updateMyStatus('DANGER')
-                  setIsSafeCheckInOpen(true)
-                }}
-              >
-                <UserX className="w-6 h-6 mr-2" />
-                NEED HELP
-              </Button>
+          </Link>
+          <button onClick={() => setIsSafeCheckInOpen(true)} className="block w-full text-left group border-l-4 border-l-[#34D399] bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+            <div className="flex justify-between items-start mb-4">
+              <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center text-green-500">
+                <Users className="w-5 h-5" />
+              </div>
+              <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-colors" />
             </div>
-
-            <div className="mt-4 flex items-center gap-2 text-xs font-bold text-slate-400">
-              <Users className="w-4 h-4" />
-              {safetyLoading ? (
-                <span className="animate-pulse">Loading contacts...</span>
-              ) : (
-                <>
-                  {familySafeCount}/{familyMembers.length} Family Members Marked Safe
-                </>
-              )}
-              <span className={`ml-2 px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black border flex items-center gap-1 ${allFamilySafe ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
-                {allFamilySafe ? <ShieldCheck className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
-                Status: {allFamilySafe ? 'true' : 'false'}
-                {!allFamilySafe && activeRisks && (
-                  <span className="ml-1 border-l border-red-200 pl-1">
-                    ({activeRisks})
-                  </span>
-                )}
-              </span>
-              <Link href="/user/are-we-safe" className="ml-auto text-blue-600 hover:underline">See Details</Link>
+            <div>
+              <h3 className="text-[16px] font-bold text-gray-900 mb-1">"Are We Safe?" Check-In</h3>
+              <p className="text-gray-500 text-[13px] leading-relaxed">Start check-in or view your group's safety status</p>
             </div>
-          </Card>
-
-          {/* Redesigned Info Sections */}
-          <div className="lg:col-span-2 space-y-6">
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-black text-slate-900 flex items-center gap-2 tracking-tight">
-                  <Bell className="w-5 h-5 text-[#34385E]" />
-                  Emergency Context
-                </h2>
-                {loading && (
-                  <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 animate-pulse">
-                    <RefreshCw className="w-3 h-3 animate-spin" /> SYNCING DATA...
-                  </div>
-                )}
+          </button>
+          <Link href="/user/favorite-places" className="block group border-l-4 border-l-[#60A5FA] bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+            <div className="flex justify-between items-start mb-4">
+              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">
+                <Star className="w-5 h-5 fill-blue-500" />
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Earthquake Feature */}
-                <Card className="p-5 border-slate-200 shadow-sm rounded-2xl bg-white border-t-4 border-t-orange-500 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4">
-                    <Zap className="w-6 h-6 text-orange-500" />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Seismic Activity</span>
-                  </div>
-
-                  {isContextLoading && earthquakeAlerts.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 space-y-4 animate-in fade-in">
-                      <div className="w-8 h-8 border-4 border-slate-100 border-t-orange-500 rounded-full animate-spin"></div>
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">
-                        Scanning local faults...
-                      </span>
-                    </div>
-                  ) : earthquakeAlerts.length > 0 ? (
-                    <div className="space-y-4">
-                      {earthquakeAlerts.map(alert => {
-                        const eq = alert as any;
-                        return (
-                          <div key={alert.id} className="pb-3 border-b border-slate-50 last:border-0 last:pb-0">
-                            <div className="flex justify-between items-center mb-1">
-                              <p className="text-[13px] font-black text-slate-900 leading-tight line-clamp-1">{eq.location || eq.title}</p>
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${eq.magnitude >= 5 ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
-                                }`}>
-                                M{eq.magnitude?.toFixed(1) || '?.?'}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-[10px] font-bold text-slate-400 uppercase">
-                                Depth: {eq.depth?.toFixed(1) || '0'}km
-                              </span>
-                              <span className="text-[10px] font-bold text-slate-400 uppercase">
-                                {new Date(alert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                            </div>
-                            {eq.tsunami && (
-                              <div className="mt-2 text-[9px] font-black text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100 uppercase tracking-wider flex items-center gap-1">
-                                <AlertTriangle className="w-3 h-3" /> Tsunami Advisory
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <div className="py-6 text-center">
-                      <p className="text-xs font-bold text-slate-400 italic">No significant activity detected</p>
-                    </div>
-                  )}
-                </Card>
-
-                {/* Weather Feature */}
-                <Card className="p-5 border-slate-200 shadow-sm rounded-2xl bg-white border-t-4 border-t-blue-500 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4">
-                    <Cloud className="w-6 h-6 text-blue-500" />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Local Conditions</span>
-                  </div>
-
-                  {isContextLoading && !latestWeather ? (
-                    <div className="flex flex-col items-center justify-center py-8 space-y-4 animate-in fade-in">
-                      <div className="w-8 h-8 border-4 border-slate-100 border-t-blue-500 rounded-full animate-spin"></div>
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">
-                        Checking local weather...
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="flex items-end justify-between">
-                        <div>
-                          <div className="flex items-end gap-1">
-                            <span className="text-4xl font-black text-slate-900 leading-none">{weatherTemp}°</span>
-                            <span className="text-sm font-bold text-slate-500 mb-1">C</span>
-                          </div>
-                          <span className="text-xs font-black text-blue-600 uppercase tracking-tight">{weatherCondition}</span>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-[10px] font-black text-slate-400 uppercase">Humidity</div>
-                          <div className="text-sm font-bold text-slate-900">{(latestWeather as any)?.humidity || 0}%</div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-slate-50 p-2 rounded-xl">
-                          <p className="text-[9px] font-black text-slate-400 uppercase mb-0.5">Wind</p>
-                          <p className="text-xs font-bold text-slate-700">{(latestWeather as any)?.windSpeed || 0} km/h</p>
-                        </div>
-                        <div className="bg-slate-50 p-2 rounded-xl">
-                          <p className="text-[9px] font-black text-slate-400 uppercase mb-0.5">Precip</p>
-                          <p className="text-xs font-bold text-slate-700">{(latestWeather as any)?.precipitation || 0} mm</p>
-                        </div>
-                      </div>
-
-                      <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
-                        <p className="text-[9px] font-black text-blue-700 uppercase mb-1">Safety Advisory:</p>
-                        <p className="text-xs font-bold text-blue-900 leading-snug">{weatherAdvice}</p>
-                      </div>
-                    </div>
-                  )}
-                </Card>
-              </div>
-
-              {/* General API Alerts List */}
-              <div className="space-y-3">
-                {weatherAlerts.length > 0 && weatherAlerts.map((alert) => (
-                  <div key={alert.id} className="bg-blue-50/50 border border-blue-100 p-4 rounded-xl flex items-start gap-4 transition-all hover:bg-blue-50">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Cloud className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-bold text-blue-900 text-sm">{alert.title}</h3>
-                        <span className="px-2 py-0.5 bg-blue-200 text-blue-800 text-[10px] font-black rounded uppercase tracking-wider">WEATHER</span>
-                      </div>
-                      <p className="text-xs text-blue-800/80 mt-1 font-medium">{alert.description}</p>
-                    </div>
-                  </div>
-                ))}
-
-                {adminAlerts.length > 0 && adminAlerts.map((alert) => (
-                  <div key={alert.id} className="bg-purple-50/50 border border-purple-100 p-4 rounded-xl flex items-start gap-4 transition-all hover:bg-purple-50">
-                    <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
-                      <Bell className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-bold text-purple-900 text-sm">{alert.title}</h3>
-                        <span className="px-2 py-0.5 bg-purple-200 text-purple-800 text-[10px] font-black rounded uppercase tracking-wider">ADMIN</span>
-                      </div>
-                      <p className="text-xs text-purple-800/80 mt-1 font-medium italic">{alert.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
-
-          <div className="space-y-6">
-            {/* <Card className="p-5 border-slate-200 shadow-sm rounded-2xl bg-white border-t-4 border-t-green-500">
-              <h3 className="font-black text-slate-900 mb-4 flex items-center gap-2 uppercase tracking-widest text-[10px]">
-                <ShieldCheck className="w-4 h-4 text-green-500" />
-                Network Integrity
-              </h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl">
-                  <span className="text-xs font-bold text-slate-500">ACTIVE ALERTS</span>
-                  <span className="font-black text-sm text-slate-900">{alerts.length}</span>
-                </div>
-                <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl">
-                  <span className="text-xs font-bold text-slate-500">GEO-FENCE</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    <span className="font-black text-sm text-green-600">SECURE</span>
-                  </div>
-                </div>
-              </div>
-            </Card> */}
-
-            <ResourcesMapSection
-              location={resolvedLocation ? { lat: resolvedLocation.lat, lng: resolvedLocation.lon } : null}
-            />
-
-            {/* <section className="space-y-3 pt-4 border-t border-slate-100">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Quick Links</h3>
-              <div className="grid grid-cols-1 gap-2">
-                <Button variant="outline" className="justify-start border-slate-200 text-slate-900 font-black rounded-2xl py-7 hover:bg-slate-50 bg-white" onClick={() => router.push('/user/plan')}>
-                  <Navigation className="w-5 h-5 mr-3 text-blue-500" />
-                  Evacuation Plan
-                </Button>
-                <Button variant="outline" className="justify-start border-slate-200 text-slate-900 font-black rounded-2xl py-7 hover:bg-slate-50 bg-white">
-                  <Info className="w-5 h-5 mr-3 text-slate-400" />
-                  Resources
-                </Button>
-              </div>
-            </section> */}
-          </div>
-
+              <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-colors" />
+            </div>
+            <div>
+              <h3 className="text-[16px] font-bold text-gray-900 mb-1">Favorite Places</h3>
+              <p className="text-gray-500 text-[13px] leading-relaxed">Quick access to school, daycare, meeting points</p>
+            </div>
+          </Link>
         </div>
-      </div >
 
-      {/* Modals */}
-      < SafeCheckInModal
+        {/* 2-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column */}
+          <div className="lg:col-span-8 space-y-8">
+            {/* My Locations & Alerts */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="p-6 pb-2 flex items-center justify-between">
+                <h2 className="text-[17px] font-bold text-gray-900">My Locations & Alerts</h2>
+                <button className="text-blue-500 text-xs font-bold flex items-center gap-1 hover:underline">
+                  + Add Location
+                </button>
+              </div>
+
+              <div className="p-4 space-y-2.5">
+                {locations.map((loc) => (
+                  <div key={loc.id} className={cn(
+                    "flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer group",
+                    loc.active ? "bg-[#F0FDF4] border-green-200" : "bg-white border-gray-50 hover:border-gray-200"
+                  )}>
+                    <div className="flex items-center gap-4">
+                      <div className={cn("w-10 h-10 rounded-full flex items-center justify-center border", loc.active ? "bg-white border-green-100 text-green-500" : "bg-slate-50 border-gray-100 text-slate-400")}>
+                        <loc.icon className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="text-[14px] font-bold text-gray-900">{loc.name}</p>
+                          {loc.active && (
+                            <span className="bg-[#22C55E] text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Active</span>
+                          )}
+                        </div>
+                        <p className="text-[12px] text-gray-500 font-medium">{loc.address}</p>
+                        {loc.active && <p className="text-[10px] text-gray-400 mt-1">GPS enabled • Real-time alerts active</p>}
+                      </div>
+                    </div>
+                    <div>
+                      {!loc.active && <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-400" />}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-6 pt-4 border-t border-slate-50">
+                <h3 className="text-[11px] font-bold text-gray-400 mb-4 tracking-wider uppercase">Alerts Enabled For:</h3>
+                <div className="flex flex-wrap gap-2.5">
+                  {alertFilters.map((filter) => (
+                    <div key={filter.label} className={cn("px-4 py-1.5 rounded-full flex items-center gap-2 text-[11px] font-bold border border-transparent shadow-sm", filter.color)}>
+                      <filter.icon className="w-3.5 h-3.5" />
+                      {filter.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Nearby Resources */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-[17px] font-bold text-gray-900">Nearby Resources</h2>
+                <button className="text-blue-500 text-xs font-bold hover:underline">
+                  View Map
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {nearbyResources.map((res) => (
+                  <div key={res.label} className="border border-gray-50 rounded-xl p-4 flex items-center gap-4 hover:border-blue-100 transition-colors cursor-pointer group bg-slate-50/30">
+                    <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shadow-sm", res.color)}>
+                      <res.icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-[14px] font-bold text-gray-900 group-hover:text-blue-600 transition-colors leading-tight mb-0.5">{res.label}</p>
+                      <p className="text-[12px] text-gray-500 font-medium">{res.dist}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column (Sidebar) */}
+          <div className="lg:col-span-4 space-y-8">
+            {/* Weather Alerts */}
+            <div className="bg-[#42A5F5] text-white rounded-[32px] shadow-lg p-8 overflow-hidden relative">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-[20px] font-bold">Weather Alerts</h2>
+                <Cloud className="w-8 h-8 text-white/90" />
+              </div>
+              <div className="mb-8">
+                <h1 className="text-6xl font-black mb-1">72°F</h1>
+                <p className="text-[15px] font-semibold opacity-80 uppercase tracking-[0.2em]">Partly Cloudy</p>
+              </div>
+              <div className="bg-white/10 border border-white/20 rounded-2xl p-5 mb-8 backdrop-blur-md">
+                <h3 className="text-[14px] font-bold mb-1">No Active Warnings</h3>
+                <p className="text-[12px] opacity-90 leading-relaxed font-medium">Your area is clear of weather alerts.</p>
+              </div>
+              <button className="w-full bg-white text-blue-500 text-xs font-black py-4 rounded-xl hover:bg-white/95 transition-all shadow-md active:scale-95 tracking-widest uppercase">
+                View Full Forecast
+              </button>
+            </div>
+
+            {/* Emergency Plan Builder */}
+            <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm p-8">
+              <h2 className="text-[17px] font-bold text-gray-900 mb-1">Emergency Plan Builder</h2>
+              <p className="text-[12px] text-gray-400 mb-8 font-medium">Create and manage your family emergency plan</p>
+              <div className="space-y-1 mb-8">
+                {[
+                  'Family Emergency Plan',
+                  'Emergency Kits',
+                  'Favorite Places Setup',
+                  'Pet Safety Plan'
+                ].map((item) => (
+                  <div key={item} className="flex items-center justify-between py-3.5 cursor-pointer group border-b border-gray-50 last:border-0 hover:px-2 rounded-lg hover:bg-gray-50 transition-all">
+                    <p className="text-[14px] text-gray-700 font-bold">{item}</p>
+                    <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors" />
+                  </div>
+                ))}
+              </div>
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-2.5 px-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Plan Completion</p>
+                  <p className="text-[11px] font-black text-orange-500">66%</p>
+                </div>
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                  <div className="h-full bg-orange-500 w-[66%] rounded-full"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Preparedness Info */}
+            <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm p-8">
+              <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Preparedness Info</h2>
+              <div className="space-y-4">
+                {[
+                  { title: 'Active Shooter Preparedness', desc: 'Essential safety protocols' },
+                  { title: 'Severe Weather Tips', desc: 'Stay safe during storms' },
+                  { title: 'Wildfire Preparedness', desc: 'Evacuation planning' },
+                ].map((info) => (
+                  <div key={info.title} className="border border-gray-50 rounded-2xl p-5 hover:border-blue-100 transition-all cursor-pointer group bg-slate-50/20">
+                    <h3 className="text-[13px] font-black text-slate-800 group-hover:text-blue-600 transition-colors mb-1 uppercase tracking-tight leading-tight">{info.title}</h3>
+                    <p className="text-[11px] text-gray-400 font-medium">{info.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* News & Updates Section */}
+        <section className="pt-12 pb-20">
+          <div className="flex items-center justify-between mb-10">
+            <h2 className="text-xl font-bold text-gray-900 tracking-tight">News &amp; Updates</h2>
+            <div className="flex gap-1 bg-slate-50 p-1 rounded-xl border border-slate-100">
+              <span className="px-6 py-2 bg-blue-500 text-white font-extrabold text-[10px] rounded-lg shadow-sm cursor-pointer uppercase tracking-widest">All</span>
+              <span className="px-6 py-2 text-slate-400 font-extrabold text-[10px] hover:text-blue-500 rounded-lg cursor-pointer transition-colors uppercase tracking-widest">Emergency</span>
+              <span className="px-6 py-2 text-slate-400 font-extrabold text-[10px] hover:text-blue-500 rounded-lg cursor-pointer transition-colors uppercase tracking-widest">Local</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {newsItems.map((news, i) => (
+              <div key={i} className="bg-white border border-gray-50 rounded-2xl overflow-hidden shadow-sm group hover:shadow-xl transition-all cursor-pointer flex flex-col h-full">
+                <div className="h-48 w-full relative overflow-hidden bg-slate-100">
+                  <img src={news.img} alt={news.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                </div>
+                <div className="p-7 flex flex-col flex-1">
+                  <div className="mb-4">
+                    <span className={cn(
+                      "px-3 py-1 rounded text-[9px] font-black uppercase tracking-widest border",
+                      news.category === 'Traffic' ? "bg-blue-50 text-blue-600 border-blue-100" :
+                        news.category === 'Community' ? "bg-green-50 text-green-600 border-green-100" :
+                          "bg-orange-50 text-orange-600 border-orange-100"
+                    )}>
+                      {news.category}
+                    </span>
+                  </div>
+                  <h3 className="text-[17px] font-bold text-slate-800 mb-4 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">{news.title}</h3>
+                  <div className="mt-auto pt-6 border-t border-slate-50 flex items-center justify-between">
+                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{news.time}</span>
+                    <ArrowRight className="w-4 h-4 text-slate-200 group-hover:text-blue-500 transition-all group-hover:translate-x-1" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+      </div>
+
+      <SafeCheckInModal
         isOpen={isSafeCheckInOpen}
-        onClose={() => setIsSafeCheckInOpen(false)
-        }
+        onClose={() => setIsSafeCheckInOpen(false)}
       />
-    </main >
+    </div>
   )
 }
