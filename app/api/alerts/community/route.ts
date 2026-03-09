@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import CommunityAlert from '@/models/CommunityAlert';
+import User from '@/models/User';
 import { getSession } from '@/lib/auth';
+import { notificationService, NotificationChannel } from '@/lib/services/notification-service';
+import { locationMatchesAlertAreas } from '@/lib/services/location-matching';
 
 export async function GET() {
     try {
@@ -40,8 +43,13 @@ export async function POST(request: Request) {
             expiresAt,
             affectedAreas,
             priority,
-            targetUsers
+            targetUsers,
+            channels,
         } = body;
+
+        const normalizedChannels: NotificationChannel[] = Array.isArray(channels) && channels.length > 0
+            ? channels.filter((value: string): value is NotificationChannel => ['push', 'sms', 'email'].includes(value))
+            : ['push', 'sms', 'email'];
 
         const newAlert = await CommunityAlert.create({
             severity,
@@ -55,7 +63,53 @@ export async function POST(request: Request) {
             adminEmail: session.user.email,
         });
 
-        return NextResponse.json({ success: true, data: newAlert }, { status: 201 });
+        const users = await User.find({ role: 'user' }).lean();
+        const explicitTargets = Array.isArray(targetUsers)
+            ? targetUsers.map((value: any) => String(value).toLowerCase())
+            : [];
+
+        const userIds = users
+            .filter((user: any) => {
+                if (explicitTargets.length > 0 && !explicitTargets.includes('broadcast') && !explicitTargets.includes('all')) {
+                    return explicitTargets.includes(String(user._id).toLowerCase()) ||
+                        explicitTargets.includes(String(user.email || '').toLowerCase());
+                }
+
+                if (Array.isArray(affectedAreas) && affectedAreas.length > 0) {
+                    const userAreas = [
+                        user.location,
+                        ...(Array.isArray(user.familyMembers) ? user.familyMembers.map((member: any) => member.location) : []),
+                    ].filter(Boolean) as string[];
+
+                    return userAreas.some(location =>
+                        locationMatchesAlertAreas(location, affectedAreas)
+                    );
+                }
+
+                return true;
+            })
+            .map((user: any) => String(user._id));
+
+        for (const userId of userIds) {
+            await notificationService.sendUserNotification(
+                userId,
+                `Community Alert: ${title}`,
+                description,
+                normalizedChannels,
+                {
+                    alertId: newAlert._id,
+                    affectedAreas,
+                    priority,
+                }
+            );
+        }
+
+        return NextResponse.json({
+            success: true,
+            data: newAlert,
+            deliveredToUsers: userIds.length,
+            channels: normalizedChannels,
+        }, { status: 201 });
     } catch (error) {
         console.error('Community Alerts POST error:', error);
         return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });

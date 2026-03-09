@@ -37,6 +37,7 @@ interface OpenWeatherResponse {
 
 export class WeatherAPIService {
     private baseURL = 'https://api.open-meteo.com/v1/forecast';
+    private nwsBaseURL = 'https://api.weather.gov';
 
     /**
      * Fetch full weather data (current + forecast)
@@ -82,62 +83,142 @@ export class WeatherAPIService {
     }
 
     /**
-     * Fetch weather alerts for a location
+     * Fetch weather alerts for a location.
+     *
+     * Primary source: National Weather Service (NWS) alerts feed.
+     * Fallback: synthetic alert based on Open-Meteo current conditions.
      * @param lat - Latitude
      * @param lon - Longitude
      */
     async fetchWeatherAlerts(lat: number, lon: number): Promise<APIWeatherAlert[]> {
         try {
-            // Open-Meteo current weather + basic variables
-            const url = `${this.baseURL}?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&timezone=auto`;
-
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error(`Weather API error: ${response.status} ${response.statusText}`);
+            const alerts = await this.fetchNWSAlerts(lat, lon);
+            if (alerts.length > 0) {
+                return alerts;
             }
 
-            const data = await response.json();
-
-            // Transform Open-Meteo current data into our WeatherAlert format
-            // Since Open-Meteo doesn't provide "alerts" in the free core tier easily (requires separate API), 
-            // we'll synthesize a status alert based on current conditions
-            const current = data.current;
-            const weatherCode = current.weather_code;
-            const temp = current.temperature_2m;
-
-            const severity = this.calculateSeverityFromCode(weatherCode, temp);
-            const weatherType = this.determineWeatherTypeFromCode(weatherCode);
-            const description = this.generateDescriptionFromCode(weatherCode, temp, current.wind_speed_10m);
-
-            const alert: APIWeatherAlert = {
-                id: `weather-${Date.now()}-${lat}-${lon}`,
-                source: AlertSource.WEATHER_API,
-                severity: severity as any,
-                title: this.getWeatherTitleFromCode(weatherCode),
-                description,
-                timestamp: new Date().toISOString(),
-                expiresAt: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
-                weatherType,
-                temperature: temp,
-                windSpeed: current.wind_speed_10m,
-                humidity: current.relative_humidity_2m,
-                precipitation: current.precipitation,
-                coordinates: { lat, lon },
-                affectedAreas: ['Current Location'],
-            };
-
-            return [alert];
+            // If NWS returned no alerts, fall back to synthesized condition-based alert
+            const fallback = await this.fetchSyntheticWeatherAlert(lat, lon);
+            return fallback ? [fallback] : [];
         } catch (error) {
             console.error('Error fetching weather data:', error);
-            // Fallback to mock if API fails
+            // Fallback to mock if both NWS and synthetic fail
             return this.getMockWeatherAlerts(lat, lon);
         }
+    }
+
+    /**
+     * Fetch active alerts from National Weather Service for a specific point.
+     */
+    private async fetchNWSAlerts(lat: number, lon: number): Promise<APIWeatherAlert[]> {
+        const point = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+        const url = `${this.nwsBaseURL}/alerts/active?point=${encodeURIComponent(point)}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/geo+json',
+                'User-Agent': process.env.NWS_USER_AGENT || 'ready2go-emergency-dashboard (non-production)',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`NWS API error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const features = Array.isArray(data.features) ? data.features : [];
+
+        return features.map((feature: any): APIWeatherAlert => {
+            const props = feature.properties || {};
+            const severity = this.mapNwsSeverity(props.severity);
+            const event: string = props.event || 'Weather Alert';
+
+            const descriptionParts: string[] = [];
+            if (props.headline) descriptionParts.push(props.headline);
+            if (props.description) descriptionParts.push(props.description);
+            if (props.instruction) descriptionParts.push(`Instructions: ${props.instruction}`);
+
+            const areaDesc: string = props.areaDesc || '';
+            const geocode = props.geocode || {};
+            const ugcZones: string[] = Array.isArray(geocode.UGC) ? geocode.UGC : [];
+
+            const affectedAreas: string[] = [];
+            if (areaDesc) {
+                affectedAreas.push(...areaDesc.split(';').map((s: string) => s.trim()).filter(Boolean));
+            }
+            if (affectedAreas.length === 0 && ugcZones.length > 0) {
+                affectedAreas.push(...ugcZones);
+            }
+
+            return {
+                id: props.id || feature.id || `nws-${Date.now()}`,
+                source: AlertSource.WEATHER_API,
+                severity,
+                title: props.headline || event,
+                description: descriptionParts.join('\n\n') || 'Official weather alert from National Weather Service.',
+                timestamp: props.sent || props.effective || new Date().toISOString(),
+                expiresAt: props.expires || props.ends || undefined,
+                event,
+                areaDesc,
+                zones: ugcZones,
+                weatherType: this.mapNwsEventToWeatherType(event),
+                temperature: undefined,
+                windSpeed: undefined,
+                humidity: undefined,
+                precipitation: undefined,
+                coordinates: { lat, lon },
+                affectedAreas,
+            };
+        });
+    }
+
+    /**
+     * Fallback: synthesize a single status-style alert from Open-Meteo current conditions.
+     */
+    private async fetchSyntheticWeatherAlert(lat: number, lon: number): Promise<APIWeatherAlert | null> {
+        const url = `${this.baseURL}?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&timezone=auto`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Weather API error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const current = data.current;
+        if (!current) return null;
+
+        const weatherCode = current.weather_code;
+        const temp = current.temperature_2m;
+
+        const severity = this.calculateSeverityFromCode(weatherCode, temp);
+        const weatherType = this.determineWeatherTypeFromCode(weatherCode);
+        const description = this.generateDescriptionFromCode(weatherCode, temp, current.wind_speed_10m);
+
+        const alert: APIWeatherAlert = {
+            id: `weather-${Date.now()}-${lat}-${lon}`,
+            source: AlertSource.WEATHER_API,
+            severity: severity as any,
+            title: this.getWeatherTitleFromCode(weatherCode),
+            description,
+            timestamp: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+            weatherType,
+            temperature: temp,
+            windSpeed: current.wind_speed_10m,
+            humidity: current.relative_humidity_2m,
+            precipitation: current.precipitation,
+            coordinates: { lat, lon },
+            affectedAreas: ['Current Location'],
+        };
+
+        return alert;
     }
 
     /**
@@ -209,6 +290,43 @@ export class WeatherAPIService {
         if (code >= 51) return APIAlertSeverity.MODERATE; // Drizzle/Rain
         if (temp > 35 || temp < -10) return APIAlertSeverity.HIGH; // Extreme temps
         return APIAlertSeverity.INFO;
+    }
+
+    /**
+     * Map NWS severity strings into internal alert severity enum.
+     */
+    private mapNwsSeverity(severity: string | undefined): APIAlertSeverity {
+        const value = (severity || '').toLowerCase();
+        switch (value) {
+            case 'extreme':
+                return APIAlertSeverity.EXTREME;
+            case 'severe':
+                return APIAlertSeverity.SEVERE;
+            case 'moderate':
+                return APIAlertSeverity.MODERATE;
+            case 'minor':
+            case 'minor flooding':
+                return APIAlertSeverity.LOW;
+            default:
+                return APIAlertSeverity.INFO;
+        }
+    }
+
+    /**
+     * Roughly classify NWS event names into our weatherType categories.
+     */
+    private mapNwsEventToWeatherType(eventName: string): APIWeatherAlert['weatherType'] {
+        const name = eventName.toLowerCase();
+        if (name.includes('tornado')) return 'tornado';
+        if (name.includes('hurricane')) return 'hurricane';
+        if (name.includes('flood') || name.includes('flash flood')) return 'flood';
+        if (name.includes('snow') || name.includes('blizzard') || name.includes('winter')) return 'snow';
+        if (name.includes('heat') || name.includes('excessive heat')) return 'heat';
+        if (name.includes('cold') || name.includes('freeze') || name.includes('wind chill')) return 'cold';
+        if (name.includes('wind')) return 'wind';
+        if (name.includes('storm') || name.includes('thunder')) return 'thunderstorm';
+        if (name.includes('fog')) return 'fog';
+        return 'other';
     }
 
     private determineWeatherTypeFromCode(code: number): APIWeatherAlert['weatherType'] {

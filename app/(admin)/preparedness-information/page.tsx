@@ -1,68 +1,71 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Loader2 } from 'lucide-react'
+
+// Dynamic Type for the Guide definition
+type GuideDef = {
+  id?: string;
+  title: string;
+  items: string[];
+}
 
 export default function PreparednessInformationPage() {
+  const [guides, setGuides] = useState<Record<string, GuideDef>>({
+    individual_evacuation: { title: '', items: [] },
+    community_evacuation: { title: '', items: [] },
+    shelter_in_place: { title: '', items: [] },
+    active_shooter: { title: '', items: [] },
+    household_pets: { title: '', items: [] },
+    large_animals: { title: '', items: [] },
+    identity_theft: { title: '', items: [] },
+  })
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({})
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchGuides() {
+      try {
+        const res = await fetch('/api/admin/preparedness-guides')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.success && data.data) {
+            setGuides((prev) => ({ ...prev, ...data.data }))
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch preparedness guides:", err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchGuides()
+  }, [])
 
   const toggleCheck = (key: string) => {
-    setCheckedItems((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }))
+    setCheckedItems((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
-  const individualEvacuation = [
-    'Identify 2 evacuation routes at your home and places you frequently visit.',
-    'Develop a family communications plan, including adding contacts to the Ready2Go "Are We Safe" feature.',
-    'Designate an outdoor reunification meeting place and practice at least twice a year.',
-    'Create an emergency go-bag for 72 hours including medicine, pet supplies, and essentials.',
-    'Store important financial documents (bank accounts, insurance) in your phone\'s contact section.',
-  ]
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[80vh]">
+        <div className="flex flex-col items-center gap-4 text-slate-500">
+          <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
+          <p className="font-black text-xs uppercase tracking-[0.2em]">Synchronizing Master Preparedness Base...</p>
+        </div>
+      </div>
+    )
+  }
 
-  const communityEvacuation = [
-    'Identify at least 2 evacuation routes from your community.',
-    'Ensure full tank of gas; local stations may run out during emergencies.',
-    'Take your emergency go-bag.',
-    'Know pet-friendly hotels if evacuating with pets.',
-    'Secure your home and take valuables with you.',
-    'Be aware of community shelters if you cannot evacuate.',
-    'Take photos of your property for insurance purposes.',
-    'Bookmark FEMA\'s disaster assistance for post-disaster help.',
-  ]
-
-  const shelterInPlacePrep = [
-    'Identify 2 shelter locations indoors; if none available, choose the most secure room.',
-    'Take shelter immediately if conditions worsen; share status via Ready2Go.',
-    'Protect from severe weather hazards (tornado, high winds, hail).',
-  ]
-
-  const activeShooterPrep = [
-    'Identify evacuation and shelter-in-place locations.',
-    'Discuss plan with family; test Ready2Go "Are We Safe" feature.',
-  ]
-
-  const householdPets = [
-    '3 days food/medicine supply',
-    'Microchip identification',
-    'Know pet-friendly shelters/hotels',
-    'Develop contingency plans',
-  ]
-
-  const largeAnimals = [
-    'Inventory and health records',
-    'Unique identifiers, 1-week supplies',
-    'Evacuation arrangements, escape routes',
-  ]
-
-  const preventionSteps = [
-    'Secure Social Security card; provide info only when necessary.',
-    'Review statements regularly.',
-    'Enable mobile security features.',
-    'Install firewalls and antivirus software.',
-  ]
+  const individualEvacuation = guides.individual_evacuation?.items || []
+  const communityEvacuation = guides.community_evacuation?.items || []
+  const shelterInPlacePrep = guides.shelter_in_place?.items || []
+  const activeShooterPrep = guides.active_shooter?.items || []
+  const householdPets = guides.household_pets?.items || []
+  const largeAnimals = guides.large_animals?.items || []
+  const preventionSteps = guides.identity_theft?.items || []
 
   return (
     <main className="p-6 space-y-6 max-w-[1200px] mx-auto min-h-screen">

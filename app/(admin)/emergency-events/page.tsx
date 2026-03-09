@@ -93,11 +93,11 @@ export default function EmergencyEventsPage() {
               <AlertTriangle className="w-5 h-5 text-purple-500 transition-transform group-hover:scale-110" />
             </div>
           </div>
-          <p className="text-sm font-bold text-slate-700">{currentEvent?.title || "Tornado Warning"}</p>
+          <p className="text-sm font-bold text-slate-700">{currentEvent?.title || 'No Active Events'}</p>
           <div className="mt-4 space-y-1">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status: <span className="text-slate-600">{currentEvent?.status || "Active"}</span></p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Source: <span className="text-slate-600">National Weather Service</span></p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Last Updated: <span className="text-slate-600">14:41</span></p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status: <span className="text-slate-600 capitalize">{currentEvent?.status || 'N/A'}</span></p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Type: <span className="text-slate-600 capitalize">{currentEvent?.type || 'N/A'}</span></p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Last Updated: <span className="text-slate-600">{currentEvent ? new Date(currentEvent.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span></p>
           </div>
         </Card>
 
@@ -109,11 +109,11 @@ export default function EmergencyEventsPage() {
               <MapPin className="w-5 h-5 text-emerald-500" />
             </div>
           </div>
-          <p className="text-[11px] font-bold text-slate-500 leading-snug">
-            Official geolocation from National Weather Service
+          <p className="text-[11px] font-bold text-slate-700 leading-snug">
+            {currentEvent?.description?.substring(0, 60) || 'No area data available'}{currentEvent?.description && currentEvent.description.length > 60 ? '...' : ''}
           </p>
           <p className="text-[11px] font-medium text-slate-400 mt-2">
-            Exact coordinates applied to live map overlay
+            {currentEvent ? `Severity: ${currentEvent.severity}` : 'Exact coordinates applied to live map overlay'}
           </p>
         </Card>
 
@@ -126,9 +126,13 @@ export default function EmergencyEventsPage() {
             </div>
           </div>
           <div className="space-y-1 text-[11px] font-bold text-slate-600">
-            <p>Residential Areas</p>
-            <p>Industrial Zones</p>
-            <p>Critical Infrastructure</p>
+            {events.filter(e => e.status === 'active').length > 0 ? (
+              events.filter(e => e.status === 'active').slice(0, 3).map((e, idx) => (
+                <p key={idx} className="capitalize">{e.type}</p>
+              ))
+            ) : (
+              <p className="text-slate-400">No active incidents</p>
+            )}
           </div>
         </Card>
 
@@ -141,9 +145,9 @@ export default function EmergencyEventsPage() {
             </div>
           </div>
           <div className="space-y-1">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Automatically Sent: <span className="text-slate-600">Yes</span></p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Audience: <span className="text-slate-600">Impacted geographic area</span></p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customization: <span className="text-slate-600">Enabled</span></p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Alerts: <span className="text-slate-600">{alerts.length}</span></p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Events: <span className="text-slate-600">{events.filter(e => e.status === 'active').length}</span></p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Monitoring: <span className="text-slate-600">{events.filter(e => e.status === 'monitoring').length}</span></p>
           </div>
         </Card>
       </div>
@@ -156,20 +160,30 @@ export default function EmergencyEventsPage() {
             <h2 className="text-2xl font-bold text-slate-900 mb-8 tracking-tight">Alert Message Preview</h2>
 
             <div className="bg-slate-50/50 p-8 rounded-2xl border-l-4 border-red-500 mb-8">
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Tornado Warning – Take Action</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
+                {currentEvent?.title || 'No Active Emergency Event'}
+              </h3>
               <p className="text-slate-600 font-medium leading-relaxed">
-                Your geographic area is under a tornado warning. This means a tornado is imminent.
+                {currentEvent?.description || 'Monitor this page for emergency alerts. When an active event is created, its details and recommended actions will appear here.'}
               </p>
             </div>
 
             <div className="space-y-6">
               <h4 className="font-bold text-slate-900 text-lg">Immediate Actions</h4>
               <ul className="space-y-4">
-                {[
-                  'Seek immediate shelter, preferably in a windowless room',
-                  'Check in with family and friends using Ready2Go’s Are We Safe feature if directly impacted',
-                  'Remain in your shelter-in-place location until the warning expires'
-                ].map((action, idx) => (
+                {currentEvent ? (
+                  [
+                    `This is an active ${currentEvent.type} event currently in the ${currentEvent.status} phase.`,
+                    'Follow all official EOC directives and stay tuned to local emergency channels.',
+                    'Ensure your supply kits are accessible and emergency contacts are notified.',
+                  ]
+                ) : (
+                  [
+                    'Monitor active alerts from the Alerts & Communication page.',
+                    'Ensure your emergency plans and preparedness checklists are up to date.',
+                    'Stay connected with your community and responder network.',
+                  ]
+                ).map((action, idx) => (
                   <li key={idx} className="flex items-start gap-3">
                     <span className="text-blue-500 mt-1 font-black">✦</span>
                     <span className="text-slate-600 font-bold text-sm tracking-tight">{action}</span>
@@ -182,7 +196,7 @@ export default function EmergencyEventsPage() {
               <div className="w-5 h-5 flex items-center justify-center text-slate-400 underline">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2" /><path d="M15 7h2a5 5 0 0 1 0 10h-2" /><line x1="8" x2="16" y1="12" y2="12" /></svg>
               </div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">National Weather Service – </span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Emergency Management Agency – </span>
               <a href="#" className="text-xs font-bold text-blue-500 hover:underline uppercase tracking-widest">View Local Conditions</a>
             </div>
           </Card>
@@ -194,19 +208,19 @@ export default function EmergencyEventsPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Active Events</p>
-              <p className="text-lg font-bold text-slate-900">2</p>
+              <p className="text-lg font-bold text-slate-900">{events.filter(e => e.status === 'active').length}</p>
             </div>
             <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Warnings</p>
-              <p className="text-lg font-bold text-slate-900">1</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Monitoring</p>
+              <p className="text-lg font-bold text-slate-900">{events.filter(e => e.status === 'monitoring').length}</p>
             </div>
             <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Alerts Sent</p>
-              <p className="text-lg font-bold text-slate-900">12,450</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Alerts</p>
+              <p className="text-lg font-bold text-slate-900">{alerts.length.toLocaleString()}</p>
             </div>
             <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Last Update</p>
-              <p className="text-lg font-bold text-slate-900">14:41</p>
+              <p className="text-lg font-bold text-slate-900">{currentEvent ? new Date(currentEvent.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}</p>
             </div>
           </div>
 

@@ -8,6 +8,18 @@ export class AlertProcessor {
     private alerts: Alert[] = [];
     private listeners: Array<(alerts: Alert[]) => void> = [];
 
+    private resolveServerBaseUrl(): string | null {
+        const configured =
+            process.env.NEXT_PUBLIC_APP_URL ||
+            process.env.APP_URL ||
+            process.env.NEXTAUTH_URL ||
+            process.env.VERCEL_URL;
+
+        if (!configured) return null;
+        if (configured.startsWith('http://') || configured.startsWith('https://')) return configured;
+        return `https://${configured}`;
+    }
+
     /**
      * Fetch all alerts from all sources
      */
@@ -47,24 +59,31 @@ export class AlertProcessor {
             // Fetch community alerts from DB
             if (fetchAll || sources?.includes(AlertSource.ADMIN_MANUAL)) {
                 try {
-                    const res = await fetch('/api/alerts/community');
-                    if (res.ok) {
-                        const communityData = await res.json();
-                        if (communityData.success) {
-                            const dbAlerts = communityData.data.map((alert: any) => ({
-                                id: alert._id || alert.id,
-                                source: AlertSource.ADMIN_MANUAL,
-                                severity: alert.severity as AlertSeverity,
-                                title: alert.title,
-                                description: alert.description,
-                                timestamp: alert.timestamp || alert.createdAt,
-                                expiresAt: alert.expiresAt,
-                                affectedAreas: alert.affectedAreas,
-                                adminName: alert.adminName,
-                                priority: alert.priority,
-                                isRead: false,
-                            }));
-                            allAlerts.push(...dbAlerts);
+                    const serverBaseUrl = typeof window === 'undefined' ? this.resolveServerBaseUrl() : null;
+                    const endpoint = typeof window === 'undefined'
+                        ? (serverBaseUrl ? `${serverBaseUrl}/api/alerts/community` : null)
+                        : '/api/alerts/community';
+
+                    if (endpoint) {
+                        const res = await fetch(endpoint);
+                        if (res.ok) {
+                            const communityData = await res.json();
+                            if (communityData.success) {
+                                const dbAlerts = communityData.data.map((alert: any) => ({
+                                    id: alert._id || alert.id,
+                                    source: AlertSource.ADMIN_MANUAL,
+                                    severity: alert.severity as AlertSeverity,
+                                    title: alert.title,
+                                    description: alert.description,
+                                    timestamp: alert.timestamp || alert.createdAt,
+                                    expiresAt: alert.expiresAt,
+                                    affectedAreas: alert.affectedAreas,
+                                    adminName: alert.adminName,
+                                    priority: alert.priority,
+                                    isRead: false,
+                                }));
+                                allAlerts.push(...dbAlerts);
+                            }
                         }
                     }
                 } catch (error) {

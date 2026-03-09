@@ -1,9 +1,15 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Card } from '@/components/ui/card'
+import { Loader2 } from 'lucide-react'
 
 export default function VirtualEOCSettingsPage() {
+    const [isLoading, setIsLoading] = useState(true)
+    const [isSaving, setIsSaving] = useState(false)
+    const [savedIndicator, setSavedIndicator] = useState(false)
+    const saveTimerRef = useRef<NodeJS.Timeout | null>(null)
+
     const [activationType, setActivationType] = useState('all')
     const [customSeverities, setCustomSeverities] = useState({
         minor: false,
@@ -18,13 +24,102 @@ export default function VirtualEOCSettingsPage() {
         other: true,
     })
 
+    // Load settings from DB on mount
+    useEffect(() => {
+        async function loadSettings() {
+            try {
+                const res = await fetch('/api/admin/eoc-settings')
+                if (res.ok) {
+                    const data = await res.json()
+                    if (data.success && data.data) {
+                        setActivationType(data.data.activationType || 'all')
+                        setCustomSeverities(prev => ({ ...prev, ...data.data.customSeverities }))
+                        setAlertFeeds(prev => ({ ...prev, ...data.data.alertFeeds }))
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load EOC settings:', err)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        loadSettings()
+    }, [])
+
+    // Debounced save to DB whenever settings change
+    const saveSettings = useCallback(async (
+        type: string,
+        severities: typeof customSeverities,
+        feeds: typeof alertFeeds
+    ) => {
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+        saveTimerRef.current = setTimeout(async () => {
+            try {
+                setIsSaving(true)
+                const res = await fetch('/api/admin/eoc-settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        activationType: type,
+                        customSeverities: severities,
+                        alertFeeds: feeds,
+                    }),
+                })
+                if (res.ok) {
+                    setSavedIndicator(true)
+                    setTimeout(() => setSavedIndicator(false), 2000)
+                }
+            } catch (err) {
+                console.error('Failed to save EOC settings:', err)
+            } finally {
+                setIsSaving(false)
+            }
+        }, 600)
+    }, [])
+
+    const handleActivationTypeChange = (value: string) => {
+        setActivationType(value)
+        saveSettings(value, customSeverities, alertFeeds)
+    }
+
+    const handleSeverityChange = (id: string, checked: boolean) => {
+        const updated = { ...customSeverities, [id]: checked }
+        setCustomSeverities(updated)
+        saveSettings(activationType, updated, alertFeeds)
+    }
+
+    const handleFeedChange = (id: string, checked: boolean) => {
+        const updated = { ...alertFeeds, [id]: checked }
+        setAlertFeeds(updated)
+        saveSettings(activationType, customSeverities, updated)
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-[80vh]">
+                <div className="flex flex-col items-center gap-4 text-slate-500">
+                    <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
+                    <p className="font-black text-xs uppercase tracking-[0.2em]">Loading EOC Settings...</p>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <main className="p-6 space-y-6 max-w-[1200px] mx-auto min-h-screen">
             {/* Header Container */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm relative overflow-hidden p-6 md:px-8 md:py-7">
                 <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-slate-900" />
-                <h1 className="text-3xl font-bold text-slate-900 mb-2">Virtual EOC Activation Settings</h1>
-                <p className="text-slate-600 text-[15px]">Configure when the Virtual Emergency Operations Center activates for your organization.</p>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold text-slate-900 mb-2">Virtual EOC Activation Settings</h1>
+                        <p className="text-slate-600 text-[15px]">Configure when the Virtual Emergency Operations Center activates for your organization.</p>
+                    </div>
+                    <div className="flex items-center gap-2 text-[12px] font-bold">
+                        {isSaving && <span className="text-slate-400 uppercase tracking-widest">Saving...</span>}
+                        {savedIndicator && !isSaving && <span className="text-emerald-500 uppercase tracking-widest">✓ Saved</span>}
+                    </div>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
@@ -45,7 +140,7 @@ export default function VirtualEOCSettingsPage() {
                                         type="radio"
                                         name="activationType"
                                         checked={activationType === 'all'}
-                                        onChange={() => setActivationType('all')}
+                                        onChange={() => handleActivationTypeChange('all')}
                                         className="peer appearance-none w-4 h-4 min-w-[1rem] border-2 border-[#2d325a] rounded-sm bg-white checked:bg-[#2d325a] transition-colors cursor-pointer"
                                     />
                                     <svg className="absolute inset-0 w-4 h-4 text-white pointer-events-none opacity-0 peer-checked:opacity-100 p-[1.5px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -65,7 +160,7 @@ export default function VirtualEOCSettingsPage() {
                                         type="radio"
                                         name="activationType"
                                         checked={activationType === 'major'}
-                                        onChange={() => setActivationType('major')}
+                                        onChange={() => handleActivationTypeChange('major')}
                                         className="peer appearance-none w-4 h-4 min-w-[1rem] border-2 border-slate-300 rounded-sm bg-white checked:bg-[#2d325a] checked:border-[#2d325a] transition-colors cursor-pointer"
                                     />
                                     {activationType === 'major' && (
@@ -87,7 +182,7 @@ export default function VirtualEOCSettingsPage() {
                                         type="radio"
                                         name="activationType"
                                         checked={activationType === 'custom'}
-                                        onChange={() => setActivationType('custom')}
+                                        onChange={() => handleActivationTypeChange('custom')}
                                         className="peer appearance-none w-4 h-4 min-w-[1rem] border-2 border-slate-300 rounded-sm bg-white checked:bg-[#2d325a] checked:border-[#2d325a] transition-colors cursor-pointer"
                                     />
                                     {activationType === 'custom' && (
@@ -121,7 +216,7 @@ export default function VirtualEOCSettingsPage() {
                                                 type="checkbox"
                                                 disabled={activationType !== 'custom'}
                                                 checked={customSeverities[id as keyof typeof customSeverities]}
-                                                onChange={(e) => setCustomSeverities(prev => ({ ...prev, [id]: e.target.checked }))}
+                                                onChange={(e) => handleSeverityChange(id, e.target.checked)}
                                                 className="peer appearance-none w-4 h-4 min-w-[1rem] border-2 border-slate-300 rounded-[3px] bg-white checked:bg-slate-400 checked:border-slate-400 disabled:opacity-50 transition-colors cursor-pointer"
                                             />
                                             <svg className="absolute inset-0 w-4 h-4 text-white pointer-events-none opacity-0 peer-checked:opacity-100 p-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -176,7 +271,7 @@ export default function VirtualEOCSettingsPage() {
                                         <input
                                             type="checkbox"
                                             checked={alertFeeds[id as keyof typeof alertFeeds]}
-                                            onChange={(e) => setAlertFeeds(prev => ({ ...prev, [id]: e.target.checked }))}
+                                            onChange={(e) => handleFeedChange(id, e.target.checked)}
                                             className="peer appearance-none w-[15px] h-[15px] min-w-[15px] border-2 border-[#2d325a] rounded-sm bg-white checked:bg-[#2d325a] transition-colors cursor-pointer"
                                         />
                                         <svg className="absolute inset-0 w-[15px] h-[15px] text-white pointer-events-none opacity-0 peer-checked:opacity-100 p-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">

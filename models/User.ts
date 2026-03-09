@@ -71,6 +71,25 @@ const UserSchema = new Schema({
         task: String,
         completed: { type: Boolean, default: false },
     }],
+    favoritePlaces: [{
+        name: String,
+        address: String,
+        coordinates: {
+            lat: Number,
+            lng: Number,
+        },
+        icon: { type: String, default: 'MapPin' },
+        createdAt: { type: Date, default: Date.now },
+    }],
+    phoneNumber: {
+        type: String,
+        default: '',
+    },
+    notificationPreferences: {
+        push: { type: Boolean, default: true },
+        sms: { type: Boolean, default: true },
+        email: { type: Boolean, default: true },
+    },
     createdAt: {
         type: Date,
         default: Date.now,

@@ -29,6 +29,18 @@ export interface BaseAlert {
 
 export interface WeatherAlert extends BaseAlert {
     source: AlertSource.WEATHER_API;
+    /**
+     * Canonical NWS event name when available, e.g. "Severe Thunderstorm Warning".
+     */
+    event?: string;
+    /**
+     * Raw area description from NWS when available.
+     */
+    areaDesc?: string;
+    /**
+     * NWS UGC zone codes when available.
+     */
+    zones?: string[];
     weatherType: 'thunderstorm' | 'tornado' | 'hurricane' | 'flood' | 'snow' | 'heat' | 'cold' | 'wind' | 'rain' | 'fog' | 'other';
     temperature?: number;
     windSpeed?: number;

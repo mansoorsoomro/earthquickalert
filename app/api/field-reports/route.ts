@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
             .lean();
 
         // Transform for UI (e.g., date formatting)
-        const formattedReports = reports.map(rep => ({
+        const formattedReports = (reports as any[]).map(rep => ({
             id: rep._id.toString(),
             name: rep.name,
             category: rep.category,

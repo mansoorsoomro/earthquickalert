@@ -11,9 +11,12 @@ export async function fetchNearbyResources(
         const googleTypeMap: Record<string, string> = {
             'hospital': 'hospital',
             'pharmacy': 'pharmacy',
-            'shelter': 'local_government_office', // Google doesn't have a perfect 'shelter' type
+            'shelter': 'local_government_office',
             'gas': 'gas_station',
             'lodging': 'lodging',
+            'food': 'restaurant',
+            'financial': 'bank',
+            'traffic': 'transit_station',
         };
 
         const googleType = googleTypeMap[type] || 'hospital';

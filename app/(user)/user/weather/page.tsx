@@ -18,10 +18,11 @@ import {
 import { cn } from '@/lib/utils'
 import { useGeolocation } from '@/lib/hooks/use-geolocation'
 import { weatherAPI } from '@/lib/services/weather-api'
+import { geocodeAddress } from '@/lib/services/mock-map-service'
 import { WeatherData } from '@/lib/types/emergency'
 
 export default function WeatherPage() {
-  const { location, error: geolocError, loading: geolocLoading } = useGeolocation()
+  const { location, error: geolocError, errorCode: geolocErrorCode, loading: geolocLoading } = useGeolocation()
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
   const [city, setCity] = useState<string>('Detecting location...')
   const [isLoading, setIsLoading] = useState(true)
@@ -30,20 +31,47 @@ export default function WeatherPage() {
   useEffect(() => {
     async function fetchData() {
       if (!location) {
+        if (geolocLoading) return
+
+        const savedLocation = typeof window !== 'undefined' ? localStorage.getItem('userLocation') : null
+        if (savedLocation) {
+          try {
+            setIsLoading(true)
+            setError(null)
+            setCity(savedLocation)
+
+            const coords = await geocodeAddress(savedLocation)
+            const data = await weatherAPI.fetchFullWeatherData(coords.lat, coords.lng)
+            setWeatherData(data)
+            setIsLoading(false)
+            return
+          } catch (savedLocErr) {
+            console.error('Saved-location weather fetch error:', savedLocErr)
+          }
+        }
+
         if (!geolocLoading && geolocError) {
-          setError('Location access denied. Please enable location for accurate weather.')
+          if (geolocErrorCode === 1) {
+            setError('Location access denied. Please enable location for accurate weather.')
+          } else {
+            setError('Unable to detect your location. Please try again.')
+          }
           setIsLoading(false)
         }
+        setIsLoading(false)
         return
       }
 
       try {
         setIsLoading(true)
+        setError(null)
+
         // 1. Fetch Location Name
         const geoRes = await fetch(`/api/reverse-geocode?lat=${location.lat}&lng=${location.lng}`)
         const geoData = await geoRes.json()
         if (geoData.name) {
           setCity(geoData.name)
+          localStorage.setItem('userLocation', geoData.name)
         } else {
           setCity('Unknown Location')
         }
@@ -60,7 +88,7 @@ export default function WeatherPage() {
     }
 
     fetchData()
-  }, [location, geolocLoading, geolocError])
+  }, [location, geolocLoading, geolocError, geolocErrorCode])
 
   const IconMap = {
     'sun': Sun,

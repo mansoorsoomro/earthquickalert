@@ -1,48 +1,54 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
-import {
-    Shield,
-    FileText,
-    Users,
-    Heart,
-    Building2,
-    Eye,
-    UserPlus,
-    Info,
-    CheckCircle,
-    User
-} from 'lucide-react'
-
-// Mock Data adapted from screenshot
-const adminUsers = [
-    { name: 'Sarah Chen', role: 'Emergency Manager', org: 'County EM', access: true, incidentRole: 'Incident Command' },
-    { name: 'Michael Perez', role: 'Mayor', org: 'City Office', access: true, incidentRole: 'Executive Oversight' },
-    { name: 'Robert Hayes', role: 'Chief of Staff', org: "Governor's Office", access: true, incidentRole: 'Policy Coordination' },
-]
-
-const activePersonnel = [
-    { name: 'L. Brzon', role: 'Comms Lead', agency: 'City EM', incident: 'Tornado Warning', status: 'Active' },
-    { name: 'M. Patel', role: 'Fire Ops', agency: 'Fire Dept', incident: 'Tornado Warning', status: 'Active' },
-    { name: 'Ops Team A', role: 'Facilities', agency: 'Public Works', incident: 'Tornado Warning', status: 'Standby' },
-]
-
-const nonprofits = [
-    { name: 'Red Cross', function: 'Sheltering', area: 'North Zone', status: 'Active', contact: 'Assigned' },
-    { name: 'World Central Kitchen', function: 'Food Services', area: 'Central Hub', status: 'Active', contact: 'Assigned' },
-]
-
-const businesses = [
-    { name: 'PowerCo', sector: 'Utilities', support: 'Power Restoration', area: 'Industrial Zone', status: 'Active' },
-    { name: 'PharmaPlus', sector: 'Pharmacy', support: 'Medication Access', area: 'East District', status: 'Active' },
-]
+import { Eye, UserPlus, Info } from 'lucide-react'
 
 export default function RespondersAgenciesPage() {
+    const [adminUsers, setAdminUsers] = useState<any[]>([])
+    const [activePersonnel, setActivePersonnel] = useState<any[]>([])
+    const [nonprofits, setNonprofits] = useState<any[]>([])
+    const [businesses, setBusinesses] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        async function fetchData() {
+            try {
+                const [personnelRes, partnersRes] = await Promise.all([
+                    fetch('/api/admin/personnel').catch(() => null),
+                    fetch('/api/admin/partners'),
+                ])
+
+                // Personnel (non-critical — endpoint may not exist yet)
+                if (personnelRes?.ok) {
+                    const data = await personnelRes.json()
+                    if (data.success) {
+                        setAdminUsers(data.data.adminUsers)
+                        setActivePersonnel(data.data.activePersonnel)
+                    }
+                }
+
+                // Partners
+                if (partnersRes.ok) {
+                    const data = await partnersRes.json()
+                    if (data.success) {
+                        setNonprofits(data.data.nonprofits || [])
+                        setBusinesses(data.data.businesses || [])
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch responders data:', err)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchData()
+    }, [])
+
     return (
         <main className="p-8 space-y-8 bg-slate-50/30 min-h-screen">
             {/* Page Header */}
@@ -69,13 +75,16 @@ export default function RespondersAgenciesPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
+                            {adminUsers.length === 0 && !loading && (
+                                <tr><td colSpan={6} className="py-8 text-center text-slate-400 font-medium">No admin users found in the system.</td></tr>
+                            )}
                             {adminUsers.map((user, i) => (
                                 <tr key={i} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="py-5 font-bold text-slate-900">{user.name}</td>
                                     <td className="py-5 text-slate-600 font-medium">{user.role}</td>
                                     <td className="py-5 text-slate-600 font-medium">{user.org}</td>
                                     <td className="py-5">
-                                        <Switch checked={user.access} className="data-[state=checked]:bg-slate-700" />
+                                        <Switch checked={user.access} onCheckedChange={() => { }} className="data-[state=checked]:bg-slate-700" />
                                     </td>
                                     <td className="py-5 text-slate-600 font-medium underline underline-offset-4 decoration-slate-200">
                                         {user.incidentRole}
@@ -119,6 +128,9 @@ export default function RespondersAgenciesPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
+                            {activePersonnel.length === 0 && !loading && (
+                                <tr><td colSpan={6} className="py-8 text-center text-slate-400 font-medium">No active personnel assigned to this incident yet.</td></tr>
+                            )}
                             {activePersonnel.map((p, i) => (
                                 <tr key={i} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="py-5 font-bold text-slate-900">{p.name}</td>
@@ -161,8 +173,11 @@ export default function RespondersAgenciesPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
-                            {nonprofits.map((n, i) => (
-                                <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                            {nonprofits.length === 0 && !loading && (
+                                <tr><td colSpan={5} className="py-8 text-center text-slate-400 font-medium">No nonprofit partners found.</td></tr>
+                            )}
+                            {nonprofits.map((n: any, i: number) => (
+                                <tr key={n.id || i} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="py-5 font-bold text-slate-900">{n.name}</td>
                                     <td className="py-5 text-slate-600 font-medium">{n.function}</td>
                                     <td className="py-5 text-slate-600 font-medium">{n.area}</td>
@@ -194,8 +209,11 @@ export default function RespondersAgenciesPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
-                            {businesses.map((b, i) => (
-                                <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                            {businesses.length === 0 && !loading && (
+                                <tr><td colSpan={5} className="py-8 text-center text-slate-400 font-medium">No business partners found.</td></tr>
+                            )}
+                            {businesses.map((b: any, i: number) => (
+                                <tr key={b.id || i} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="py-5 font-bold text-slate-900">{b.name}</td>
                                     <td className="py-5 text-slate-600 font-medium">{b.sector}</td>
                                     <td className="py-5 text-slate-600 font-medium">{b.support}</td>

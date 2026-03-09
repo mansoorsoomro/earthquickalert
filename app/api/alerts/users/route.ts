@@ -1,139 +1,278 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
+import CommunityAlert from '@/models/CommunityAlert';
+import WeatherAlertRecord from '@/models/WeatherAlertRecord';
+import WeatherAlertTypeConfig from '@/models/WeatherAlertTypeConfig';
+import { getSession } from '@/lib/auth';
 import { alertProcessor } from '@/lib/services/alert-processor';
-import { AlertSource, AlertSeverity, Alert } from '@/lib/types/api-alerts';
+import { Alert, AlertSource, AlertSeverity } from '@/lib/types/api-alerts';
+import {
+    geocodeLocation,
+    locationMatchesAlertAreas,
+} from '@/lib/services/location-matching';
 
-export async function GET(request: Request) {
+type WeatherAlertDoc = {
+    alertId: string;
+    source: string;
+    event?: string;
+    severity: string;
+    title: string;
+    description: string;
+    timestamp: Date;
+    expiresAt?: Date;
+    weatherType?: string;
+    temperature?: number;
+    windSpeed?: number;
+    humidity?: number;
+    precipitation?: number;
+    coordinates?: { lat: number; lon: number };
+    affectedAreas?: string[];
+    areaDesc?: string;
+    zones?: string[];
+};
+
+function unique<T>(values: T[]): T[] {
+    return Array.from(new Set(values));
+}
+
+function locationsFromUser(user: any): string[] {
+    const values: string[] = [];
+    if (typeof user.location === 'string' && user.location.trim()) {
+        values.push(user.location.trim());
+    }
+    if (Array.isArray(user.familyMembers)) {
+        for (const member of user.familyMembers) {
+            if (typeof member.location === 'string' && member.location.trim()) {
+                values.push(member.location.trim());
+            }
+        }
+    }
+    return unique(values);
+}
+
+function toSeverity(value: string): AlertSeverity {
+    const normalized = (value || '').toLowerCase();
+    if (normalized === 'extreme') return AlertSeverity.EXTREME;
+    if (normalized === 'severe') return AlertSeverity.SEVERE;
+    if (normalized === 'high') return AlertSeverity.HIGH;
+    if (normalized === 'moderate') return AlertSeverity.MODERATE;
+    if (normalized === 'low' || normalized === 'minor') return AlertSeverity.LOW;
+    return AlertSeverity.INFO;
+}
+
+function toRadians(value: number): number {
+    return value * (Math.PI / 180);
+}
+
+function distanceKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
+    const earthRadiusKm = 6371;
+    const dLat = toRadians(bLat - aLat);
+    const dLon = toRadians(bLon - aLon);
+
+    const sinLat = Math.sin(dLat / 2);
+    const sinLon = Math.sin(dLon / 2);
+
+    const value =
+        sinLat * sinLat +
+        Math.cos(toRadians(aLat)) * Math.cos(toRadians(bLat)) * sinLon * sinLon;
+
+    const c = 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+    return earthRadiusKm * c;
+}
+
+function normalizeAlertTargetValues(values: string[]): string[] {
+    return values
+        .map(value => value.toLowerCase().trim())
+        .filter(Boolean);
+}
+
+export async function GET() {
     try {
         await connectDB();
 
-        // 1. Gather all unique location strings from all users and their family members
-        const users = await User.find({}).lean();
-        const locationSet = new Set<string>();
+        const session = await getSession();
+        const isAdmin = session?.user?.role === 'admin';
 
-        users.forEach((user: any) => {
-            if (user.location && user.location.trim() !== '') {
-                locationSet.add(user.location.trim());
-            }
-            if (user.familyMembers && Array.isArray(user.familyMembers)) {
-                user.familyMembers.forEach((member: any) => {
-                    if (member.location && member.location.trim() !== '') {
-                        locationSet.add(member.location.trim());
-                    }
-                });
-            }
-        });
+        let users: any[] = [];
+        if (session?.user && !isAdmin) {
+            const currentUser = await User.findById(session.user.id).lean();
+            if (currentUser) users = [currentUser];
+        } else {
+            users = await User.find({}).lean();
+        }
 
-        const uniqueLocations = Array.from(locationSet);
+        const allRegisteredLocations = unique(
+            users.flatMap(user => locationsFromUser(user))
+        );
+
         const geocodedLocations: { lat: number; lon: number; name: string }[] = [];
-
-        // 2. Geocode the unique string locations using the Photon API logic
-        for (const loc of uniqueLocations) {
-            try {
-                // Check if it's already a lat/lon string (e.g. "41.87,-87.62")
-                const coordsRegex = /^([-+]?[0-9]*\.?[0-9]+),\s*([-+]?[0-9]*\.?[0-9]+)$/;
-                const match = loc.match(coordsRegex);
-
-                if (match) {
-                    geocodedLocations.push({
-                        lat: parseFloat(match[1]),
-                        lon: parseFloat(match[2]),
-                        name: loc
-                    });
-                    continue;
-                }
-
-                const url = `https://photon.komoot.io/api?q=${encodeURIComponent(loc)}&limit=1`;
-                const response = await fetch(url, {
-                    headers: { 'Accept': 'application/json' }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.features && data.features.length > 0) {
-                        const feature = data.features[0];
-                        geocodedLocations.push({
-                            lat: feature.geometry.coordinates[1],
-                            lon: feature.geometry.coordinates[0],
-                            name: loc
-                        });
-                    }
-                }
-            } catch (err) {
-                console.error(`Failed to geocode location: ${loc}`, err);
+        for (const locationName of allRegisteredLocations) {
+            const geocoded = await geocodeLocation(locationName);
+            if (geocoded) {
+                geocodedLocations.push(geocoded);
             }
         }
 
-        // 3. Fetch Alerts (Weather + Earthquake)
-        // Earthquake fetches all natively and we can filter, but weather needs coords
-        const allAlerts: Alert[] = [];
+        const now = new Date();
+        const alertConfig: any = await WeatherAlertTypeConfig.findOne().lean();
+        const enabledEvents = new Set<string>(
+            (alertConfig?.events || [])
+                .filter((entry: any) => entry.enabled && !entry.invalid)
+                .map((entry: any) => entry.name)
+        );
+        const hasConfig = Array.isArray(alertConfig?.events) && alertConfig.events.length > 0;
 
-        // A. Weather Alerts: explicitly fetch for each geocoded location
-        // Using alertProcessor isn't perfectly vectorized for multiple locations at once, 
-        // so we'll fetch them individually and combine
-        for (const geo of geocodedLocations) {
-            try {
-                const alerts = await alertProcessor.fetchAllAlerts(
-                    { lat: geo.lat, lon: geo.lon },
-                    [AlertSource.WEATHER_API]
+        const storedWeatherAlerts = await WeatherAlertRecord.find({
+            source: AlertSource.WEATHER_API,
+            $or: [
+                { expiresAt: { $exists: false } },
+                { expiresAt: null },
+                { expiresAt: { $gt: now } },
+            ],
+        }).sort({ timestamp: -1 }).lean() as unknown as WeatherAlertDoc[];
+
+        const mergedWeatherMap = new Map<string, Alert>();
+        const coordinateLocations = geocodedLocations.map(value => ({ lat: value.lat, lon: value.lon, name: value.name }));
+
+        for (const record of storedWeatherAlerts) {
+            if (hasConfig && record.event && !enabledEvents.has(record.event)) {
+                continue;
+            }
+
+            let matchedAreas: string[] = [];
+            if (isAdmin && allRegisteredLocations.length === 0) {
+                matchedAreas = record.affectedAreas || [];
+            } else {
+                matchedAreas = allRegisteredLocations.filter(location =>
+                    locationMatchesAlertAreas(location, record.affectedAreas || [], record.areaDesc, record.zones || [])
                 );
 
-                // Attach the string location name to affectedAreas
-                const localizedAlerts = alerts.map(a => ({
-                    ...a,
-                    affectedAreas: [geo.name]
-                }));
-
-                allAlerts.push(...localizedAlerts);
-            } catch (err) {
-                console.error(`Failed to fetch weather for ${geo.name}`, err);
+                if (matchedAreas.length === 0 && record.coordinates && coordinateLocations.length > 0) {
+                    const nearby = coordinateLocations
+                        .filter(coords => distanceKm(coords.lat, coords.lon, record.coordinates!.lat, record.coordinates!.lon) <= 80)
+                        .map(coords => coords.name);
+                    matchedAreas.push(...nearby);
+                }
             }
+
+            if (!isAdmin && matchedAreas.length === 0) continue;
+
+            const existing = mergedWeatherMap.get(record.alertId);
+            const mergedAreas = unique([
+                ...(existing?.affectedAreas || []),
+                ...(matchedAreas.length > 0 ? matchedAreas : (record.affectedAreas || [])),
+            ]);
+
+            mergedWeatherMap.set(record.alertId, {
+                id: record.alertId,
+                source: AlertSource.WEATHER_API,
+                severity: toSeverity(record.severity),
+                title: record.title,
+                description: record.description,
+                timestamp: new Date(record.timestamp).toISOString(),
+                expiresAt: record.expiresAt ? new Date(record.expiresAt).toISOString() : undefined,
+                affectedAreas: mergedAreas,
+                event: record.event,
+                areaDesc: record.areaDesc,
+                zones: record.zones || [],
+                weatherType: (record.weatherType as any) || 'other',
+                temperature: record.temperature,
+                windSpeed: record.windSpeed,
+                humidity: record.humidity,
+                precipitation: record.precipitation,
+                coordinates: record.coordinates,
+            } as Alert);
         }
 
-        // B. Earthquake Alerts: Fetch globally, then filter based on proximity to our users OR just include all major ones
-        // Actually, the request was "Alerts of weather and earth quick only of my users", 
-        // so we just fetch earthquakes for the locations
-        for (const geo of geocodedLocations) {
+        const earthquakeAlerts: Alert[] = [];
+        for (const location of geocodedLocations) {
             try {
-                const alerts = await alertProcessor.fetchAllAlerts(
-                    { lat: geo.lat, lon: geo.lon },
+                const fetched = await alertProcessor.fetchAllAlerts(
+                    { lat: location.lat, lon: location.lon },
                     [AlertSource.EARTHQUAKE_API]
                 );
 
-                // Attach the string location name to affectedAreas (if not already set)
-                const localizedAlerts = alerts.map(a => ({
-                    ...a,
-                    affectedAreas: a.affectedAreas?.length ? a.affectedAreas : [geo.name]
-                }));
-
-                // Avoid duplicating earthquakes since one earthquake might cover multiple users
-                for (const alert of localizedAlerts) {
-                    if (!allAlerts.some(existing => existing.id === alert.id)) {
-                        allAlerts.push(alert);
+                for (const alert of fetched) {
+                    const existing = earthquakeAlerts.find(item => item.id === alert.id);
+                    if (!existing) {
+                        earthquakeAlerts.push({
+                            ...alert,
+                            affectedAreas: unique([...(alert.affectedAreas || []), location.name]),
+                        });
                     } else {
-                        // Append affected area if it affects another user
-                        const existing = allAlerts.find(e => e.id === alert.id);
-                        if (existing && !existing.affectedAreas?.includes(geo.name)) {
-                            existing.affectedAreas?.push(geo.name);
-                        }
+                        existing.affectedAreas = unique([...(existing.affectedAreas || []), location.name]);
                     }
                 }
-
-            } catch (err) {
-                console.error(`Failed to fetch earthquakes for ${geo.name}`, err);
+            } catch (error) {
+                console.error(`Failed to fetch earthquakes for ${location.name}:`, error);
             }
         }
 
-        // Sort by timestamp
+        const communityRaw = await CommunityAlert.find({
+            $or: [
+                { expiresAt: { $exists: false } },
+                { expiresAt: null },
+                { expiresAt: { $gt: now } },
+            ],
+        }).sort({ timestamp: -1 }).lean();
+
+        const requestedUserId = session?.user?.id ? String(session.user.id) : '';
+        const scopedZones = normalizeAlertTargetValues(allRegisteredLocations);
+
+        const communityAlerts: Alert[] = communityRaw
+            .filter((alert: any) => {
+                if (isAdmin) return true;
+
+                const targetUsers = normalizeAlertTargetValues(
+                    Array.isArray(alert.targetUsers) ? alert.targetUsers.map((value: any) => String(value)) : []
+                );
+                const affectedAreas = normalizeAlertTargetValues(
+                    Array.isArray(alert.affectedAreas) ? alert.affectedAreas.map((value: any) => String(value)) : []
+                );
+
+                const targetsCurrentUser = requestedUserId && targetUsers.includes(requestedUserId.toLowerCase());
+                const targetsAll = targetUsers.includes('broadcast') || targetUsers.includes('all');
+                const areaOverlap = affectedAreas.length === 0 ||
+                    affectedAreas.some((area: string) =>
+                        scopedZones.some(zone => area.includes(zone) || zone.includes(area))
+                    );
+
+                return targetsCurrentUser || targetsAll || areaOverlap;
+            })
+            .map((alert: any) => ({
+                id: String(alert._id),
+                source: AlertSource.ADMIN_MANUAL,
+                severity: toSeverity(alert.severity),
+                title: alert.title,
+                description: alert.description,
+                timestamp: new Date(alert.timestamp || alert.createdAt || new Date()).toISOString(),
+                expiresAt: alert.expiresAt ? new Date(alert.expiresAt).toISOString() : undefined,
+                affectedAreas: alert.affectedAreas || [],
+                adminName: alert.adminName || 'Admin',
+                priority: alert.priority || 'medium',
+                isRead: false,
+            } as Alert));
+
+        const allAlerts: Alert[] = [
+            ...Array.from(mergedWeatherMap.values()),
+            ...earthquakeAlerts,
+            ...communityAlerts,
+        ];
+
         allAlerts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
         return NextResponse.json({
             success: true,
             data: allAlerts,
             count: allAlerts.length,
+            metadata: {
+                locations: geocodedLocations.length,
+                weatherAlerts: mergedWeatherMap.size,
+                earthquakeAlerts: earthquakeAlerts.length,
+                communityAlerts: communityAlerts.length,
+            },
         });
-
     } catch (error) {
         console.error('Error in /api/alerts/users:', error);
         return NextResponse.json(

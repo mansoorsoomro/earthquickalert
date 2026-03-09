@@ -47,11 +47,22 @@ type ReportItem = {
 export default function GISMappingPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [feedItems, setFeedItems] = useState<FeedItem[]>([])
-  const [reports, setReports] = useState<ReportItem[]>([
-    { id: '1', name: 'Javier Waters', category: 'Road Closures', date: '20/Dec/2026', file: 'Road_Closure_0421.pdf', status: 'Review' },
-    { id: '2', name: 'Frankie Kilback', category: 'Structural Damage', date: '19/Dec/2026', file: 'Structural_Damage_0420.pdf', status: 'Reviewed' }
-  ])
+  const [reports, setReports] = useState<ReportItem[]>([])
   const [loading, setLoading] = useState(true)
+
+  const fetchReports = async () => {
+    try {
+      const res = await fetch('/api/field-reports')
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success && data.data) {
+          setReports(data.data)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load reports', err)
+    }
+  }
 
   const fetchIncidents = async () => {
     try {
@@ -87,6 +98,7 @@ export default function GISMappingPage() {
 
   useEffect(() => {
     fetchIncidents()
+    fetchReports()
   }, [])
 
   const mapResources = useMemo(() => {
@@ -102,10 +114,24 @@ export default function GISMappingPage() {
       } as EmergencyResource))
   }, [feedItems])
 
-  const handleUpdateReportStatus = (id: string, currentStatus: string) => {
+  const handleUpdateReportStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'Review' ? 'Reviewed' : 'Review'
+    // Optimistic UI update
     setReports(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r))
     setIsModalOpen(true)
+
+    // Server payload
+    try {
+      await fetch('/api/field-reports', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id, status: newStatus })
+      })
+    } catch (err) {
+      console.error('Failed to update field report status', err)
+    }
   }
 
   return (

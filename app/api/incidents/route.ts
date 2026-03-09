@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
             .lean();
 
         // Transform slightly to match the UI expectations
-        const formattedIncidents = incidents.map(inc => ({
+        const formattedIncidents = (incidents as any[]).map(inc => ({
             id: inc._id.toString(),
             type: inc.type,
             title: `${inc.type}${inc.description ? ' - ' + inc.description : ''}`,

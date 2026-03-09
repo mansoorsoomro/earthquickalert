@@ -17,7 +17,10 @@ import {
     Activity,
     Loader2,
     ChevronRight,
-    ChevronLeft
+    ChevronLeft,
+    Coffee,
+    DollarSign,
+    Car
 } from 'lucide-react'
 import { useGeolocation } from '@/lib/hooks/use-geolocation'
 import { useSearchParams } from 'next/navigation'
@@ -81,9 +84,10 @@ function ResourcesContent() {
     const resourceTypes = [
         { id: 'hospital', label: 'Hospitals', icon: Hospital, color: 'bg-red-600', shadow: 'shadow-red-50' },
         { id: 'pharmacy', label: 'Pharmacies', icon: Pill, color: 'bg-green-600', shadow: 'shadow-green-50' },
-        { id: 'shelter', label: 'Shelters', icon: AlertCircle, color: 'bg-indigo-600', shadow: 'shadow-indigo-50' },
-        { id: 'gas', label: 'Fuel', icon: Fuel, color: 'bg-orange-600', shadow: 'shadow-orange-50' },
         { id: 'lodging', label: 'Lodging', icon: Hotel, color: 'bg-blue-600', shadow: 'shadow-blue-50' },
+        { id: 'food', label: 'Food & Essentials', icon: Coffee, color: 'bg-orange-600', shadow: 'shadow-orange-50' },
+        { id: 'financial', label: 'Financial Services', icon: DollarSign, color: 'bg-purple-600', shadow: 'shadow-purple-50' },
+        { id: 'traffic', label: 'Traffic Status', icon: Car, color: 'bg-yellow-600', shadow: 'shadow-yellow-50' },
     ]
 
     const ResourceItem = ({ resource }: { resource: EmergencyResource }) => (

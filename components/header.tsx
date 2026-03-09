@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Bell, Search, LogOut, Menu, X, Users } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Bell, Search, LogOut, Menu, X, Users, User, Settings, ChevronDown } from 'lucide-react'
 import { menuItems } from '@/components/sidebar'
 import { menuItems as userMenuItems } from '@/components/user-sidebar'
 import Link from 'next/link'
@@ -15,9 +15,19 @@ interface HeaderProps {
 }
 
 export function Header({ userName = 'Admin User', onLogout }: HeaderProps) {
-  const [showMenu, setShowMenu] = useState(false)
-  const [showSearch, setShowSearch] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
   const [showSidebar, setShowSidebar] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const displayName = userName || (typeof window !== 'undefined' ? localStorage.getItem('userName') : '') || 'User'
   const userEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : ''
@@ -47,24 +57,58 @@ export function Header({ userName = 'Admin User', onLogout }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-6">
-        <button className="relative p-1 hover:bg-slate-50 rounded-full transition-all">
-          <Bell className="w-5 h-5 text-slate-600" />
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full border-2 border-white shadow-sm">3</span>
-        </button>
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setShowDropdown(!showDropdown)}
+            className="flex items-center gap-3 pl-6 border-l border-slate-100 hover:bg-slate-50 py-1.5 px-3 rounded-xl transition-all group"
+          >
+            <Avatar className="w-9 h-9 border-2 border-slate-100 p-0.5 transition-all group-hover:border-blue-100">
+              <AvatarImage src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop" className="rounded-full overflow-hidden object-cover" />
+              <AvatarFallback className="rounded-full flex items-center justify-center bg-slate-100 text-[10px] font-bold">{displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <div className="text-left hidden sm:block">
+              <p className="text-sm font-black text-slate-900 leading-tight tracking-tight">{displayName}</p>
+              <p className="text-[11px] text-slate-400 font-bold">{userEmail || 'user@gmail.com'}</p>
+            </div>
+            <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-200 ml-1", showDropdown && "rotate-180")} />
+          </button>
 
-        <div className="flex items-center gap-3 pl-6 border-l border-slate-100">
-          <Avatar className="w-9 h-9 border border-slate-100 p-0.5">
-            <AvatarImage src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop" className="rounded-full overflow-hidden object-cover" />
-            <AvatarFallback className="rounded-full flex items-center justify-center bg-slate-100 text-[10px] font-bold">{displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
-          <div className="text-left hidden sm:block">
-            <p className="text-sm font-bold text-slate-900 leading-tight">{displayName}</p>
-            <p className="text-[11px] text-slate-400 font-medium">{userEmail || 'user@gmail.com'}</p>
-          </div>
+          {showDropdown && (
+            <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-100 shadow-2xl rounded-[24px] py-3 z-50 animate-in fade-in zoom-in-95 duration-150 origin-top-right">
+              <div className="px-5 py-3 mb-2 border-b border-slate-50 md:hidden">
+                <p className="text-sm font-black text-slate-900 leading-tight">{displayName}</p>
+                <p className="text-[11px] text-slate-400 font-bold">{userEmail}</p>
+              </div>
+
+              <Link
+                href="/user/settings"
+                onClick={() => setShowDropdown(false)}
+                className="flex items-center gap-3 px-4 py-3 mx-2 rounded-2xl text-sm font-black text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all"
+              >
+                <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
+                  <User className="w-4 h-4" />
+                </div>
+                Edit Profile
+              </Link>
+
+              <div className="h-px bg-slate-100 my-2 mx-4" />
+
+              <button
+                onClick={() => {
+                  setShowDropdown(false)
+                  onLogout?.()
+                }}
+                className="flex items-center gap-3 px-4 py-3 mx-2 rounded-2xl text-sm font-black text-red-600 hover:bg-red-50 transition-all w-[calc(100%-16px)] text-left"
+              >
+                <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center text-red-500">
+                  <LogOut className="w-4 h-4" />
+                </div>
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Mobile Sidebar Logic and ShowMenu dropdown would go here if needed, but keeping it simple for now */}
     </header>
   )
 }

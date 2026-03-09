@@ -49,27 +49,37 @@ export function QuickActionButtons({
 
   return (
     <>
-      <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-        <h3 className="text-xl font-bold text-slate-900 mb-6">Quick Action Buttons</h3>
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Pending Items</p>
-        <div className="flex flex-wrap gap-2">
+      <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none">
+          <Zap className="w-24 h-24 rotate-12" />
+        </div>
+
+        <h3 className="text-xl font-bold text-slate-900 mb-6 relative z-10">Quick Action Buttons</h3>
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 relative z-10">Administrative Control</p>
+
+        <div className="flex flex-wrap gap-3 relative z-10">
           {[
-            { label: 'Activate Virtual EOC', color: 'bg-red-500 hover:bg-red-600', icon: Zap, onClick: () => setIsEOCModalOpen(true) },
-            { label: 'Send Community Alert', color: 'bg-blue-500 hover:bg-blue-600', icon: Bell, onClick: () => setIsAlertModalOpen(true) },
-            { label: 'View All Events', color: 'bg-slate-700 hover:bg-slate-800', icon: Eye, onClick: () => setIsEventsModalOpen(true) },
-            { label: 'Generate Situation Report', color: 'bg-emerald-500 hover:bg-emerald-600', icon: CheckCircle, onClick: () => setIsSitRepModalOpen(true) },
-            { label: 'Open Recovery Tools', color: 'bg-amber-400 hover:bg-amber-500', icon: AlertCircle, onClick: () => setIsRecoveryModalOpen(true) }
+            { label: 'Activate Virtual EOC', color: 'bg-red-500 hover:bg-red-600', icon: Zap, onClick: () => setIsEOCModalOpen(true), badge: 'Command' },
+            { label: 'Send Community Alert', color: 'bg-blue-500 hover:bg-blue-600', icon: Bell, onClick: () => setIsAlertModalOpen(true), badge: 'Broadcast' },
+            { label: 'View All Events', color: 'bg-slate-700 hover:bg-slate-800', icon: Eye, onClick: () => setIsEventsModalOpen(true), badge: 'Live' },
+            { label: 'Generate Situation Report', color: 'bg-emerald-600 hover:bg-emerald-700', icon: CheckCircle, onClick: () => setIsSitRepModalOpen(true), badge: 'AI' },
+            { label: 'Open Recovery Tools', color: 'bg-amber-400 hover:bg-amber-500', icon: AlertCircle, onClick: () => setIsRecoveryModalOpen(true), badge: 'Verify' }
           ].map((action, idx) => (
             <Button
               key={idx}
               onClick={action.onClick}
               className={cn(
-                "h-10 px-4 text-white text-[11px] font-bold uppercase rounded-lg flex items-center gap-2 border-none transition-all hover:scale-[1.02]",
+                "h-12 px-5 text-white text-[11px] font-black uppercase rounded-xl flex items-center gap-3 border-none transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm hover:shadow-md",
                 action.color
               )}
             >
               <action.icon className="w-4 h-4" />
-              {action.label}
+              <div className="flex flex-col items-start gap-0.5">
+                <span className="leading-none">{action.label}</span>
+                {action.badge && (
+                  <span className="text-[8px] opacity-70 font-black tracking-[0.2em]">{action.badge}</span>
+                )}
+              </div>
             </Button>
           ))}
         </div>

@@ -60,19 +60,27 @@ export function CommunicationsCenter({
           <div>
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Recent Messages Sent</h3>
             <div className="space-y-3">
-              {[
-                { title: 'Preparedness Alert', msg: 'Weather watch in effect...', time: '10 min ago', bg: 'bg-slate-50' },
-                { title: 'Take Action Message', msg: 'Seek shelter immediately...', time: '15 min ago', bg: 'bg-red-50' },
-                { title: 'Resource Update', msg: 'Shelter locations now open...', time: '18 min ago', bg: 'bg-slate-50' }
-              ].map((msg, idx) => (
-                <div key={idx} className={cn("p-4 rounded-xl flex justify-between items-start", msg.bg)}>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">{msg.title}</p>
-                    <p className="text-sm font-medium text-slate-500 mt-0.5">"{msg.msg}"</p>
+              {recentAlerts.length > 0 ? (
+                recentAlerts.map((msg) => (
+                  <div key={msg.id} className={cn(
+                    "p-4 rounded-xl flex justify-between items-start transition-all",
+                    msg.severity === 'critical' ? 'bg-red-50 border border-red-100' : 'bg-slate-50 border border-slate-100'
+                  )}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-black text-slate-900 truncate uppercase tracking-tight">{msg.title}</p>
+                      <p className="text-xs font-bold text-slate-500 mt-1 line-clamp-1 italic">"{msg.message}"</p>
+                    </div>
+                    <span className="text-[9px] font-black text-slate-400 uppercase ml-4 whitespace-nowrap bg-white px-2 py-1 rounded-lg border border-slate-100 shadow-sm">
+                      {formatTimeAgo(msg.createdAt)}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase ml-4">{msg.time}</span>
+                ))
+              ) : (
+                <div className="p-8 border-2 border-dashed border-slate-100 rounded-2xl flex flex-col items-center justify-center text-center">
+                  <FileText className="w-8 h-8 text-slate-200 mb-3" />
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-relaxed"> No transmission history detected </p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 

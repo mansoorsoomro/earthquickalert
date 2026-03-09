@@ -1,29 +1,63 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
-import { Flame, Layers, Clock, Columns } from 'lucide-react'
+import { Flame, Layers, Clock, Columns, Loader2 } from 'lucide-react'
 
-const INCIDENT_DATA = {
-  name: 'Tornado Warning 04/23',
-  type: 'Tornado',
-  duration: '14:10 – 15:45',
-  insights: 12,
-  events: [
-    { id: 1, time: '08:15 AM', type: 'Alert Issued', title: 'Initial Fire Alert Detected', description: 'Automated system detected smoke and heat signatures in Sector 7-B. Emergency protocols activated.', color: 'red' },
-    { id: 2, time: '08:22 AM', type: 'Responder Action', title: 'Fire Unit 3 Dispatched', description: 'Primary response team deployed with 12 personnel and 2 engines. ETA: 7 minutes.', color: 'blue' },
-    { id: 3, time: '08:26 AM', type: 'Citizen Report', title: 'Multiple 911 Calls Received', description: '47 citizen reports confirming fire spread. Evacuation requests from residential areas.', color: 'green' },
-    { id: 4, time: '08:35 AM', type: 'Responder Action', title: 'Evacuation Order Issued', description: 'Mandatory evacuation for 2.3 mile radius. Shelter locations broadcast via emergency alert system.', color: 'blue' },
-    { id: 5, time: '09:12 AM', type: 'System Update', title: 'Resource Allocation Updated', description: 'AI system reallocated 3 additional units based on wind pattern analysis and spread prediction.', color: 'purple' },
-    { id: 6, time: '11:45 AM', type: 'Responder Action', title: 'Aerial Support Deployed', description: '2 helicopters with water drops initiated. Ground crews report 40% containment achieved.', color: 'blue' },
-    { id: 7, time: '10:47 PM', type: 'Citizen Report', title: 'Incident Contained - All Clear', description: '100% containment confirmed. Residents cleared to return. Post-incident assessment initiated.', color: 'green' },
-  ],
-  aiInsights: [
-    { id: '001', category: 'Response Time', description: 'Fire Ops delayed 5 min', time: '14:45', status: 'Pending' },
-    { id: '002', category: 'Resource Allocation', description: 'Additional medical team recommended', time: '14:42', status: 'Addressed' },
-  ]
+// Dynamic Type for the Incident data
+type IncidentReviewDef = {
+  id?: string;
+  name: string;
+  type: string;
+  duration: string;
+  insights: number;
+  events: any[];
+  aiInsights: any[];
 }
 
 export default function AfterActionReviewPage() {
+  const [incidentData, setIncidentData] = useState<IncidentReviewDef | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchReviewData() {
+      try {
+        const res = await fetch('/api/admin/after-action-review')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.success && data.data) {
+            setIncidentData(data.data)
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch AAR data:", err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchReviewData()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[80vh]">
+        <div className="flex flex-col items-center gap-4 text-slate-500">
+          <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
+          <p className="font-black text-xs uppercase tracking-[0.2em]">Assembling Critical Incident Matrix...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Fallback map if no resolved data exists yet
+  const displayData = incidentData || {
+    name: 'No Resolved Incidents Available',
+    type: 'N/A',
+    duration: 'N/A',
+    insights: 0,
+    events: [],
+    aiInsights: []
+  }
   return (
     <main className="p-6 space-y-6 max-w-[1200px] mx-auto min-h-screen">
       {/* Header Container */}
@@ -41,7 +75,7 @@ export default function AfterActionReviewPage() {
             <Flame className="w-5 h-5" />
           </div>
           <p className="text-[13px] text-slate-500 mb-1">Incident Name</p>
-          <p className="text-lg font-bold text-slate-900">{INCIDENT_DATA.name}</p>
+          <p className="text-lg font-bold text-slate-900">{displayData.name}</p>
         </Card>
 
         {/* Card 2 */}
@@ -50,7 +84,7 @@ export default function AfterActionReviewPage() {
             <Layers className="w-5 h-5" />
           </div>
           <p className="text-[13px] text-slate-500 mb-1">Incident Type</p>
-          <p className="text-lg font-bold text-slate-900">{INCIDENT_DATA.type}</p>
+          <p className="text-lg font-bold text-slate-900">{displayData.type}</p>
         </Card>
 
         {/* Card 3 */}
@@ -59,7 +93,7 @@ export default function AfterActionReviewPage() {
             <Clock className="w-5 h-5" />
           </div>
           <p className="text-[13px] text-slate-500 mb-1">Duration</p>
-          <p className="text-lg font-bold text-slate-900">{INCIDENT_DATA.duration}</p>
+          <p className="text-lg font-bold text-slate-900">{displayData.duration}</p>
         </Card>
 
         {/* Card 4 */}
@@ -68,7 +102,7 @@ export default function AfterActionReviewPage() {
             <Columns className="w-5 h-5" />
           </div>
           <p className="text-[13px] text-slate-500 mb-1">Total AI Insights Generated</p>
-          <p className="text-lg font-bold text-slate-900">{INCIDENT_DATA.insights}</p>
+          <p className="text-lg font-bold text-slate-900">{displayData.insights}</p>
         </Card>
       </div>
 
@@ -101,7 +135,7 @@ export default function AfterActionReviewPage() {
         </div>
 
         <div className="relative border-l border-slate-200 ml-4 space-y-8 pb-4">
-          {INCIDENT_DATA.events.map((event) => {
+          {displayData.events.length > 0 ? displayData.events.map((event: any, idx: number) => {
             const badgeColors: Record<string, string> = {
               red: 'bg-red-50 text-red-600',
               blue: 'bg-blue-50 text-blue-600',
@@ -115,11 +149,11 @@ export default function AfterActionReviewPage() {
               purple: 'bg-purple-500 ring-purple-50'
             };
             return (
-              <div key={event.id} className="relative pl-8">
-                <div className={`absolute -left-[4.5px] top-1 w-2 h-2 rounded-full ring-[3px] ${dotColors[event.color]}`}></div>
+              <div key={event.id || idx} className="relative pl-8">
+                <div className={`absolute -left-[4.5px] top-1 w-2 h-2 rounded-full ring-[3px] ${dotColors[event.color] || dotColors['blue']}`}></div>
                 <div className="flex flex-wrap items-center gap-3 mb-2">
                   <span className="text-[12px] font-bold text-slate-900">{event.time}</span>
-                  <span className={`px-2 py-[2px] rounded text-[10px] font-bold tracking-wide flex items-center ${badgeColors[event.color]}`}>
+                  <span className={`px-2 py-[2px] rounded text-[10px] font-bold tracking-wide flex items-center ${badgeColors[event.color] || badgeColors['blue']}`}>
                     {event.type}
                   </span>
                 </div>
@@ -127,7 +161,11 @@ export default function AfterActionReviewPage() {
                 <p className="text-[14px] text-slate-500 leading-relaxed max-w-3xl">{event.description}</p>
               </div>
             )
-          })}
+          }) : (
+            <div className="pl-8 py-4">
+              <p className="text-sm font-medium text-slate-500">No chronological event entries matched for this incident log.</p>
+            </div>
+          )}
         </div>
       </Card>
 
@@ -147,7 +185,7 @@ export default function AfterActionReviewPage() {
               </tr>
             </thead>
             <tbody>
-              {INCIDENT_DATA.aiInsights.map((insight, idx) => (
+              {displayData.aiInsights.length > 0 ? displayData.aiInsights.map((insight: any, idx: number) => (
                 <tr key={idx} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
                   <td className="py-4 text-[14px] text-slate-600">{insight.id}</td>
                   <td className="py-4 text-[14px] text-slate-900">{insight.category}</td>
@@ -160,7 +198,13 @@ export default function AfterActionReviewPage() {
                     </span>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan={5} className="py-6 text-center text-sm font-medium text-slate-400">
+                    OpenAI Engine produced no distinct insights for this resolved event log.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { useRouter } from 'next/navigation'
 import {
     PlusCircle,
     UserCheck,
@@ -24,7 +25,7 @@ import {
     Pencil
 } from 'lucide-react'
 
-import { useSafety } from '@/lib/context/safety-context'
+import { useSafety, SafetyStatus } from '@/lib/context/safety-context'
 import { AddFamilyMemberModal } from '@/components/modals/add-family-member-modal'
 import { useGeolocation } from '@/lib/hooks/use-geolocation'
 import { reverseGeocode, geocodeAddress } from '@/lib/services/mock-map-service'
@@ -35,6 +36,7 @@ import { earthquakeAPI } from '@/lib/services/earthquake-api'
 import { WeatherData } from '@/lib/types/emergency'
 
 export default function AreWeSafePage() {
+    const router = useRouter()
     const {
         myStatus,
         updateMyStatus,
@@ -48,10 +50,22 @@ export default function AreWeSafePage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
     const [tempLocation, setTempLocation] = useState('')
     const [isVerifying, setIsVerifying] = useState(false)
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
     const { location: geoLoc, loading: geoLoading } = useGeolocation()
     const [myLocationName, setMyLocationName] = useState<string | null>(null)
     const [myLocLoading, setMyLocLoading] = useState(true)
     const [memberMetrics, setMemberMetrics] = useState<Record<string, { temp: number; condition: string; seismic: string }>>({})
+
+    const handleUpdateStatus = async (status: SafetyStatus) => {
+        setIsUpdatingStatus(true)
+        await updateMyStatus(status)
+        setIsUpdatingStatus(false)
+        if (status === 'DANGER' || status === 'false') {
+            router.push('/virtual-eoc')
+        } else if (status === 'SAFE' || status === 'true') {
+            router.push('/user-dashboard')
+        }
+    }
 
     // Resolve the user's own location name and metrics from GPS
     useEffect(() => {
@@ -185,24 +199,25 @@ export default function AreWeSafePage() {
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div className={cn(
+                                        "h-20 flex items-center px-6 rounded-2xl border-2 transition-all shadow-sm",
+                                        isSafe ? "bg-green-50 border-green-200 text-green-700" : "bg-slate-50 border-slate-200 text-slate-400"
+                                    )}>
+                                        <UserCheck className={cn("w-6 h-6 mr-3", isSafe ? "text-green-600" : "text-slate-400")} />
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Current Status</p>
+                                            <p className="text-lg font-black uppercase tracking-tight">{isSafe ? 'SECURE' : 'ACTION REQUIRED'}</p>
+                                        </div>
+                                    </div>
                                     <Button
-                                        onClick={() => updateMyStatus('SAFE')}
+                                        onClick={() => handleUpdateStatus('DANGER')}
+                                        disabled={isUpdatingStatus || isDanger}
                                         className={cn(
                                             "h-20 text-lg font-bold transition-all rounded-2xl shadow-lg",
-                                            isSafe ? 'bg-green-600 ring-4 ring-green-100' : 'bg-slate-900 hover:bg-slate-800'
+                                            isDanger ? 'bg-red-600 ring-4 ring-red-100 shadow-red-200' : 'bg-red-500 hover:bg-red-600'
                                         )}
                                     >
-                                        <UserCheck className="w-6 h-6 mr-3" />
-                                        I AM SAFE
-                                    </Button>
-                                    <Button
-                                        onClick={() => updateMyStatus('DANGER')}
-                                        className={cn(
-                                            "h-20 text-lg font-bold transition-all rounded-2xl shadow-lg",
-                                            isDanger ? 'bg-red-600 ring-4 ring-red-100' : 'bg-red-500 hover:bg-red-600'
-                                        )}
-                                    >
-                                        <UserX className="w-6 h-6 mr-3" />
+                                        {isUpdatingStatus ? <Loader2 className="w-6 h-6 animate-spin mr-3" /> : <UserX className="w-6 h-6 mr-3" />}
                                         I NEED HELP
                                     </Button>
                                 </div>

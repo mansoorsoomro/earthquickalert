@@ -43,13 +43,12 @@ export default function Dashboard() {
             <ThreatMonitoring />
           </div>
 
-          <div>
+          <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
             <FirstResponderTools />
-          </div>
-          <div>
             <VirtualEOCOperations />
           </div>
-          <div>
+
+          <div className="lg:col-span-3">
             <CommunicationsCenter />
           </div>
 

@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
+import IncidentReport from '@/models/IncidentReport';
 import { alertProcessor } from '@/lib/services/alert-processor';
 import { AlertSource } from '@/lib/types/api-alerts';
+import { openaiService } from '@/lib/services/openai-service';
 
 export async function GET() {
     try {
@@ -15,33 +17,26 @@ export async function GET() {
         // Get safe users
         const safeUsers = await User.countDocuments({ role: 'user', isSafe: true });
 
+        // Get active personnel (admins and responders)
+        const activePersonnel = await User.countDocuments({
+            role: { $in: ['admin', 'responder'] }
+        });
+
+        // Get total incident reports
+        const totalIncidents = await IncidentReport.countDocuments();
+
         // Get all alerts
         const allAlerts = await alertProcessor.fetchAllAlerts();
 
-        // Calculate relevant hazards
-        const relevantAlertIds = new Set<string>();
-        users.forEach(user => {
-            allAlerts.forEach(alert => {
-                const locationStr = user.location?.toLowerCase() || '';
-                const alertTitle = alert.title.toLowerCase();
-                const alertDesc = alert.description.toLowerCase();
-                const alertLoc = (alert as any).location?.toLowerCase() || '';
+        const quakeAlerts = allAlerts.filter(a => a.source === AlertSource.EARTHQUAKE_API);
+        const weatherAlerts = allAlerts.filter(a => a.source === AlertSource.WEATHER_API);
+        const quakeCount = quakeAlerts.length;
+        const weatherCount = weatherAlerts.length;
+        const latestQuake = quakeAlerts[0]?.title || 'No recent impact';
 
-                if (locationStr && (
-                    alertTitle.includes(locationStr) ||
-                    alertDesc.includes(locationStr) ||
-                    alertLoc.includes(locationStr) ||
-                    locationStr.includes(alertLoc && alertLoc.length > 3 ? alertLoc : '____')
-                )) {
-                    relevantAlertIds.add(alert.id);
-                }
-            });
-        });
-
-        const relevantAlerts = allAlerts.filter(a => relevantAlertIds.has(a.id));
-        const quakeCount = relevantAlerts.filter(a => a.source === AlertSource.EARTHQUAKE_API).length;
-        const weatherCount = relevantAlerts.filter(a => a.source === AlertSource.WEATHER_API).length;
-        const latestQuake = relevantAlerts.find(a => a.source === AlertSource.EARTHQUAKE_API)?.title || 'No recent impact';
+        // Get AI Insight (Integrating OpenAI)
+        const aiInsight = await openaiService.generateEmergencyInsights(weatherAlerts, quakeAlerts);
+        const signals = openaiService.buildSignalsFromAlertSet(allAlerts, totalIncidents, safeUsers, totalUsers);
 
         return NextResponse.json({
             success: true,
@@ -50,8 +45,12 @@ export async function GET() {
                 safeUsers,
                 quakeCount,
                 weatherCount,
-                latestQuake
-            }
+                latestQuake,
+                totalIncidents,
+                activePersonnel,
+                aiInsight,
+                signals,
+            },
         });
     } catch (error) {
         console.error('Error fetching admin stats:', error);

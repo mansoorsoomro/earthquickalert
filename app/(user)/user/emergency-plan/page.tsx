@@ -37,6 +37,7 @@ type Supply = { _id?: string; item: string; checked: boolean }
 type MeetingPoint = { _id?: string; name: string; address: string; description: string; isPrimary: boolean }
 
 export default function EmergencyPlanPage() {
+  const [activeTab, setActiveTab] = useState('contacts')
   const [contacts, setContacts] = useState<Contact[]>([])
   const [supplies, setSupplies] = useState<Supply[]>([])
   const [meetingPoints, setMeetingPoints] = useState<MeetingPoint[]>([])
@@ -71,6 +72,14 @@ export default function EmergencyPlanPage() {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const tab = params.get('tab')
+    if (tab === 'contacts' || tab === 'kit' || tab === 'meeting') {
+      setActiveTab(tab)
+    }
+  }, [])
 
   const saveData = async (type: 'contacts' | 'kit' | 'meeting', data: any) => {
     setIsSaving(true)
@@ -154,7 +163,7 @@ export default function EmergencyPlanPage() {
         </header>
 
 
-        <Tabs defaultValue="contacts" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex justify-center mb-12">
             <TabsList className="bg-slate-50 p-1.5 rounded-full border border-slate-100 w-full max-w-3xl flex h-14">
               <TabsTrigger value="contacts" className="flex-1 gap-2 rounded-full font-bold text-sm text-slate-700 py-2.5 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm transition-all h-full">

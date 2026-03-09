@@ -29,6 +29,7 @@ export const menuItems = [
   { icon: Bell, label: 'Alerts & Communication', href: '/alerts-communication' },
   { icon: Map, label: 'GIS & Mapping', href: '/gis-mapping' },
   { icon: Users, label: 'Responders & Agencies', href: '/responders-agencies' },
+  { icon: Brain, label: 'Virtual EOC / AI Center', href: '/virtual-eoc-ai-center' },
   { icon: ClipboardList, label: 'After Action Review', href: '/after-action-review' },
   { icon: FileText, label: 'Emergency Plan', href: '/emergency-plan' },
   { icon: FileText, label: 'Preparedness Information', href: '/preparedness-information' },
