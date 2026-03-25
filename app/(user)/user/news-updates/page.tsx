@@ -15,12 +15,16 @@ import {
   ChevronRight,
   Shield,
   TrendingUp,
-  Globe
+  Globe,
+  Share2,
+  RefreshCw
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useSocialSignals } from '@/lib/hooks/use-api-alerts'
 
 export default function NewsPage() {
   const [activeCategory, setActiveCategory] = useState('All')
+  const { alerts: socialSignals, loading: socialLoading } = useSocialSignals()
 
   const categories = ['All', 'Safety', 'Weather', 'Official', 'Community']
 
@@ -141,19 +145,29 @@ export default function NewsPage() {
           <aside className="md:col-span-4 space-y-8">
             <Card className="p-8 border-none shadow-2xl rounded-[2.5rem] bg-[#34385E] text-white">
               <h3 className="text-xl font-black uppercase tracking-tight mb-8 flex items-center gap-3 italic">
-                <TrendingUp className="w-6 h-6 text-indigo-400" /> Viral Intel
+                <Share2 className="w-6 h-6 text-indigo-400" /> Viral Intel
               </h3>
               <div className="space-y-6">
-                {[
-                  'Emergency Shelter Capacity Update',
-                  'Water Purification Best Practices',
-                  'Mobile Signal Mesh Networks'
-                ].map((trending, i) => (
-                  <div key={i} className="group cursor-pointer">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">#Trending-{i + 1}</p>
-                    <p className="font-bold text-white group-hover:text-indigo-400 transition-colors line-clamp-2 leading-tight uppercase font-black tracking-tight">{trending}</p>
+                {socialLoading ? (
+                  <div className="flex items-center gap-3 opacity-50">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span className="text-[10px] font-black uppercase">Scanning Signals...</span>
                   </div>
-                ))}
+                ) : socialSignals.length === 0 ? (
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">No viral signals detected</p>
+                ) : (
+                  socialSignals.slice(0, 4).map((alert: any) => (
+                    <div key={alert.id} className="group cursor-pointer">
+                      <div className="flex justify-between items-center mb-1">
+                        <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest italic">@{alert.author?.toLowerCase().replace(' ', '_') || 'anonymous'}</p>
+                        <Badge className="bg-white/10 text-white border-none py-0 px-2 rounded-md text-[7px] font-black uppercase">
+                          {alert.platform || 'Social'}
+                        </Badge>
+                      </div>
+                      <p className="font-bold text-white group-hover:text-indigo-400 transition-colors line-clamp-2 leading-tight uppercase font-black tracking-tight text-xs">{alert.description}</p>
+                    </div>
+                  ))
+                )}
               </div>
             </Card>
 

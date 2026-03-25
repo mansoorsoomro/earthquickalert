@@ -1,4 +1,4 @@
-import { Alert, AlertSeverity, AlertSource } from '@/lib/types/api-alerts';
+import { Alert, AlertSeverity, AlertSource, SocialMediaAlert, ResourceAlert } from '@/lib/types/api-alerts';
 
 export interface EmergencyInsights {
     status: 'All Clear' | 'Warning' | 'Emergency';
@@ -249,6 +249,78 @@ export class OpenAIService {
         return Array.isArray(result.news) && result.news.length > 0 ? result.news : fallback;
     }
 
+    async generateSocialMediaPosts(location: string = 'your area'): Promise<SocialMediaAlert[]> {
+        const prompt = `Generate 5 realistic social media posts (X, Facebook, Instagram) about a current emergency or safety situation in ${location}. 
+        Return a JSON object with a "posts" array. Each post must follow the SocialMediaAlert interface:
+        - id: string
+        - source: "social_media"
+        - platform: "X" | "Facebook" | "Instagram"
+        - severity: "info" | "low" | "moderate" | "high" | "severe" | "extreme"
+        - title: string (short catchy summary)
+        - description: string (the actual post content)
+        - author: string
+        - handle: string (optional)
+        - timestamp: ISO string (recent)
+        - engagement: { likes: number, shares: number }`;
+
+        const fallback: { posts: SocialMediaAlert[] } = { posts: [] };
+        const result = await this.callOpenAI<{ posts: any[] }>([{ role: 'system', content: 'You are an emergency management AI.' }, { role: 'user', content: prompt }], { posts: [] });
+        
+        return (result.posts || []).map(p => ({
+            ...p,
+            source: AlertSource.SOCIAL_MEDIA,
+            timestamp: p.timestamp || new Date().toISOString(),
+        })) as SocialMediaAlert[];
+    }
+
+    async generateFuelStatus(location: string = 'your area'): Promise<ResourceAlert[]> {
+        const prompt = `Generate 4 realistic gas station fuel availability reports for ${location} during an emergency.
+        Return a JSON object with a "reports" array. Each report must follow the ResourceAlert interface:
+        - id: string
+        - source: "gas_buddy"
+        - resourceType: "fuel"
+        - severity: "info" | "low" | "moderate" | "high"
+        - title: string (Station name, e.g. "Chevron on 5th")
+        - description: string (Detailed status, e.g. "Has regular and diesel, premium sold out")
+        - subTitle: string (Quick price/status, e.g. "$4.55/gal - Normal lines")
+        - status: "available" | "limited" | "closed"
+        - locationName: string (Specific address or cross streets)
+        - timestamp: ISO string (now)
+        - coordinates: { lat: number, lon: number } (make them near ${location})`;
+
+        const fallback: { reports: any[] } = { reports: [] };
+        const result = await this.callOpenAI<{ reports: any[] }>([{ role: 'system', content: 'You are an emergency resource tracking AI.' }, { role: 'user', content: prompt }], fallback);
+        return (result.reports || []).map(r => ({
+            ...r,
+            source: AlertSource.GAS_BUDDY,
+            timestamp: r.timestamp || new Date().toISOString(),
+        })) as ResourceAlert[];
+    }
+
+    async generateLodgingStatus(location: string = 'your area'): Promise<ResourceAlert[]> {
+        const prompt = `Generate 4 realistic hotel/shelter availability reports for ${location} during an emergency.
+        Return a JSON object with a "reports" array. Each report must follow the ResourceAlert interface:
+        - id: string
+        - source: "hotel_api"
+        - resourceType: "lodging"
+        - severity: "info" | "low" | "moderate" | "high"
+        - title: string (Hotel name, e.g. "Hilton Downtown")
+        - description: string (Room status, e.g. "Pet friendly, 5 king rooms remaining")
+        - subTitle: string (Quick status, e.g. "Open - 12 rooms left")
+        - status: "available" | "limited" | "closed"
+        - locationName: string (Specific address)
+        - timestamp: ISO string (now)
+        - coordinates: { lat: number, lon: number } (make them near ${location})`;
+
+        const fallback: { reports: any[] } = { reports: [] };
+        const result = await this.callOpenAI<{ reports: any[] }>([{ role: 'system', content: 'You are an emergency lodging coordinator AI.' }, { role: 'user', content: prompt }], fallback);
+        return (result.reports || []).map(r => ({
+            ...r,
+            source: AlertSource.HOTEL_API,
+            timestamp: r.timestamp || new Date().toISOString(),
+        })) as ResourceAlert[];
+    }
+
     async generatePreparednessTips(location: string, weatherData: any): Promise<PreparednessTip[]> {
         const fallback: PreparednessTip[] = [
             { title: 'Communication Readiness', desc: 'Keep emergency contacts and check-in channels updated.' },
@@ -341,10 +413,12 @@ export class OpenAIService {
         });
     }
 
-    splitAlertsBySource(alerts: Alert[]): { weather: Alert[]; earthquakes: Alert[] } {
+    splitAlertsBySource(alerts: Alert[]): { weather: Alert[]; earthquakes: Alert[]; social: Alert[]; resources: Alert[] } {
         return {
             weather: alerts.filter(alert => alert.source === AlertSource.WEATHER_API),
             earthquakes: alerts.filter(alert => alert.source === AlertSource.EARTHQUAKE_API),
+            social: alerts.filter(alert => alert.source === AlertSource.SOCIAL_MEDIA),
+            resources: alerts.filter(alert => alert.source === AlertSource.GAS_BUDDY || alert.source === AlertSource.HOTEL_API),
         };
     }
 }

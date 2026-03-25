@@ -4,6 +4,9 @@ export enum AlertSource {
     WEATHER_API = 'weather_api',
     EARTHQUAKE_API = 'earthquake_api',
     ADMIN_MANUAL = 'admin_manual',
+    SOCIAL_MEDIA = 'social_media',
+    GAS_BUDDY = 'gas_buddy',
+    HOTEL_API = 'hotel_api',
 }
 
 export enum AlertSeverity {
@@ -75,7 +78,32 @@ export interface AdminAlert extends BaseAlert {
     priority: 'low' | 'medium' | 'high';
 }
 
-export type Alert = WeatherAlert | EarthquakeAlert | AdminAlert;
+export interface SocialMediaAlert extends BaseAlert {
+    source: AlertSource.SOCIAL_MEDIA;
+    platform: 'X' | 'Facebook' | 'Instagram' | 'Internal';
+    author: string;
+    handle?: string;
+    mediaUrl?: string;
+    link?: string;
+    engagement?: {
+        likes?: number;
+        shares?: number;
+    };
+}
+
+export interface ResourceAlert extends BaseAlert {
+    source: AlertSource.GAS_BUDDY | AlertSource.HOTEL_API;
+    locationName: string;
+    resourceType: 'fuel' | 'lodging';
+    status: 'available' | 'limited' | 'closed';
+    subTitle?: string; // e.g., "Premium Fuel Available" or "3 Rooms Left"
+    coordinates: {
+        lat: number;
+        lon: number;
+    };
+}
+
+export type Alert = WeatherAlert | EarthquakeAlert | AdminAlert | SocialMediaAlert | ResourceAlert;
 
 export interface SafeZone {
     id: string;

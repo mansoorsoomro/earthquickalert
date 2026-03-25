@@ -140,3 +140,13 @@ export function useAdminNotifications() {
         },
     });
 }
+
+// Hook for social signals specifically
+export function useSocialSignals(location?: { lat: number; lon: number }) {
+    return useAPIAlerts({
+        location,
+        filters: {
+            source: [AlertSource.SOCIAL_MEDIA],
+        },
+    });
+}

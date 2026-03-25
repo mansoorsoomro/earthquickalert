@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { AlertTriangle, Cloud, MapPin, Loader2, ShieldAlert, Zap, RefreshCw } from 'lucide-react'
+import { AlertTriangle, Cloud, MapPin, Loader2, ShieldAlert, Zap, RefreshCw, Share2 } from 'lucide-react'
 import { useAPIAlerts } from '@/lib/hooks/use-api-alerts'
 import { Alert, AlertSeverity, AlertSource } from '@/lib/types/api-alerts'
 import { cn } from '@/lib/utils'
@@ -12,7 +12,7 @@ export default function UserAlertsPage() {
   const alertOptions = useMemo(() => ({
     autoRefresh: false,
     filters: {
-      source: [AlertSource.ADMIN_MANUAL]
+      source: [AlertSource.ADMIN_MANUAL, AlertSource.SOCIAL_MEDIA, AlertSource.WEATHER_API, AlertSource.EARTHQUAKE_API]
     }
   }), [])
 
@@ -32,6 +32,7 @@ export default function UserAlertsPage() {
     switch (source) {
       case AlertSource.WEATHER_API: return Cloud
       case AlertSource.EARTHQUAKE_API: return Zap
+      case AlertSource.SOCIAL_MEDIA: return Share2
       default: return AlertTriangle
     }
   }
@@ -43,6 +44,8 @@ export default function UserAlertsPage() {
     const weatherData = isWeather ? (alert as any) : null
     const isAdmin = alert.source === AlertSource.ADMIN_MANUAL
     const adminData = isAdmin ? (alert as any) : null
+    const isSocial = alert.source === AlertSource.SOCIAL_MEDIA
+    const socialData = isSocial ? (alert as any) : null
 
     return (
       <Card className={cn("p-6 border-l-4 border-none shadow-lg hover:shadow-xl transition-all duration-300 bg-white group relative overflow-hidden")}>
@@ -64,9 +67,13 @@ export default function UserAlertsPage() {
                   Official Communication
                 </span>
               )}
-              {weatherData?.temperature !== undefined && (
-                <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md uppercase tracking-widest">
-                  {weatherData.temperature}°C
+              {isSocial && (
+                <span className={cn(
+                  "text-[10px] font-black text-white px-2 py-0.5 rounded-md uppercase tracking-widest",
+                  socialData.platform === 'X' ? "bg-slate-900" : 
+                  socialData.platform === 'Facebook' ? "bg-blue-600" : "bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500"
+                )}>
+                  {socialData.platform} Report
                 </span>
               )}
             </div>
@@ -132,7 +139,7 @@ export default function UserAlertsPage() {
               <div className="p-2 bg-blue-50 rounded-lg">
                 <MapPin className="w-4 h-4 text-blue-600" />
               </div>
-              <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Official Community Alerts</h2>
+              <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Safety Signals (Official & Public)</h2>
             </div>
 
             <div className="space-y-4">

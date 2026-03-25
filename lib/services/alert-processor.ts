@@ -3,6 +3,9 @@
 import { Alert, AlertSource, AlertSeverity, AlertFilters } from '@/lib/types/api-alerts';
 import { earthquakeAPI } from './earthquake-api';
 import { weatherAPI } from './weather-api';
+import { socialMediaAPI } from './social-media-api';
+import { gasBuddyService } from './gas-buddy-service';
+import { hotelAPIService } from './hotel-api-service';
 
 export class AlertProcessor {
     private alerts: Alert[] = [];
@@ -24,7 +27,7 @@ export class AlertProcessor {
      * Fetch all alerts from all sources
      */
     async fetchAllAlerts(
-        location?: { lat: number; lon: number },
+        location?: { lat: number; lon: number; city?: string },
         sources?: AlertSource[]
     ): Promise<Alert[]> {
         try {
@@ -88,6 +91,36 @@ export class AlertProcessor {
                     }
                 } catch (error) {
                     console.error('Error fetching community alerts:', error);
+                }
+            }
+
+            // Fetch social media alerts
+            if (fetchAll || sources?.includes(AlertSource.SOCIAL_MEDIA)) {
+                try {
+                    const socialAlerts = await socialMediaAPI.fetchAlerts(location);
+                    allAlerts.push(...socialAlerts);
+                } catch (error) {
+                    console.error('Error fetching social media alerts:', error);
+                }
+            }
+
+            // Fetch fuel status (GasBuddy)
+            if (location && (fetchAll || sources?.includes(AlertSource.GAS_BUDDY))) {
+                try {
+                    const fuelAlerts = await gasBuddyService.fetchFuelStatus(location.city || 'your area');
+                    allAlerts.push(...fuelAlerts);
+                } catch (error) {
+                    console.error('Error fetching fuel alerts:', error);
+                }
+            }
+
+            // Fetch hotel status
+            if (location && (fetchAll || sources?.includes(AlertSource.HOTEL_API))) {
+                try {
+                    const hotelAlerts = await hotelAPIService.fetchHotelStatus(location.city || 'your area');
+                    allAlerts.push(...hotelAlerts);
+                } catch (error) {
+                    console.error('Error fetching hotel alerts:', error);
                 }
             }
 
@@ -287,6 +320,9 @@ export class AlertProcessor {
             weather: this.getAlertsBySource(AlertSource.WEATHER_API).length,
             earthquake: this.getAlertsBySource(AlertSource.EARTHQUAKE_API).length,
             admin: this.getAlertsBySource(AlertSource.ADMIN_MANUAL).length,
+            social: this.getAlertsBySource(AlertSource.SOCIAL_MEDIA).length,
+            gas: this.getAlertsBySource(AlertSource.GAS_BUDDY).length,
+            hotel: this.getAlertsBySource(AlertSource.HOTEL_API).length,
         };
 
         return {

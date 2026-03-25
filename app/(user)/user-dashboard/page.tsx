@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import {
   ArrowRight, Users, Star, MapPin, Home, Briefcase, School,
   Cloud, AlertTriangle, ChevronRight, Hospital, Pill, Bed, Coffee, DollarSign, Car,
-  Activity, Map, Pencil, MapPinOff, ShieldAlert, CheckCircle2, Package, Plus, Loader2
+  Activity, Map, Pencil, MapPinOff, ShieldAlert, CheckCircle2, Package, Plus, Loader2,
+  Twitter, Facebook, Instagram, Fuel
 } from 'lucide-react'
 import Link from 'next/link'
 import { useGeolocation } from '@/lib/hooks/use-geolocation'
@@ -43,8 +44,10 @@ export default function UserDashboard() {
   const [supplyKit, setSupplyKit] = useState<any[]>([])
   const [isAddPlaceModalOpen, setIsAddPlaceModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [newsFilter, setNewsFilter] = useState<'All' | 'Emergency' | 'Local'>('All')
+  const [newsFilter, setNewsFilter] = useState<'All' | 'Emergency' | 'Local' | 'Twitter' | 'Facebook' | 'Instagram'>('All')
   const [activeAlertTab, setActiveAlertTab] = useState('Weather')
+  const [socialAlerts, setSocialAlerts] = useState<any[]>([])
+  const [resourceAlerts, setResourceAlerts] = useState<any[]>([])
 
   useEffect(() => {
     verifyFamilySafety()
@@ -65,13 +68,17 @@ export default function UserDashboard() {
         setGeoLocName(name)
 
         // 2. Fetch Real-time Weather & Earthquake Data
-        const [wData, eqAlerts] = await Promise.all([
+        const [wData, eqAlerts, sAlerts, rAlerts] = await Promise.all([
           weatherAPI.fetchFullWeatherData(lat, lng),
-          alertProcessor.fetchAllAlerts({ lat, lon: lng }, [AlertSource.EARTHQUAKE_API])
+          alertProcessor.fetchAllAlerts({ lat, lon: lng, city: name }, [AlertSource.EARTHQUAKE_API]),
+          alertProcessor.fetchAllAlerts({ lat, lon: lng, city: name }, [AlertSource.SOCIAL_MEDIA]),
+          alertProcessor.fetchAllAlerts({ lat, lon: lng, city: name }, [AlertSource.GAS_BUDDY, AlertSource.HOTEL_API])
         ])
-
+  
         setWeatherData(wData)
         setEarthquakes(eqAlerts)
+        setSocialAlerts(sAlerts)
+        setResourceAlerts(rAlerts)
 
         // 3. Fetch Dynamic Content from OpenAI & Resources & Fav Places & Supply Kit
         const [insights, news, tips, nearbyHospitals, favRes, planRes] = await Promise.all([
@@ -129,6 +136,11 @@ export default function UserDashboard() {
   const alertFilters = [
     { label: 'Weather', icon: Cloud, color: 'text-blue-500 bg-blue-50 border-blue-100', inactiveColor: 'text-gray-400 bg-white border-gray-100 hover:border-blue-100 hover:text-blue-400' },
     { label: 'Earthquakes', icon: Activity, color: 'text-purple-500 bg-purple-50 border-purple-100', inactiveColor: 'text-gray-400 bg-white border-gray-100 hover:border-purple-100 hover:text-purple-400' },
+    { label: 'Twitter', icon: Twitter, color: 'text-slate-900 bg-slate-50 border-slate-200', inactiveColor: 'text-gray-400 bg-white border-gray-100 hover:border-slate-200 hover:text-slate-600' },
+    { label: 'Facebook', icon: Facebook, color: 'text-blue-600 bg-blue-50 border-blue-100', inactiveColor: 'text-gray-400 bg-white border-gray-100 hover:border-blue-100 hover:text-blue-500' },
+    { label: 'Instagram', icon: Instagram, color: 'text-pink-600 bg-pink-50 border-pink-100', inactiveColor: 'text-gray-400 bg-white border-gray-100 hover:border-pink-100 hover:text-pink-500' },
+    { label: 'Fuel', icon: Fuel, color: 'text-orange-600 bg-orange-50 border-orange-100', inactiveColor: 'text-gray-400 bg-white border-gray-100 hover:border-orange-100 hover:text-orange-500' },
+    { label: 'Lodging', icon: Bed, color: 'text-indigo-600 bg-indigo-50 border-indigo-100', inactiveColor: 'text-gray-400 bg-white border-gray-100 hover:border-indigo-100 hover:text-indigo-500' },
     { label: 'Emergency', icon: AlertTriangle, color: 'text-red-500 bg-red-50 border-red-100', inactiveColor: 'text-gray-400 bg-white border-gray-100 hover:border-red-100 hover:text-red-400' },
     { label: 'Community', icon: Users, color: 'text-green-500 bg-green-50 border-green-100', inactiveColor: 'text-gray-400 bg-white border-gray-100 hover:border-green-100 hover:text-green-400' },
   ]
@@ -155,14 +167,14 @@ export default function UserDashboard() {
   ]
 
   const filteredNews = useMemo(() => {
-    if (newsFilter === 'Emergency') {
-      return newsItems.filter(news => news.category === 'Emergency' || news.category === 'Safety');
-    }
-    if (newsFilter === 'Local') {
-      return newsItems.filter(news => news.category === 'Community' || news.category === 'Traffic');
-    }
-    return newsItems;
-  }, [newsItems, newsFilter]);
+    let baseNews = newsItems;
+    if (newsFilter === 'Emergency') return baseNews.filter(news => news.category === 'Emergency' || news.category === 'Safety');
+    if (newsFilter === 'Local') return baseNews.filter(news => news.category === 'Community' || news.category === 'Traffic');
+    if (newsFilter === 'Twitter') return socialAlerts.filter(s => s.platform === 'X').map(s => ({ title: s.description, category: 'Twitter', time: 'Just now', img: '' }));
+    if (newsFilter === 'Facebook') return socialAlerts.filter(s => s.platform === 'Facebook').map(s => ({ title: s.description, category: 'Facebook', time: 'Just now', img: '' }));
+    if (newsFilter === 'Instagram') return socialAlerts.filter(s => s.platform === 'Instagram').map(s => ({ title: s.description, category: 'Instagram', time: 'Just now', img: '' }));
+    return baseNews;
+  }, [newsItems, newsFilter, socialAlerts]);
 
   return (
     <div className="flex-1 overflow-auto bg-white p-6 md:p-8">
@@ -319,7 +331,7 @@ export default function UserDashboard() {
               </div>
 
               <div className="p-6 pt-4 border-t border-slate-50">
-                <h3 className="text-[11px] font-bold text-gray-400 mb-4 tracking-wider uppercase">Alerts Enabled For:</h3>
+                <h3 className="text-[11px] font-bold text-gray-400 mb-4 tracking-wider uppercase">Alerts Enabled For: {geoLocName || 'Detecting Location...'}</h3>
                 <div className="flex flex-wrap gap-2.5 mb-6">
                   {alertFilters.map((filter) => (
                     <button
@@ -357,16 +369,103 @@ export default function UserDashboard() {
                       earthquakes.slice(0, 3).map((eq, i) => (
                         <div key={i} className="p-4 bg-purple-50/50 border border-purple-100 rounded-xl leading-snug flex items-start gap-4 hover:bg-purple-50 transition-colors">
                           <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-black shrink-0 text-sm border border-purple-200 shadow-sm">
-                            {eq.magnitude.toFixed(1)}
+                            {(eq.magnitude || 0).toFixed(1)}
                           </div>
                           <div>
-                            <h4 className="text-[13px] font-bold text-purple-900 mb-1">{eq.location}</h4>
-                            <p className="text-[11px] font-medium text-purple-700/70">{new Date(eq.time).toLocaleString()}</p>
+                            <h4 className="text-[13px] font-bold text-purple-900 mb-1">{eq.location || 'Unknown Location'}</h4>
+                            <p className="text-[11px] font-medium text-purple-700/70">{new Date(eq.timestamp || eq.time).toLocaleString()}</p>
                           </div>
                         </div>
                       ))
                     ) : (
                       <div className="text-center py-8 text-[12px] font-medium text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">No recent earthquakes in your area.</div>
+                    )
+                  )}
+
+                  {activeAlertTab === 'Twitter' && (
+                    socialAlerts.filter(s => s.platform === 'X').length > 0 ? (
+                      socialAlerts.filter(s => s.platform === 'X').slice(0, 3).map((s, i) => (
+                        <div key={i} className="p-4 bg-slate-50 border border-slate-200 rounded-xl leading-snug hover:bg-slate-100 transition-colors">
+                          <h4 className="text-[13px] font-bold text-slate-900 mb-1.5 line-clamp-2">{s.description}</h4>
+                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-white px-2 py-1 rounded border border-slate-100">@{s.author.toLowerCase().replace(' ', '_')}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-[12px] font-medium text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">No recent reports from Twitter (X) in your area.</div>
+                    )
+                  )}
+
+                  {activeAlertTab === 'Facebook' && (
+                    socialAlerts.filter(s => s.platform === 'Facebook').length > 0 ? (
+                      socialAlerts.filter(s => s.platform === 'Facebook').slice(0, 3).map((s, i) => (
+                        <div key={i} className="p-4 bg-blue-50 border border-blue-100 rounded-xl leading-snug hover:bg-blue-100/50 transition-colors">
+                          <h4 className="text-[13px] font-bold text-blue-900 mb-1.5 line-clamp-2">{s.description}</h4>
+                          <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-white px-2 py-1 rounded border border-blue-100">{s.author}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-[12px] font-medium text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">No recent reports from Facebook in your area.</div>
+                    )
+                  )}
+
+                  {activeAlertTab === 'Instagram' && (
+                    socialAlerts.filter(s => s.platform === 'Instagram').length > 0 ? (
+                      socialAlerts.filter(s => s.platform === 'Instagram').slice(0, 3).map((s, i) => (
+                        <div key={i} className="p-4 bg-pink-50 border border-pink-100 rounded-xl leading-snug hover:bg-pink-100/50 transition-colors">
+                          <h4 className="text-[13px] font-bold text-pink-900 mb-1.5 line-clamp-2">{s.description}</h4>
+                          <span className="text-[10px] font-black text-pink-600 uppercase tracking-widest bg-white px-2 py-1 rounded border border-pink-100">@{s.author.toLowerCase().replace(' ', '_')}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-[12px] font-medium text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">No recent stories from Instagram in your area.</div>
+                    )
+                  )}
+
+                  {activeAlertTab === 'Fuel' && (
+                    resourceAlerts.filter(r => r.source === AlertSource.GAS_BUDDY).length > 0 ? (
+                      resourceAlerts.filter(r => r.source === AlertSource.GAS_BUDDY).slice(0, 3).map((r, i) => (
+                        <div key={i} className="p-4 bg-orange-50/50 border border-orange-100 rounded-xl leading-snug hover:bg-orange-50 transition-colors">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="text-[13px] font-bold text-orange-900">{r.title}</h4>
+                            <span className={cn(
+                              "text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest",
+                              r.status === 'available' ? "bg-green-100 text-green-700" :
+                              r.status === 'limited' ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"
+                            )}>{r.status}</span>
+                          </div>
+                          <p className="text-[11px] text-orange-800/80 mb-2 font-medium">{r.description}</p>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-[10px] font-bold text-orange-600">{r.subTitle}</span>
+                            <span className="text-[9px] text-orange-400 font-medium">Updated just now</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-[12px] font-medium text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">No fuel reports available near you.</div>
+                    )
+                  )}
+
+                  {activeAlertTab === 'Lodging' && (
+                    resourceAlerts.filter(r => r.source === AlertSource.HOTEL_API).length > 0 ? (
+                      resourceAlerts.filter(r => r.source === AlertSource.HOTEL_API).slice(0, 3).map((r, i) => (
+                        <div key={i} className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl leading-snug hover:bg-indigo-50 transition-colors">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="text-[13px] font-bold text-indigo-900">{r.title}</h4>
+                            <span className={cn(
+                              "text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest",
+                              r.status === 'available' ? "bg-green-100 text-green-700" :
+                              r.status === 'limited' ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"
+                            )}>{r.status}</span>
+                          </div>
+                          <p className="text-[11px] text-indigo-800/80 mb-2 font-medium">{r.description}</p>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-[10px] font-bold text-indigo-600">{r.subTitle}</span>
+                            <span className="text-[9px] text-indigo-400 font-medium">Updated just now</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-[12px] font-medium text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">No lodging availability reports near you.</div>
                     )
                   )}
 
@@ -600,6 +699,33 @@ export default function UserDashboard() {
                 )}
               >
                 Local
+              </span>
+              <span
+                onClick={() => setNewsFilter('Twitter')}
+                className={cn(
+                  "px-6 py-2 font-extrabold text-[10px] rounded-lg shadow-sm cursor-pointer uppercase tracking-widest transition-colors",
+                  newsFilter === 'Twitter' ? "bg-blue-500 text-white" : "text-slate-400 hover:text-blue-500"
+                )}
+              >
+                Twitter
+              </span>
+              <span
+                onClick={() => setNewsFilter('Facebook')}
+                className={cn(
+                  "px-6 py-2 font-extrabold text-[10px] rounded-lg shadow-sm cursor-pointer uppercase tracking-widest transition-colors",
+                  newsFilter === 'Facebook' ? "bg-blue-500 text-white" : "text-slate-400 hover:text-blue-500"
+                )}
+              >
+                Facebook
+              </span>
+              <span
+                onClick={() => setNewsFilter('Instagram')}
+                className={cn(
+                  "px-6 py-2 font-extrabold text-[10px] rounded-lg shadow-sm cursor-pointer uppercase tracking-widest transition-colors",
+                  newsFilter === 'Instagram' ? "bg-blue-500 text-white" : "text-slate-400 hover:text-blue-500"
+                )}
+              >
+                Instagram
               </span>
             </div>
           </div>
