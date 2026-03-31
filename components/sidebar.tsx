@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -17,6 +17,7 @@ import {
   LogOut,
   X,
   Building2,
+  Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
@@ -45,11 +46,29 @@ export function Sidebar() {
   const router = useRouter()
   const pathname = usePathname()
   const [showHelpModal, setShowHelpModal] = useState(false)
+  const [userRole, setUserRole] = useState<string | null>(null)
+
+  useEffect(() => {
+    setUserRole(localStorage.getItem('userRole'))
+  }, [])
+
+  const adminMenuItems = userRole === 'super-admin'
+    ? [
+        { icon: LayoutDashboard, label: 'Dashboard', href: '/super-admin-dashboard' },
+        { icon: Shield, label: 'Sub-Admins', href: '/admin/sub-admins' },
+        { icon: Users, label: 'Board Users', href: '/admin/users' }
+      ]
+    : [
+        ...menuItems,
+        ...(userRole === 'sub-admin' || userRole === 'admin' 
+           ? [{ icon: Users, label: 'User Approval', href: '/admin/users' }] 
+           : [])
+      ]
 
   return (
     <div className="hidden md:flex w-72 bg-sidebar text-sidebar-foreground flex-col h-full border-r border-border">
       {/* Logo Section */}
-      <div className="p-6 border-b border-border/50 flex flex-col items-center">
+      <Link href="/" className="p-6 border-b border-border/50 flex flex-col items-center hover:bg-sidebar-accent transition-colors">
         <Image
           src={logo}
           alt="Ready2Go Logo"
@@ -60,11 +79,11 @@ export function Sidebar() {
         {/* <h1 className="text-2xl font-black text-white">
           Ready<span className="text-yellow-400">2</span>Go<span className="text-xs">™</span>
         </h1> */}
-      </div>
+      </Link>
 
       {/* Main Navigation */}
       <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-        {menuItems.map((item) => {
+        {adminMenuItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href
 

@@ -9,13 +9,29 @@ import SystemStatus from '@/models/SystemStatus';
 export async function POST(req: NextRequest) {
     try {
         await connectDB();
-        const { name, email, password, isSafe } = await req.json();
+        const { name, email, password, isSafe, role, country, city } = await req.json();
 
         // Check if user already exists
         const userExists = await User.findOne({ email });
         if (userExists) {
             return NextResponse.json({ error: 'User already exists' }, { status: 400 });
         }
+
+        // --- NEW VALIDATION: UNIQUE SUB-ADMIN PER CITY ---
+        if (role === 'sub-admin' && city && country) {
+            const subAdminInCity = await User.findOne({ 
+                role: 'sub-admin', 
+                city: city, 
+                country: country 
+            });
+
+            if (subAdminInCity) {
+                return NextResponse.json({ 
+                    error: `already sub-admin on this city` 
+                }, { status: 400 });
+            }
+        }
+        // ------------------------------------------------
 
         // Hash password
         const salt = await bcrypt.genSalt(10);
@@ -27,12 +43,17 @@ export async function POST(req: NextRequest) {
             systemStatus = await SystemStatus.create({ emergencyMode: 'safe' });
         }
 
+        const isDefaultAdmin = email.toLowerCase() === 'admin@gmail.com';
+
         const user = await User.create({
             name,
             email,
             password: hashedPassword,
-            role: email.toLowerCase() === 'admin@gmail.com' ? 'admin' : 'user',
+            role: isDefaultAdmin ? 'super-admin' : (role || 'user'),
+            accountStatus: isDefaultAdmin ? 'approved' : 'pending',
             isSafe: isSafe !== undefined ? isSafe : true,
+            country: country || '',
+            city: city || '',
         });
 
         // Create session
@@ -48,6 +69,7 @@ export async function POST(req: NextRequest) {
                 email: user.email,
                 name: user.name,
                 role: user.role,
+                accountStatus: user.accountStatus,
                 isSafe: user.isSafe ?? true,
                 location: user.location || ''
             },
@@ -63,6 +85,14 @@ export async function POST(req: NextRequest) {
         });
 
         (await cookies()).set('userRole', user.role, {
+            expires,
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+        });
+
+        (await cookies()).set('accountStatus', user.accountStatus || 'pending', {
             expires,
             httpOnly: false,
             secure: process.env.NODE_ENV === 'production',

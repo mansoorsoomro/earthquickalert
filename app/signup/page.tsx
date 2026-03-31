@@ -14,20 +14,38 @@ export default function SignupPage() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [isSafe, setIsSafe] = useState(true)
+    const [role, setRole] = useState('user')
+    const [country, setCountry] = useState('')
+    const [city, setCity] = useState('')
     const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
 
+    // Sample data for Country/City dropdowns
+    const locations: Record<string, string[]> = {
+        "USA": ["New York", "Los Angeles", "Chicago", "Houston", "Miami"],
+        "UK": ["London", "Manchester", "Birmingham", "Leeds", "Glasgow"],
+        "UAE": ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Al Ain"],
+        "Pakistan": ["Karachi", "Lahore", "Islamabad", "Faisalabad", "Rawalpindi"],
+    }
+
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
+        
+        // Validation for Sub-Admin
+        if (role === 'sub-admin' && (!country || !city)) {
+            setError('Please select both Country and City for Sub-Admin registration.')
+            return
+        }
+
         setLoading(true)
 
         try {
             const response = await fetch('/api/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password, isSafe }),
+                body: JSON.stringify({ name, email, password, isSafe, role, country, city }),
             })
 
             const data = await response.json()
@@ -40,7 +58,9 @@ export default function SignupPage() {
                 localStorage.setItem('isSafe', String(data.user.isSafe ?? true))
                 localStorage.setItem('userLocation', data.user.location || '')
 
-                if (data.user.role === 'admin') {
+                if (data.user.accountStatus === 'pending') {
+                    router.push('/pending-approval')
+                } else if (data.user.role === 'super-admin' || data.user.role === 'admin' || data.user.role === 'sub-admin') {
                     router.push('/')
                 } else if (!data.user.isSafe) {
                     router.push('/virtual-eoc')
@@ -125,7 +145,7 @@ export default function SignupPage() {
                             <p className="text-slate-500 font-medium">Start your safety journey today</p>
                         </div>
 
-                        <form onSubmit={handleSignup} className="space-y-5">
+                        <form onSubmit={handleSignup} className="space-y-5 overflow-y-auto max-h-[70vh] px-1">
                             <div className="space-y-2">
                                 <label className="text-sm font-bold text-slate-700 ml-1">
                                     Full Name
@@ -163,6 +183,89 @@ export default function SignupPage() {
                                     />
                                 </div>
                             </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-slate-700 ml-1">
+                                    Account Type
+                                </label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setRole('user')}
+                                        className={`py-3 px-4 rounded-2xl border text-sm font-bold transition-all ${
+                                            role === 'user' 
+                                            ? 'bg-amber-50 border-amber-400 text-amber-700 shadow-sm' 
+                                            : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
+                                        }`}
+                                    >
+                                        Community Member
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setRole('sub-admin')}
+                                        className={`py-3 px-4 rounded-2xl border text-sm font-bold transition-all ${
+                                            role === 'sub-admin' 
+                                            ? 'bg-[#34385E] border-[#34385E] text-white shadow-md' 
+                                            : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
+                                        }`}
+                                    >
+                                        Sub Admin
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-slate-400 font-medium ml-1">
+                                    {role === 'user' 
+                                        ? "Register as a regular user to report incidents and receive safety alerts." 
+                                        : "Register as an organization admin to manage resources and response teams."
+                                    }
+                                </p>
+                            </div>
+
+                            {/* Sub-Admin Location Fields */}
+                            {role === 'sub-admin' && (
+                                <div className="space-y-4 p-4 bg-slate-50 border border-slate-100 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-500">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">
+                                            Select Country
+                                        </label>
+                                        <select
+                                            value={country}
+                                            onChange={(e) => {
+                                                setCountry(e.target.value)
+                                                setCity('') // Reset city when country changes
+                                            }}
+                                            className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all font-bold text-slate-700 appearance-none"
+                                            required
+                                        >
+                                            <option value="">Choose Country...</option>
+                                            {Object.keys(locations).map(c => (
+                                                <option key={c} value={c}>{c}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {country && (
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">
+                                                Select City
+                                            </label>
+                                            <select
+                                                value={city}
+                                                onChange={(e) => setCity(e.target.value)}
+                                                className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all font-bold text-slate-700 appearance-none"
+                                                required
+                                            >
+                                                <option value="">Choose City...</option>
+                                                {locations[country].map(ct => (
+                                                    <option key={ct} value={ct}>{ct}</option>
+                                                ))}
+                                            </select>
+                                            <p className="text-[10px] text-amber-600 font-bold ml-1 italic">
+                                                Note: Only one Sub-Admin is allowed per city.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="space-y-2">
                                 <label className="text-sm font-bold text-slate-700 ml-1">

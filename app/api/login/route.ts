@@ -34,6 +34,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
         }
 
+        // Check account status
+        // We allow pending and rejected users to get a session, but middleware/frontend will restrict them.
+        // This ensures they are authenticated and redirected to the appropriate "Waiting" or "Rejected" screen.
+
         // Fetch current system mode
         let systemStatus = await SystemStatus.findOne();
         if (!systemStatus) {
@@ -43,7 +47,13 @@ export async function POST(req: NextRequest) {
         // Create session
         const expires = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
         const session = await encrypt({
-            user: { id: user._id.toString(), email: user.email, name: user.name, role: user.role },
+            user: { 
+                id: user._id.toString(), 
+                email: user.email, 
+                name: user.name, 
+                role: user.role,
+                accountStatus: user.accountStatus 
+            },
             expires
         });
 
@@ -53,6 +63,7 @@ export async function POST(req: NextRequest) {
                 email: user.email,
                 name: user.name,
                 role: user.role,
+                accountStatus: user.accountStatus,
                 isSafe: user.isSafe ?? true,
                 location: user.location || ''
             },
@@ -68,6 +79,14 @@ export async function POST(req: NextRequest) {
         });
 
         (await cookies()).set('userRole', user.role, {
+            expires,
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+        });
+
+        (await cookies()).set('accountStatus', user.accountStatus || 'approved', {
             expires,
             httpOnly: false,
             secure: process.env.NODE_ENV === 'production',

@@ -40,8 +40,10 @@ export default function LoginPage() {
         localStorage.setItem('isSafe', String(data.user.isSafe ?? true))
         localStorage.setItem('userLocation', data.user.location || '')
 
-        if (data.user.role === 'admin') {
-          router.push('/')
+        if (data.user.role === 'super-admin') {
+          router.push('/super-admin-dashboard')
+        } else if (data.user.role === 'admin' || data.user.role === 'sub-admin') {
+          router.push('/admin-dashboard')
         } else {
           // Regular user redirection based on safety status
           if (!data.user.isSafe) {

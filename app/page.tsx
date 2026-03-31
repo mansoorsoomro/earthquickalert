@@ -21,7 +21,9 @@ export default function LandingPage() {
 
         // Session check
         const role = localStorage.getItem('userRole')
-        if (role === 'admin') {
+        if (role === 'super-admin') {
+            router.push('/super-admin-dashboard')
+        } else if (role === 'admin' || role === 'sub-admin') {
             router.push('/admin-dashboard')
         } else if (role === 'user') {
             router.push('/user-dashboard')

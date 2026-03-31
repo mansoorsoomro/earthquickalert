@@ -19,8 +19,13 @@ const UserSchema = new Schema({
     },
     role: {
         type: String,
-        enum: ['admin', 'responder', 'manager', 'user'],
+        enum: ['super-admin', 'sub-admin', 'admin', 'responder', 'manager', 'user'],
         default: 'user',
+    },
+    accountStatus: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending',
     },
     isSafe: {
         type: Boolean,
@@ -89,6 +94,14 @@ const UserSchema = new Schema({
         push: { type: Boolean, default: true },
         sms: { type: Boolean, default: true },
         email: { type: Boolean, default: true },
+    },
+    country: {
+        type: String,
+        default: '',
+    },
+    city: {
+        type: String,
+        default: '',
     },
     createdAt: {
         type: Date,

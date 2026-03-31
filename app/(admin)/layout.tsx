@@ -17,7 +17,9 @@ export default function AdminLayout({
     useEffect(() => {
         const userRole = localStorage.getItem('userRole')
         const storedName = localStorage.getItem('userName')
-        if (userRole !== 'admin') {
+        const isAuthorized = userRole === 'admin' || userRole === 'super-admin' || userRole === 'sub-admin'
+        
+        if (!isAuthorized) {
             router.push('/login')
         } else {
             if (storedName) setUserName(storedName)

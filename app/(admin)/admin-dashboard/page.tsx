@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { DashboardStats } from '@/components/dashboard-stats'
 import { GISMap } from '@/components/gis-map'
 import { CommunicationsCenter } from '@/components/communications-center'
@@ -32,14 +32,29 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Cards Row */}
-        <DashboardStats />
+        {/* Tactical Alert Grid */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-1 bg-red-600 rounded-full" />
+            <h2 className="text-sm font-black text-slate-800 uppercase tracking-[0.2em]">Tactical Alert Grid</h2>
+          </div>
+          <DashboardStats />
+        </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-1 bg-indigo-600 rounded-full" />
+              <h2 className="text-sm font-black text-slate-800 uppercase tracking-[0.2em]">GIS Impact Map</h2>
+            </div>
             <GISMap />
           </div>
-          <div>
+          
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-1 bg-amber-600 rounded-full" />
+              <h2 className="text-sm font-black text-slate-800 uppercase tracking-[0.2em]">Threat Monitoring</h2>
+            </div>
             <ThreatMonitoring />
           </div>
 
