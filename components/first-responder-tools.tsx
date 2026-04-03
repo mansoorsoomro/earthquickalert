@@ -42,6 +42,7 @@ export function FirstResponderTools() {
             label: 'Update Infrastructure Status',
             color: 'text-purple-600',
             bg: 'bg-purple-50/50',
+            badge: '3 Pending',
             onClick: () => toggleModal('infrastructure', true)
         },
         // {
