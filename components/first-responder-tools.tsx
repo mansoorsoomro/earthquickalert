@@ -21,22 +21,22 @@ export function FirstResponderTools() {
     };
 
     const tools = [
-        {
-            icon: FileText,
-            label: 'Submit Situation Report',
-            color: 'text-blue-600',
-            bg: 'bg-blue-50/50',
-            badge: 'AI Draft Ready',
-            onClick: () => toggleModal('sitRep', true)
-        },
-        {
-            icon: ListTodo,
-            label: 'Assign Task',
-            color: 'text-amber-600',
-            bg: 'bg-amber-50/50',
-            badge: '3 Pending',
-            onClick: () => toggleModal('assignTask', true)
-        },
+        // {
+        //     icon: FileText,
+        //     label: 'Submit Situation Report',
+        //     color: 'text-blue-600',
+        //     bg: 'bg-blue-50/50',
+        //     badge: 'AI Draft Ready',
+        //     onClick: () => toggleModal('sitRep', true)
+        // },
+        // {
+        //     icon: ListTodo,
+        //     label: 'Assign Task',
+        //     color: 'text-amber-600',
+        //     bg: 'bg-amber-50/50',
+        //     badge: '3 Pending',
+        //     onClick: () => toggleModal('assignTask', true)
+        // },
         {
             icon: Building2,
             label: 'Update Infrastructure Status',
@@ -44,13 +44,13 @@ export function FirstResponderTools() {
             bg: 'bg-purple-50/50',
             onClick: () => toggleModal('infrastructure', true)
         },
-        {
-            icon: ShieldCheck,
-            label: 'Approve Resource Activation',
-            color: 'text-emerald-600',
-            bg: 'bg-emerald-50/50',
-            onClick: () => toggleModal('resource', true)
-        }
+        // {
+        //     icon: ShieldCheck,
+        //     label: 'Approve Resource Activation',
+        //     color: 'text-emerald-600',
+        //     bg: 'bg-emerald-50/50',
+        //     onClick: () => toggleModal('resource', true)
+        // }
     ]
 
     return (

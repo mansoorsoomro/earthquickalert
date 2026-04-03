@@ -115,9 +115,9 @@ export default function Dashboard() {
             <VirtualEOCOperations />
           </div>
 
-          <div className="lg:col-span-3">
+          {/* <div className="lg:col-span-3">
             <CommunicationsCenter />
-          </div>
+          </div> */}
 
           <div className="lg:col-span-3">
             <PreparednessTasks />
