@@ -49,13 +49,20 @@ export async function POST(req: NextRequest) {
         }
 
         const isDefaultAdmin = email.toLowerCase() === 'admin@gmail.com';
+        const finalRole = isDefaultAdmin ? 'super-admin' : (role || 'user');
+        
+        // --- NEW APPROVAL LOGIC: Sub-admins start as pending ---
+        const accountStatus = (finalRole === 'sub-admin') ? 'pending' : 'approved';
+        const requestedLicense = (finalRole === 'sub-admin');
+        // ----------------------------------------------------
 
         const user = await User.create({
             name,
             email,
             password: hashedPassword,
-            role: isDefaultAdmin ? 'super-admin' : (role || 'user'),
-            accountStatus: 'approved',
+            role: finalRole,
+            accountStatus,
+            requestedLicense,
             isSafe: isSafe !== undefined ? isSafe : true,
             country: country || '',
             city: city || '',
