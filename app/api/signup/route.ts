@@ -24,15 +24,15 @@ export async function POST(req: NextRequest) {
 
         // --- NEW VALIDATION: UNIQUE SUB-ADMIN PER CITY ---
         if (role === 'sub-admin' && city && country) {
-            const subAdminInCity = await User.findOne({ 
-                role: 'sub-admin', 
-                city: city, 
-                country: country 
+            const subAdminInCity = await User.findOne({
+                role: 'sub-admin',
+                city: city,
+                country: country
             });
 
             if (subAdminInCity) {
-                return NextResponse.json({ 
-                    error: `already sub-admin on this city` 
+                return NextResponse.json({
+                    error: `already sub-admin on this city`
                 }, { status: 400 });
             }
         }
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
         const isDefaultAdmin = email.toLowerCase() === 'admin@gmail.com';
         const finalRole = isDefaultAdmin ? 'super-admin' : (role || 'user');
-        
+
         // --- NEW APPROVAL LOGIC: Sub-admins start as pending ---
         const accountStatus = (finalRole === 'sub-admin') ? 'pending' : 'approved';
         const requestedLicense = (finalRole === 'sub-admin');
@@ -71,10 +71,10 @@ export async function POST(req: NextRequest) {
         // Create session
         const expires = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
         const session = await encrypt({
-            user: { 
-                id: user._id.toString(), 
-                email: user.email, 
-                name: user.name, 
+            user: {
+                id: user._id.toString(),
+                email: user.email,
+                name: user.name,
                 role: user.role,
                 licenseId: user.licenseId?.toString() || null,
             },

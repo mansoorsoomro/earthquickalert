@@ -16,16 +16,16 @@ export async function GET(req: NextRequest) {
         }
 
         let query: any = {};
-        
+
         // 1. If explicit role filter is provided (e.g., from Super Admin pages)
         if (roleFilter) {
             query.role = roleFilter;
-            
+
             // Security: Sub-admins can't filter for roles they are not allowed to manage
             if (session.user.role === 'sub-admin' && roleFilter !== 'user') {
                 return NextResponse.json({ error: 'Unauthorized role access' }, { status: 403 });
             }
-        } 
+        }
         // 2. If filtering for license requests
         else if (requestedLicenseFilter === 'true') {
             query.requestedLicense = true;
@@ -165,8 +165,8 @@ export async function POST(req: NextRequest) {
             createdBy: session.user.id
         });
 
-        return NextResponse.json({ 
-            success: true, 
+        return NextResponse.json({
+            success: true,
             message: 'User created successfully',
             user: {
                 id: newUser._id,
