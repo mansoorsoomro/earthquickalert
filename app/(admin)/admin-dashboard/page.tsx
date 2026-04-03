@@ -11,10 +11,62 @@ import { ThreatMonitoring } from '@/components/threat-monitoring'
 import { VirtualEOCOperations } from '@/components/virtual-eoc-operations'
 import { PreparednessTasks } from '@/components/preparedness-tasks'
 import { FirstResponderTools } from '@/components/first-responder-tools'
+import { SetupWizard } from '@/components/setup-wizard'
 
 export default function Dashboard() {
   const [showSendAlertModal, setShowSendAlertModal] = useState(false)
   const [showEventsModal, setShowEventsModal] = useState(false)
+
+  // Setup Status Logic
+  const [checkingSetup, setCheckingSetup] = useState(true)
+  const [requiresSetup, setRequiresSetup] = useState(false)
+  const [isOrphan, setIsOrphan] = useState(false)
+  const [licenseData, setLicenseData] = useState({ id: '', orgName: '' })
+
+  useEffect(() => {
+    checkSetupStatus()
+  }, [])
+
+  const checkSetupStatus = async () => {
+    try {
+      const res = await fetch('/api/admin/eoc-setup-status')
+      const data = await res.json()
+
+      if (data.requiresSetup) {
+        setRequiresSetup(true)
+        if (data.orphan) {
+          setIsOrphan(true)
+        } else {
+          setLicenseData({ id: data.licenseId, orgName: data.organizationName })
+        }
+      }
+    } catch (err) {
+      console.error("Setup Check Failed", err)
+    } finally {
+      setCheckingSetup(false)
+    }
+  }
+
+  if (checkingSetup) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-slate-50 min-h-screen">
+        <div className="animate-pulse text-slate-400 font-bold text-lg">Initializing Terminal...</div>
+      </div>
+    )
+  }
+
+  if (requiresSetup && !isOrphan) {
+    return (
+      <div className="flex-1 relative bg-slate-50">
+        {/* The wizard intercepts the entire screen */}
+        <SetupWizard
+          licenseId={licenseData.id}
+          organizationName={licenseData.orgName}
+          onComplete={() => setRequiresSetup(false)}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 overflow-auto bg-slate-50">
@@ -49,7 +101,7 @@ export default function Dashboard() {
             </div>
             <GISMap />
           </div>
-          
+
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-1 bg-amber-600 rounded-full" />

@@ -9,6 +9,7 @@ export async function GET(req: NextRequest) {
         const session = await getSession();
         const { searchParams } = new URL(req.url);
         const roleFilter = searchParams.get('role');
+        const requestedLicenseFilter = searchParams.get('requestedLicense');
 
         if (!session || (session.user.role !== 'super-admin' && session.user.role !== 'sub-admin' && session.user.role !== 'admin')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -25,17 +26,35 @@ export async function GET(req: NextRequest) {
                 return NextResponse.json({ error: 'Unauthorized role access' }, { status: 403 });
             }
         } 
-        // 2. Default behavior (for standard User Management page)
+        // 2. If filtering for license requests
+        else if (requestedLicenseFilter === 'true') {
+            query.requestedLicense = true;
+        }
+        // 3. Default behavior (for standard User Management page)
         else {
             if (session.user.role === 'sub-admin') {
-                query = { role: 'user' };
+                // If sub-admin, only show users created by THEM
+                query = { createdBy: session.user.id };
             } else if (session.user.role === 'super-admin' || session.user.role === 'admin') {
                 query = {}; // Super admin sees everyone by default
             }
         }
 
         const users = await User.find(query).sort({ createdAt: -1 });
-        return NextResponse.json({ users });
+
+        // Include current user license status for sub-admins
+        let currentUser: any = null;
+        if (session.user.role !== 'super-admin') {
+            const user = await User.findById(session.user.id);
+            if (user) {
+                currentUser = {
+                    hasLicense: !!user.licenseId,
+                    requestedLicense: !!user.requestedLicense
+                };
+            }
+        }
+
+        return NextResponse.json({ users, currentUser });
     } catch (error) {
         console.error('Fetch users error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -92,5 +111,72 @@ export async function PATCH(req: NextRequest) {
     } catch (error) {
         console.error('Update user error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+}
+
+export async function POST(req: NextRequest) {
+    try {
+        await connectDB();
+        const session = await getSession();
+
+        if (!session || (session.user.role !== 'super-admin' && session.user.role !== 'sub-admin' && session.user.role !== 'admin')) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { name, email, password, role } = await req.json();
+
+        if (!name || !email || !password || !role) {
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return NextResponse.json({ error: 'User already exists' }, { status: 400 });
+        }
+
+        // Fetch current user and check license count
+        const creator = await User.findById(session.user.id);
+        if (!creator) {
+            return NextResponse.json({ error: 'Creator not found' }, { status: 404 });
+        }
+
+        // Only enforce limit for sub-admins
+        if (session.user.role === 'sub-admin' && creator.licenseId) {
+            const userCount = await User.countDocuments({ licenseId: creator.licenseId });
+            // Total limit (including sub-admin) should be 21 (sub-admin + 20 EOC users)
+            if (userCount >= 21) {
+                return NextResponse.json({ error: 'Organization user limit (20) has been reached.' }, { status: 403 });
+            }
+        }
+
+        const bcrypt = require('bcryptjs');
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newUser = await User.create({
+            name,
+            email,
+            password: hashedPassword,
+            role,
+            licenseId: creator.licenseId || null,
+            city: creator.city || '',
+            country: creator.country || '',
+            accountStatus: 'approved',
+            createdBy: session.user.id
+        });
+
+        return NextResponse.json({ 
+            success: true, 
+            message: 'User created successfully',
+            user: {
+                id: newUser._id,
+                name: newUser.name,
+                email: newUser.email,
+                role: newUser.role
+            }
+        });
+    } catch (error: any) {
+        console.error('Create user error:', error);
+        return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
     }
 }

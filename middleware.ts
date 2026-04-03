@@ -43,21 +43,46 @@ export function middleware(request: NextRequest) {
         ]
 
         const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route))
-        const isAdminRole = userRole === 'admin' || userRole === 'super-admin' || userRole === 'sub-admin'
+        const isAdminRole = userRole === 'admin' || userRole === 'super-admin' || userRole === 'sub-admin' || userRole === 'observer' || userRole === 'responder' || userRole === 'manager' || userRole === 'eoc-manager' || userRole === 'eoc-observer'
+        const isEOCRole = userRole === 'eoc-manager' || userRole === 'eoc-observer'
 
-        // Super Admin only routes
-        if (pathname.startsWith('/admin/users') && userRole !== 'super-admin') {
+        // 1. EOC Roles specific redirection and restrictions
+        if (isEOCRole) {
+            // If EOC role is on standard admin-dashboard or user-dashboard, redirect to Virtual EOC dashboard
+            if (pathname === '/admin-dashboard' || pathname === '/eoc-dashboard' || pathname === '/user-dashboard' || pathname === '/') {
+                return NextResponse.redirect(new URL('/virtual-eoc', request.url))
+            }
+            // Block EOC roles from management pages
+            const managementRoutes = ['/admin/users', '/admin/licenses', '/admin/sub-admins', '/super-admin-dashboard']
+            if (managementRoutes.some(route => pathname.startsWith(route))) {
+                return NextResponse.redirect(new URL('/virtual-eoc', request.url))
+            }
+        }
+
+        // 2. Super Admin or Admin/Sub-Admin routes
+        if (pathname.startsWith('/super-admin-dashboard') && userRole !== 'super-admin') {
             return NextResponse.redirect(new URL('/admin-dashboard', request.url))
         }
 
-        // Restriction: If on admin route but NOT an admin, go to user dashboard
+        // 3. Allow admin and sub-admin to access their respective management pages if they are in adminRoutes
+        const restrictedForSubAdmin = pathname.startsWith('/admin/licenses') || pathname.startsWith('/admin/sub-admins')
+        if (restrictedForSubAdmin && (userRole !== 'super-admin' && userRole !== 'admin' && userRole !== 'sub-admin')) {
+             return NextResponse.redirect(new URL('/admin-dashboard', request.url))
+        }
+
+        // 4. Restriction: If on admin route but NOT an admin, go to user dashboard
         if (isAdminRoute && !isAdminRole) {
             return NextResponse.redirect(new URL('/user-dashboard', request.url))
         }
 
-        // Restriction: If on user dashboard but IS an admin, go to admin dashboard
-        if (pathname === '/user-dashboard' && isAdminRole) {
+        // 5. Restriction: If on user dashboard but IS an admin (and not EOC), go to admin dashboard
+        if (pathname === '/user-dashboard' && isAdminRole && !isEOCRole) {
             return NextResponse.redirect(new URL('/admin-dashboard', request.url))
+        }
+
+        // 6. Redirect EOC roles to EOC dashboard if they are on admin dashboard
+        if (pathname === '/admin-dashboard' && isEOCRole) {
+             return NextResponse.redirect(new URL('/virtual-eoc', request.url))
         }
     }
 

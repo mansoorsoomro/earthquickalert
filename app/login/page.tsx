@@ -44,6 +44,8 @@ export default function LoginPage() {
           router.push('/super-admin-dashboard')
         } else if (data.user.role === 'admin' || data.user.role === 'sub-admin') {
           router.push('/admin-dashboard')
+        } else if (data.user.role === 'eoc-manager' || data.user.role === 'eoc-observer') {
+          router.push('/virtual-eoc')
         } else {
           // Regular user redirection based on safety status
           if (!data.user.isSafe) {

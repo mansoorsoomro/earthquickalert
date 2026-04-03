@@ -25,7 +25,9 @@ export default function UserLayout({
         const userRole = localStorage.getItem('userRole')
         const storedName = localStorage.getItem('userName')
 
-        if (userRole === 'admin') {
+        const isAdminRole = userRole === 'admin' || userRole === 'super-admin' || userRole === 'sub-admin' || userRole === 'observer' || userRole === 'responder' || userRole === 'manager'
+        
+        if (isAdminRole) {
             router.push('/')
             return
         }

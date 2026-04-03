@@ -32,10 +32,10 @@ export default function SignupPage() {
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
-        
-        // Validation for Sub-Admin
-        if (role === 'sub-admin' && (!country || !city)) {
-            setError('Please select both Country and City for Sub-Admin registration.')
+
+        // Validation for Country and City
+        if (!country || !city) {
+            setError('Please select both Country and City.')
             return
         }
 
@@ -192,80 +192,78 @@ export default function SignupPage() {
                                     <button
                                         type="button"
                                         onClick={() => setRole('user')}
-                                        className={`py-3 px-4 rounded-2xl border text-sm font-bold transition-all ${
-                                            role === 'user' 
-                                            ? 'bg-amber-50 border-amber-400 text-amber-700 shadow-sm' 
-                                            : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
-                                        }`}
+                                        className={`py-3 px-4 rounded-2xl border text-sm font-bold transition-all ${role === 'user'
+                                                ? 'bg-amber-50 border-amber-400 text-amber-700 shadow-sm'
+                                                : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
+                                            }`}
                                     >
                                         Community Member
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setRole('sub-admin')}
-                                        className={`py-3 px-4 rounded-2xl border text-sm font-bold transition-all ${
-                                            role === 'sub-admin' 
-                                            ? 'bg-[#34385E] border-[#34385E] text-white shadow-md' 
-                                            : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
-                                        }`}
+                                        className={`py-3 px-4 rounded-2xl border text-sm font-bold transition-all ${role === 'sub-admin'
+                                                ? 'bg-[#34385E] border-[#34385E] text-white shadow-md'
+                                                : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
+                                            }`}
                                     >
                                         Sub Admin
                                     </button>
                                 </div>
                                 <p className="text-[10px] text-slate-400 font-medium ml-1">
-                                    {role === 'user' 
-                                        ? "Register as a regular user to report incidents and receive safety alerts." 
+                                    {role === 'user'
+                                        ? "Register as a regular user to report incidents and receive safety alerts."
                                         : "Register as an organization admin to manage resources and response teams."
                                     }
                                 </p>
                             </div>
 
-                            {/* Sub-Admin Location Fields */}
-                            {role === 'sub-admin' && (
-                                <div className="space-y-4 p-4 bg-slate-50 border border-slate-100 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-500">
+                            {/* Location Fields for all users */}
+                            <div className="space-y-4 p-4 bg-slate-50 border border-slate-100 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-500">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">
+                                        Select Country
+                                    </label>
+                                    <select
+                                        value={country}
+                                        onChange={(e) => {
+                                            setCountry(e.target.value)
+                                            setCity('') // Reset city when country changes
+                                        }}
+                                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all font-bold text-slate-700 appearance-none"
+                                        required
+                                    >
+                                        <option value="">Choose Country...</option>
+                                        {Object.keys(locations).map(c => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {country && (
                                     <div className="space-y-2">
                                         <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">
-                                            Select Country
+                                            Select City
                                         </label>
                                         <select
-                                            value={country}
-                                            onChange={(e) => {
-                                                setCountry(e.target.value)
-                                                setCity('') // Reset city when country changes
-                                            }}
+                                            value={city}
+                                            onChange={(e) => setCity(e.target.value)}
                                             className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all font-bold text-slate-700 appearance-none"
                                             required
                                         >
-                                            <option value="">Choose Country...</option>
-                                            {Object.keys(locations).map(c => (
-                                                <option key={c} value={c}>{c}</option>
+                                            <option value="">Choose City...</option>
+                                            {locations[country].map(ct => (
+                                                <option key={ct} value={ct}>{ct}</option>
                                             ))}
                                         </select>
-                                    </div>
-
-                                    {country && (
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">
-                                                Select City
-                                            </label>
-                                            <select
-                                                value={city}
-                                                onChange={(e) => setCity(e.target.value)}
-                                                className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all font-bold text-slate-700 appearance-none"
-                                                required
-                                            >
-                                                <option value="">Choose City...</option>
-                                                {locations[country].map(ct => (
-                                                    <option key={ct} value={ct}>{ct}</option>
-                                                ))}
-                                            </select>
+                                        {role === 'sub-admin' && (
                                             <p className="text-[10px] text-amber-600 font-bold ml-1 italic">
                                                 Note: Only one Sub-Admin is allowed per city.
                                             </p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                                        )}
+                                    </div>
+                                )}
+                            </div>
 
                             <div className="space-y-2">
                                 <label className="text-sm font-bold text-slate-700 ml-1">

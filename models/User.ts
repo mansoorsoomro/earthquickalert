@@ -19,13 +19,18 @@ const UserSchema = new Schema({
     },
     role: {
         type: String,
-        enum: ['super-admin', 'sub-admin', 'admin', 'responder', 'manager', 'user'],
+        enum: ['super-admin', 'sub-admin', 'admin', 'observer', 'responder', 'manager', 'user', 'eoc-manager', 'eoc-observer'],
         default: 'user',
+    },
+    licenseId: {
+        type: Schema.Types.ObjectId,
+        ref: 'License',
+        default: null, // Null means public user or super-admin unattached to EOC
     },
     accountStatus: {
         type: String,
         enum: ['pending', 'approved', 'rejected'],
-        default: 'pending',
+        default: 'approved',
     },
     isSafe: {
         type: Boolean,
@@ -102,6 +107,19 @@ const UserSchema = new Schema({
     city: {
         type: String,
         default: '',
+    },
+    requestedLicense: {
+        type: Boolean,
+        default: false,
+    },
+    requestedOrgName: {
+        type: String,
+        default: '',
+    },
+    createdBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        default: null,
     },
     createdAt: {
         type: Date,

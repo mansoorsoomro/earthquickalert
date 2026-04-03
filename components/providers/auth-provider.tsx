@@ -29,6 +29,8 @@ export function AuthProvider({ children, requiredRole = 'admin' }: AuthProviderP
     // If admin-only pages and user is not admin
     const adminPages = [
       '/',
+      '/admin-dashboard',
+      '/super-admin-dashboard',
       '/emergency-plan',
       '/preparedness-information',
       '/virtual-eoc-settings',
@@ -41,14 +43,16 @@ export function AuthProvider({ children, requiredRole = 'admin' }: AuthProviderP
       '/eoc-mode-dashboard',
     ]
 
-    if (adminPages.includes(pathname) && userRole !== 'admin') {
+    const isAdminRole = userRole === 'admin' || userRole === 'super-admin' || userRole === 'sub-admin' || userRole === 'observer' || userRole === 'responder' || userRole === 'manager'
+
+    if (pathname && adminPages.includes(pathname) && !isAdminRole) {
       router.push('/user-dashboard')
       return
     }
 
     // If user-only pages and user is admin
-    if (pathname === '/user-dashboard' && userRole === 'admin') {
-      router.push('/')
+    if (pathname === '/user-dashboard' && isAdminRole) {
+      router.push('/admin-dashboard')
       return
     }
 

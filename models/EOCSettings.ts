@@ -1,18 +1,28 @@
 import mongoose, { Schema, model, models } from 'mongoose';
 
-// Singleton-style settings model — only one document is stored
 const EOCSettingsSchema = new Schema({
-    activationType: {
-        type: String,
-        enum: ['all', 'major', 'custom'],
-        default: 'all',
+    licenseId: {
+        type: Schema.Types.ObjectId,
+        ref: 'License',
+        required: [true, 'EOC Settings must belong to a license'],
+        unique: true, // 1:1 relationship with License
     },
-    customSeverities: {
-        minor: { type: Boolean, default: false },
-        moderate: { type: Boolean, default: false },
-        major: { type: Boolean, default: false },
-        catastrophic: { type: Boolean, default: false },
+    activationThresholds: {
+        minor: { triggerEOC: { type: Boolean, default: false } },
+        moderate: { triggerEOC: { type: Boolean, default: false } },
+        major: { triggerEOC: { type: Boolean, default: true } },
+        catastrophic: { triggerEOC: { type: Boolean, default: true } },
     },
+    pollingIntervals: {
+        eventTypesForOneMinute: [{ 
+            type: String, 
+            enum: ['earthquake', 'hurricane', 'tornado', 'flood', 'wildfire', 'severe-weather', 'other'] 
+        }],
+    },
+    communicationTemplates: [{
+        severity: String,
+        messageBody: String, 
+    }],
     alertFeeds: {
         nws: { type: Boolean, default: true },
         local: { type: Boolean, default: true },

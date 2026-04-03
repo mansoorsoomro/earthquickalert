@@ -55,7 +55,7 @@ export default function SubAdminManagementPage() {
 
     useEffect(() => {
         const userRole = localStorage.getItem('userRole')
-        if (userRole !== 'super-admin' && userRole !== 'admin') {
+        if (userRole !== 'super-admin' && userRole !== 'admin' && userRole !== 'sub-admin') {
             router.push('/admin-dashboard')
             return
         }

@@ -37,6 +37,8 @@ const EmergencyEventSchema = new Schema({
     createdBy: { type: String, required: true },
     timeline: [EventTimelineItemSchema],
     resolvedAt: { type: Date },
+    linkedLicenseId: { type: Schema.Types.ObjectId, ref: 'License' }, // Which EOC workspace owns this event if applicable
+    isEOCActivated: { type: Boolean, default: false }, // Flips to true based on the Severity rule in EOCSettings
 }, {
     timestamps: true,
 });

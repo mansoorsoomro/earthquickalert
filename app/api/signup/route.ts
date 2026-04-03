@@ -17,6 +17,11 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'User already exists' }, { status: 400 });
         }
 
+        // Validation for Country and City for all users
+        if (!country || !city) {
+            return NextResponse.json({ error: 'Country and City are required' }, { status: 400 });
+        }
+
         // --- NEW VALIDATION: UNIQUE SUB-ADMIN PER CITY ---
         if (role === 'sub-admin' && city && country) {
             const subAdminInCity = await User.findOne({ 
@@ -50,7 +55,7 @@ export async function POST(req: NextRequest) {
             email,
             password: hashedPassword,
             role: isDefaultAdmin ? 'super-admin' : (role || 'user'),
-            accountStatus: isDefaultAdmin ? 'approved' : 'pending',
+            accountStatus: 'approved',
             isSafe: isSafe !== undefined ? isSafe : true,
             country: country || '',
             city: city || '',
@@ -59,7 +64,13 @@ export async function POST(req: NextRequest) {
         // Create session
         const expires = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
         const session = await encrypt({
-            user: { id: user._id.toString(), email: user.email, name: user.name, role: user.role },
+            user: { 
+                id: user._id.toString(), 
+                email: user.email, 
+                name: user.name, 
+                role: user.role,
+                licenseId: user.licenseId?.toString() || null,
+            },
             expires
         });
 

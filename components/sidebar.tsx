@@ -18,6 +18,11 @@ import {
   X,
   Building2,
   Shield,
+  Bed,
+  Crosshair,
+  Wrench,
+  CloudRain,
+  RefreshCw,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
@@ -52,17 +57,36 @@ export function Sidebar() {
     setUserRole(localStorage.getItem('userRole'))
   }, [])
 
-  const adminMenuItems = userRole === 'super-admin'
+  const isSuperAdminRole = userRole === 'super-admin'
+  const isEOCRole = userRole === 'eoc-manager' || userRole === 'eoc-observer'
+  const isOperationalAdmin = userRole === 'admin' || userRole === 'sub-admin' || userRole === 'observer' || userRole === 'responder' || userRole === 'manager'
+
+  const eocMenuItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', href: '/virtual-eoc' },
+    { icon: Bed, label: 'Lodging & Essentials', href: '/virtual-eoc/lodging' },
+    { icon: Crosshair, label: 'Emergency Center', href: '/virtual-eoc/center' },
+    { icon: Wrench, label: 'Emergency Maintenance', href: '/virtual-eoc/maintenance' },
+    { icon: CloudRain, label: 'Weather & Traffic Feed', href: '/virtual-eoc/weather-traffic' },
+    { icon: RefreshCw, label: 'Recovery Resources', href: '/virtual-eoc/recovery' },
+  ]
+
+  const adminMenuItems = isSuperAdminRole
     ? [
         { icon: LayoutDashboard, label: 'Dashboard', href: '/super-admin-dashboard' },
+        { icon: Building2, label: 'Licenses', href: '/admin/licenses' },
         { icon: Shield, label: 'Sub-Admins', href: '/admin/sub-admins' },
-        { icon: Users, label: 'Board Users', href: '/admin/users' }
+        { icon: Users, label: 'User Approval', href: '/admin/users' }
+      ]
+    : isEOCRole
+    ? eocMenuItems
+    : isOperationalAdmin
+    ? [
+        { icon: LayoutDashboard, label: 'Dashboard', href: '/admin-dashboard' },
+        { icon: Users, label: 'User Approval', href: '/admin/users' },
+        ...menuItems.filter(item => item.href !== '/admin-dashboard')
       ]
     : [
         ...menuItems,
-        ...(userRole === 'sub-admin' || userRole === 'admin' 
-           ? [{ icon: Users, label: 'User Approval', href: '/admin/users' }] 
-           : [])
       ]
 
   return (

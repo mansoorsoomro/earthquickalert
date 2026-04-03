@@ -52,7 +52,8 @@ export async function POST(req: NextRequest) {
                 email: user.email, 
                 name: user.name, 
                 role: user.role,
-                accountStatus: user.accountStatus 
+                accountStatus: user.accountStatus,
+                licenseId: user.licenseId?.toString() || null,
             },
             expires
         });

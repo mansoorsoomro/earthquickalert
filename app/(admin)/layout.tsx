@@ -17,7 +17,7 @@ export default function AdminLayout({
     useEffect(() => {
         const userRole = localStorage.getItem('userRole')
         const storedName = localStorage.getItem('userName')
-        const isAuthorized = userRole === 'admin' || userRole === 'super-admin' || userRole === 'sub-admin'
+        const isAuthorized = userRole === 'admin' || userRole === 'super-admin' || userRole === 'sub-admin' || userRole === 'observer' || userRole === 'responder' || userRole === 'manager' || userRole === 'eoc-manager' || userRole === 'eoc-observer'
         
         if (!isAuthorized) {
             router.push('/login')
