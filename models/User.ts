@@ -104,7 +104,15 @@ const UserSchema = new Schema({
         type: String,
         default: '',
     },
+    state: {
+        type: String,
+        default: '',
+    },
     city: {
+        type: String,
+        default: '',
+    },
+    zipcode: {
         type: String,
         default: '',
     },

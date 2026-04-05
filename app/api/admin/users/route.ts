@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import { getSession } from '@/lib/auth';
+import { getSubAdminUserFilter } from '@/lib/admin-filters';
 
 export async function GET(req: NextRequest) {
     try {
@@ -15,32 +16,47 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        let query: any = {};
+        let baseQuery: any = {};
+        if (session.user.role === 'sub-admin') {
+            const filter = await getSubAdminUserFilter(session.user.id);
+            baseQuery = filter || { createdBy: session.user.id };
+            // Exclude self from the list for sub-admins
+            if (baseQuery.$or) {
+                baseQuery = { $and: [baseQuery, { _id: { $ne: session.user.id } }] };
+            } else {
+                baseQuery._id = { $ne: session.user.id };
+            }
+        }
+
+        let query: any = { ...baseQuery };
 
         // 1. If explicit role filter is provided (e.g., from Super Admin pages)
-        if (roleFilter) {
-            query.role = roleFilter;
-
+        if (roleFilter && roleFilter !== 'all') {
             // Security: Sub-admins can't filter for roles they are not allowed to manage
-            if (session.user.role === 'sub-admin' && roleFilter !== 'user') {
+            if (session.user.role === 'sub-admin' && (roleFilter !== 'user' && !roleFilter.split(',').every(r => r === 'user'))) {
                 return NextResponse.json({ error: 'Unauthorized role access' }, { status: 403 });
+            }
+
+            if (roleFilter.includes(',')) {
+                query.role = { $in: roleFilter.split(',') };
+            } else {
+                query.role = roleFilter;
             }
         }
         // 2. If filtering for license requests
         else if (requestedLicenseFilter === 'true') {
             query.requestedLicense = true;
         }
-        // 3. Default behavior (for standard User Management page)
-        else {
-            if (session.user.role === 'sub-admin') {
-                // If sub-admin, only show users created by THEM
-                query = { createdBy: session.user.id };
-            } else if (session.user.role === 'super-admin' || session.user.role === 'admin') {
-                query = {}; // Super admin sees everyone by default
-            }
-        }
 
         const users = await User.find(query).sort({ createdAt: -1 });
+
+        // Calculate stats for the dashboard cards (Requested by User)
+        const userStats = {
+            totalUsers: await User.countDocuments({}),
+            pendingSubAdmins: await User.countDocuments({ role: 'sub-admin', accountStatus: 'pending' }),
+            approvedSubAdmins: await User.countDocuments({ role: 'sub-admin', accountStatus: 'approved' }),
+            superAdmins: await User.countDocuments({ role: 'super-admin' })
+        };
 
         // Include current user license status for sub-admins
         let currentUser: any = null;
@@ -54,7 +70,7 @@ export async function GET(req: NextRequest) {
             }
         }
 
-        return NextResponse.json({ users, currentUser });
+        return NextResponse.json({ users, currentUser, userStats });
     } catch (error) {
         console.error('Fetch users error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

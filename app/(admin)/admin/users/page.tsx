@@ -60,7 +60,7 @@ export default function AdminUsersPage() {
 
             // For super admin, fetch both regular users and sub-admins
             // For sub-admin, the API will automatically filter by their licenseId
-            const url = isSuperAdmin ? '/api/admin/users?role=user,sub-admin' : '/api/admin/users'
+            const url = '/api/admin/users'
             const response = await fetch(url)
             const data = await response.json()
             if (response.ok) {
@@ -129,12 +129,11 @@ export default function AdminUsersPage() {
         const isEOC = role.startsWith('eoc-')
 
         return (
-            <div className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${
-                isSuperAdmin ? 'bg-indigo-100 text-indigo-700' :
-                isSubAdmin ? 'bg-blue-50 text-blue-700 border border-blue-100' :
-                isEOC ? 'bg-amber-50 text-amber-700 border border-amber-100' :
-                'bg-slate-100 text-slate-600'
-            }`}>
+            <div className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${isSuperAdmin ? 'bg-indigo-100 text-indigo-700' :
+                    isSubAdmin ? 'bg-blue-50 text-blue-700 border border-blue-100' :
+                        isEOC ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                            'bg-slate-100 text-slate-600'
+                }`}>
                 {isSuperAdmin ? <Shield size={10} /> : isEOC ? <Shield size={10} className="text-amber-600" /> : <User size={10} />}
                 {role.replace('-', ' ')}
             </div>
@@ -232,12 +231,11 @@ export default function AdminUsersPage() {
                 <div className="flex items-center gap-3">
                     {(isSuperAdmin || currentUserStatus.hasLicense) && (
                         <div className="flex flex-col items-end gap-1.5 mr-2">
-                             <Button
+                            <Button
                                 onClick={() => setIsAddUserModalOpen(true)}
                                 disabled={isAtLimit && !isSuperAdmin}
-                                className={`h-11 px-5 rounded-xl font-bold shadow-lg shadow-indigo-900/10 gap-2 ${
-                                    isAtLimit ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                                }`}
+                                className={`h-11 px-5 rounded-xl font-bold shadow-lg shadow-indigo-900/10 gap-2 ${isAtLimit ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                    }`}
                             >
                                 <UserPlus size={18} />
                                 Add EOC Member
@@ -245,8 +243,8 @@ export default function AdminUsersPage() {
                             {!isSuperAdmin && (
                                 <div className="flex items-center gap-1.5">
                                     <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                        <div 
-                                            className={`h-full rounded-full transition-all duration-500 ${isAtLimit ? 'bg-rose-500' : 'bg-indigo-500'}`} 
+                                        <div
+                                            className={`h-full rounded-full transition-all duration-500 ${isAtLimit ? 'bg-rose-500' : 'bg-indigo-500'}`}
                                             style={{ width: `${(eocMembersCount / 20) * 100}%` }}
                                         />
                                     </div>

@@ -7,6 +7,9 @@ import { Eye, EyeOff, User, Mail, Lock } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import logo from '../../public/logo.png'
+import { useJsApiLoader, Autocomplete } from '@react-google-maps/api'
+
+const libraries: "places"[] = ["places"]
 
 export default function SignupPage() {
     const router = useRouter()
@@ -16,26 +19,63 @@ export default function SignupPage() {
     const [isSafe, setIsSafe] = useState(true)
     const [role, setRole] = useState('user')
     const [country, setCountry] = useState('')
+    const [state, setState] = useState('')
     const [city, setCity] = useState('')
+    const [zipcode, setZipcode] = useState('')
     const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
 
-    // Sample data for Country/City dropdowns
-    const locations: Record<string, string[]> = {
-        "USA": ["New York", "Los Angeles", "Chicago", "Houston", "Miami"],
-        "UK": ["London", "Manchester", "Birmingham", "Leeds", "Glasgow"],
-        "UAE": ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Al Ain"],
-        "Pakistan": ["Karachi", "Lahore", "Islamabad", "Faisalabad", "Rawalpindi"],
+    const [autocompleteInfo, setAutocompleteInfo] = useState<any>(null)
+
+    const { isLoaded } = useJsApiLoader({
+        id: 'google-map-script',
+        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+        libraries: libraries,
+    })
+
+    const onPlaceLoaded = (autocomplete: any) => {
+        setAutocompleteInfo(autocomplete)
+    }
+
+    const onPlaceChanged = () => {
+        if (autocompleteInfo) {
+            const place = autocompleteInfo.getPlace()
+            let newCity = ''
+            let newState = ''
+            let newCountry = ''
+            let newZip = ''
+
+            place.address_components?.forEach((component: any) => {
+                const types = component.types
+                if (types.includes('locality')) {
+                    newCity = component.long_name
+                }
+                if (types.includes('administrative_area_level_1')) {
+                    newState = component.long_name
+                }
+                if (types.includes('country')) {
+                    newCountry = component.long_name
+                }
+                if (types.includes('postal_code')) {
+                    newZip = component.long_name
+                }
+            })
+
+            if (newCity) setCity(newCity)
+            if (newState) setState(newState)
+            if (newCountry) setCountry(newCountry)
+            if (newZip) setZipcode(newZip)
+        }
     }
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
 
-        // Validation for Country and City
-        if (!country || !city) {
-            setError('Please select both Country and City.')
+        // Validation for Location Fields
+        if (!country || !state || !city || !zipcode) {
+            setError('Please provide Country, State, City, and Zipcode.')
             return
         }
 
@@ -45,7 +85,7 @@ export default function SignupPage() {
             const response = await fetch('/api/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password, isSafe, role, country, city }),
+                body: JSON.stringify({ name, email, password, isSafe, role, country, state, city, zipcode }),
             })
 
             const data = await response.json()
@@ -193,8 +233,8 @@ export default function SignupPage() {
                                         type="button"
                                         onClick={() => setRole('user')}
                                         className={`py-3 px-4 rounded-2xl border text-sm font-bold transition-all ${role === 'user'
-                                                ? 'bg-amber-50 border-amber-400 text-amber-700 shadow-sm'
-                                                : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
+                                            ? 'bg-amber-50 border-amber-400 text-amber-700 shadow-sm'
+                                            : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
                                             }`}
                                     >
                                         Community Member
@@ -203,8 +243,8 @@ export default function SignupPage() {
                                         type="button"
                                         onClick={() => setRole('sub-admin')}
                                         className={`py-3 px-4 rounded-2xl border text-sm font-bold transition-all ${role === 'sub-admin'
-                                                ? 'bg-[#34385E] border-[#34385E] text-white shadow-md'
-                                                : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
+                                            ? 'bg-[#34385E] border-[#34385E] text-white shadow-md'
+                                            : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
                                             }`}
                                     >
                                         Sub Admin
@@ -220,49 +260,81 @@ export default function SignupPage() {
 
                             {/* Location Fields for all users */}
                             <div className="space-y-4 p-4 bg-slate-50 border border-slate-100 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-500">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">
-                                        Select Country
-                                    </label>
-                                    <select
-                                        value={country}
-                                        onChange={(e) => {
-                                            setCountry(e.target.value)
-                                            setCity('') // Reset city when country changes
-                                        }}
-                                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all font-bold text-slate-700 appearance-none"
-                                        required
-                                    >
-                                        <option value="">Choose Country...</option>
-                                        {Object.keys(locations).map(c => (
-                                            <option key={c} value={c}>{c}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {country && (
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">
-                                            Select City
+                                {isLoaded && (
+                                    <div className="space-y-2 mb-2 pb-4 border-b border-slate-200">
+                                        <label className="text-xs font-black text-amber-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                            Search Google Maps
                                         </label>
-                                        <select
-                                            value={city}
-                                            onChange={(e) => setCity(e.target.value)}
-                                            className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all font-bold text-slate-700 appearance-none"
-                                            required
-                                        >
-                                            <option value="">Choose City...</option>
-                                            {locations[country].map(ct => (
-                                                <option key={ct} value={ct}>{ct}</option>
-                                            ))}
-                                        </select>
-                                        {role === 'sub-admin' && (
-                                            <p className="text-[10px] text-amber-600 font-bold ml-1 italic">
-                                                Note: Only one Sub-Admin is allowed per city.
-                                            </p>
-                                        )}
+                                        <Autocomplete onLoad={onPlaceLoaded} onPlaceChanged={onPlaceChanged}>
+                                            <input
+                                                type="text"
+                                                placeholder="Type to search your location..."
+                                                className="w-full px-5 py-4 bg-white border border-amber-200 shadow-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all font-bold text-slate-700"
+                                            />
+                                        </Autocomplete>
+                                        <p className="text-[10px] text-slate-400 font-medium ml-1">
+                                            Selecting an address will autofill the fields below.
+                                        </p>
                                     </div>
                                 )}
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">
+                                        Country
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={country}
+                                        onChange={(e) => setCountry(e.target.value)}
+                                        placeholder="e.g. USA"
+                                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all font-medium text-slate-700"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">
+                                        State/Province
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={state}
+                                        onChange={(e) => setState(e.target.value)}
+                                        placeholder="e.g. Arkansas"
+                                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all font-medium text-slate-700"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">
+                                        City
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={city}
+                                        onChange={(e) => setCity(e.target.value)}
+                                        placeholder="e.g. Little Rock"
+                                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all font-medium text-slate-700"
+                                        required
+                                    />
+                                    {role === 'sub-admin' && (
+                                        <p className="text-[10px] text-amber-600 font-bold ml-1 italic">
+                                            Note: Only one Sub-Admin is allowed per city.
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">
+                                        Zipcode
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={zipcode}
+                                        onChange={(e) => setZipcode(e.target.value)}
+                                        placeholder="e.g. 72201"
+                                        className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all font-medium text-slate-700"
+                                        required
+                                    />
+                                </div>
                             </div>
 
                             <div className="space-y-2">

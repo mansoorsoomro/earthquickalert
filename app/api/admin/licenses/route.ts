@@ -35,33 +35,35 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized. Only Super Admin can create licenses.' }, { status: 401 });
         }
 
-        const { organizationName, planType, endDate, userId, country, city } = await req.json();
+        const { organizationName, planType, endDate, userId, country, state, city, zipcode } = await req.json();
 
         if (!organizationName || !userId) {
-             return NextResponse.json({ error: 'Missing required fields (organizationName and userId)' }, { status: 400 });
+            return NextResponse.json({ error: 'Missing required fields (organizationName and userId)' }, { status: 400 });
         }
 
         // 1. Fetch the user to be assigned
         let assignedSubAdmin = await User.findById(userId);
-        
+
         if (!assignedSubAdmin) {
-             return NextResponse.json({ error: 'Selected user not found' }, { status: 404 });
+            return NextResponse.json({ error: 'Selected user not found' }, { status: 404 });
         }
 
-        // Check if there is already a sub-admin for this city (existing logic)
-        if (city && country) {
-            const subAdminInCity = await User.findOne({ role: 'sub-admin', city, country, _id: { $ne: assignedSubAdmin._id } });
+        // Check if there is already a sub-admin for this city/state/country
+        if (city && state && country) {
+            const subAdminInCity = await User.findOne({ role: 'sub-admin', city, state, country, _id: { $ne: assignedSubAdmin._id } });
             if (subAdminInCity) {
-                return NextResponse.json({ error: `A sub-admin already exists for ${city}, ${country}` }, { status: 400 });
+                return NextResponse.json({ error: `A sub-admin already exists for ${city}, ${state}, ${country}` }, { status: 400 });
             }
         }
-        
+
         // Upgrade user to sub-admin status
         assignedSubAdmin.role = 'sub-admin';
         assignedSubAdmin.accountStatus = 'approved';
         assignedSubAdmin.requestedLicense = false; // Clear request flag
         if (country) assignedSubAdmin.country = country;
+        if (state) assignedSubAdmin.state = state;
         if (city) assignedSubAdmin.city = city;
+        if (zipcode) assignedSubAdmin.zipcode = zipcode;
         await assignedSubAdmin.save();
 
         // 2. Create the License

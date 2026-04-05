@@ -25,17 +25,43 @@ interface CitizenLocation {
   id: string
   name: string
   location: string
+  role: string
   isSafe: boolean
   alerts: any[]
+  weather?: { temp: number, code: number, wind: number }
   position?: { lat: number; lng: number }
+}
+
+interface IncidentMarker {
+  _id: string
+  type: string
+  location: string
+  description: string
+  status: string
+  lat?: number
+  lng?: number
+  timestamp?: string
+}
+
+interface EventMarker {
+  _id: string
+  type: string
+  title: string
+  description: string
+  severity: string
+  location: { lat: number; lng: number; address: string }
+  magnitude?: number
+  timestamp?: string
 }
 
 export function GISMap() {
   const [citizens, setCitizens] = useState<CitizenLocation[]>([])
+  const [incidents, setIncidents] = useState<IncidentMarker[]>([])
+  const [events, setEvents] = useState<EventMarker[]>([])
+  const [weatherConditions, setWeatherConditions] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [globalAlerts, setGlobalAlerts] = useState<{ earthquakes: any[], weather: any[] }>({ earthquakes: [], weather: [] })
-  const [adminAddress, setAdminAddress] = useState<string>('')
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | undefined>(undefined)
   const [hasCentered, setHasCentered] = useState(false)
 
@@ -49,9 +75,13 @@ export function GISMap() {
         const json = await res.json()
         if (json.success) {
           const citizenData = json.data as CitizenLocation[]
+          setIncidents(json.incidents || [])
+          setEvents(json.events || [])
+          setWeatherConditions(json.weatherConditions || [])
 
-          // Geocode addresses for map markers
+          // Geocode addresses for citizen markers if positions missing
           const withPositions = await Promise.all(citizenData.map(async (c) => {
+            if (c.position) return c;
             try {
               const pos = await geocodeAddress(c.location)
               return { ...c, position: pos }
@@ -76,46 +106,135 @@ export function GISMap() {
     return () => clearInterval(interval)
   }, [])
 
-  // Resolve Admin Address & Auto-Center
+  // Auto-Center on Admin Location once
   useEffect(() => {
-    if (!adminLoc) return
+    if (!adminLoc || hasCentered) return
 
-    const resolveAdminData = async () => {
-      try {
-        const address = await reverseGeocode(adminLoc.lat, adminLoc.lng)
-        if (address) setAdminAddress(address)
-
-        if (!hasCentered) {
-          setMapCenter(adminLoc)
-          setHasCentered(true)
-        }
-      } catch (e) {
-        console.error("Failed to resolve admin location:", e)
-      }
-    }
-    resolveAdminData()
-  }, [adminLoc, hasCentered, reverseGeocode])
+    setMapCenter(adminLoc)
+    setHasCentered(true)
+  }, [adminLoc, hasCentered])
 
   const markers = useMemo(() => {
+    // Helper to get weather text and color from code
+    const getWeatherStyle = (code: number, wind: number) => {
+      if (code >= 95) return { title: 'Thunderstorm', color: '#4B0082' }; // Indigo
+      if (code >= 71) return { title: 'Snowy', color: '#00FFFF' }; // Cyan/White
+      if (code >= 51) return { title: 'Rainy', color: '#0000FF' }; // Blue
+      if (wind > 30) return { title: 'Strong Wind', color: '#808080' }; // Grey
+      if (wind > 15) return { title: 'Moderate Breeze', color: '#20B2AA' }; // Light Sea Green
+      if (code <= 3) return { title: 'Fair / Cloudy', color: '#FFD700' }; // Gold/Yellow
+      return { title: 'Clear', color: '#FFD700' };
+    };
+
+    const getWeatherText = (code: number) => getWeatherStyle(code, 0).title;
+
     const userMarkers = citizens
       .filter(c => c.position)
-      .map(c => ({
-        id: c.id,
-        position: c.position!,
-        title: c.name,
-        type: 'user' as const,
-        isSafe: c.isSafe
+      .map(c => {
+        let weatherDesc = '';
+        if (c.weather) {
+          weatherDesc = ` | Weather: ${Math.round(c.weather.temp)}°C, ${getWeatherText(c.weather.code)}, Wind: ${Math.round(c.weather.wind)}km/h`;
+        }
+
+        return {
+          id: c.id,
+          position: c.position!,
+          title: c.name,
+          type: 'user' as const,
+          isSafe: c.isSafe,
+          status: c.isSafe ? 'Safe' : 'Danger',
+          description: `Role: ${c.role || 'Citizen'} - Current Location: ${c.location}${weatherDesc}`,
+          alerts: c.alerts,
+          timestamp: new Date().toISOString() // Current status
+        };
+      })
+
+    const incidentMarkers = incidents
+      .filter(inc => inc.lat && inc.lng)
+      .map(inc => ({
+        id: inc._id,
+        position: { lat: inc.lat!, lng: inc.lng! },
+        title: inc.type,
+        type: 'incident' as const,
+        status: inc.status,
+        description: inc.description || `Reported at ${inc.location}`,
+        timestamp: inc.timestamp
       }))
+
+    const eventMarkers = events.map(ev => ({
+      id: ev._id,
+      position: { lat: ev.location.lat, lng: ev.location.lng },
+      title: ev.title,
+      type: (ev.type === 'earthquake' ? 'earthquake' : 'weather') as any,
+      mag: ev.magnitude,
+      description: ev.description,
+      status: ev.severity,
+      radius: ev.type === 'earthquake' ? (ev.magnitude ? ev.magnitude * 10000 : 50000) : 30000,
+      timestamp: ev.timestamp
+    }))
+
+    const quakeAlertMarkers = globalAlerts.earthquakes.map(eq => {
+      const coords = eq.coordinates || { lat: 0, lon: 0 };
+      return {
+        id: eq.id,
+        position: { lat: coords.lat, lng: coords.lon || coords.lng },
+        title: eq.title || `Magnitude ${eq.magnitude} Earthquake`,
+        type: 'earthquake' as const,
+        mag: eq.magnitude,
+        description: eq.location || eq.description,
+        radius: (eq.magnitude || 5) * 15000,
+        status: (eq.magnitude || 0) > 5 ? 'Danger' : 'Advisory',
+        timestamp: eq.timestamp
+      };
+    })
+
+    const weatherAlertMarkers = globalAlerts.weather.map(w => {
+      const coords = w.coordinates || { lat: 37.7749, lng: -122.4194 };
+      const isTornado = w.title?.toLowerCase().includes('tornado') || w.description?.toLowerCase().includes('tornado');
+
+      return {
+        id: w.id,
+        position: { lat: coords.lat, lng: coords.lon || coords.lng },
+        title: w.title,
+        type: 'weather' as const,
+        description: w.description,
+        status: w.severity,
+        radius: isTornado ? 60000 : 40000,
+        timestamp: w.timestamp
+      };
+    })
+
+    const condMarkers = weatherConditions.map(wc => {
+      const style = getWeatherStyle(wc.code, wc.wind);
+      return {
+        id: wc.id,
+        position: wc.position,
+        title: `${style.title} (${Math.round(wc.temp)}°C)`,
+        type: 'condition' as const,
+        description: `Current ${style.title}. Wind speed: ${Math.round(wc.wind)} km/h.`,
+        color: style.color,
+        timestamp: new Date().toISOString()
+      };
+    })
 
     const adminMarker = adminLoc ? [{
       id: 'admin-self',
       position: adminLoc,
-      title: `You (Admin)${adminAddress ? ` - ${adminAddress}` : ''}`,
-      type: 'admin' as const
+      title: 'Your Command Post',
+      type: 'admin' as const,
+      status: 'Online'
     }] : []
 
-    return [...userMarkers, ...adminMarker]
-  }, [citizens, adminLoc, adminAddress])
+    return [
+      ...userMarkers,
+      ...incidentMarkers,
+      ...eventMarkers,
+      ...quakeAlertMarkers,
+      ...weatherAlertMarkers,
+      ...condMarkers,
+      ...adminMarker
+    ]
+  }, [citizens, incidents, events, globalAlerts, weatherConditions, adminLoc])
 
   const CitizenAlertItem = ({ citizen }: { citizen: CitizenLocation }) => (
     <div className={cn(

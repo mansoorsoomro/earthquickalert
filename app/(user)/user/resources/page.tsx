@@ -45,7 +45,7 @@ const LeafletMap = dynamic<{
 
 function ResourcesContent() {
     const searchParams = useSearchParams()
-    const urlType = searchParams.get('type')
+    const urlType = searchParams?.get('type')
     const { location: geoLoc } = useGeolocation()
 
     const [activeCategory, setActiveCategory] = useState<string>(urlType || 'hospital')

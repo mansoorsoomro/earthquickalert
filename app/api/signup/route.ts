@@ -9,7 +9,7 @@ import SystemStatus from '@/models/SystemStatus';
 export async function POST(req: NextRequest) {
     try {
         await connectDB();
-        const { name, email, password, isSafe, role, country, city } = await req.json();
+        const { name, email, password, isSafe, role, country, state, city, zipcode } = await req.json();
 
         // Check if user already exists
         const userExists = await User.findOne({ email });
@@ -17,16 +17,17 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'User already exists' }, { status: 400 });
         }
 
-        // Validation for Country and City for all users
-        if (!country || !city) {
-            return NextResponse.json({ error: 'Country and City are required' }, { status: 400 });
+        // Validation for Location Fields for all users
+        if (!country || !state || !city || !zipcode) {
+            return NextResponse.json({ error: 'Country, State, City, and Zipcode are required' }, { status: 400 });
         }
 
         // --- NEW VALIDATION: UNIQUE SUB-ADMIN PER CITY ---
-        if (role === 'sub-admin' && city && country) {
+        if (role === 'sub-admin' && city && country && state) {
             const subAdminInCity = await User.findOne({
                 role: 'sub-admin',
                 city: city,
+                state: state,
                 country: country
             });
 
@@ -65,7 +66,9 @@ export async function POST(req: NextRequest) {
             requestedLicense,
             isSafe: isSafe !== undefined ? isSafe : true,
             country: country || '',
+            state: state || '',
             city: city || '',
+            zipcode: zipcode || '',
         });
 
         // Create session

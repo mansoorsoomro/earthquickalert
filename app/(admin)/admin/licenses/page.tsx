@@ -5,22 +5,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from '@/components/ui/table'
 import { Plus, Search, Building2, Shield, AlertTriangle } from 'lucide-react'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { useJsApiLoader, Autocomplete } from '@react-google-maps/api'
+
+const libraries: "places"[] = ["places"]
 
 interface License {
     _id: string;
@@ -52,15 +55,63 @@ export default function LicenseManagement() {
         organizationName: '',
         planType: 'Enterprise',
         country: '',
+        state: '',
         city: '',
+        zipcode: '',
         userId: '',
     })
+
+    const [autocompleteInfo, setAutocompleteInfo] = useState<any>(null)
+
+    const { isLoaded } = useJsApiLoader({
+        id: 'google-map-script',
+        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+        libraries: libraries,
+    })
+
+    const onPlaceLoaded = (autocomplete: any) => {
+        setAutocompleteInfo(autocomplete)
+    }
+
+    const onPlaceChanged = () => {
+        if (autocompleteInfo) {
+            const place = autocompleteInfo.getPlace()
+            let newCity = ''
+            let newState = ''
+            let newCountry = ''
+            let newZip = ''
+
+            place.address_components?.forEach((component: any) => {
+                const types = component.types
+                if (types.includes('locality')) {
+                    newCity = component.long_name
+                }
+                if (types.includes('administrative_area_level_1')) {
+                    newState = component.long_name
+                }
+                if (types.includes('country')) {
+                    newCountry = component.long_name
+                }
+                if (types.includes('postal_code')) {
+                    newZip = component.long_name
+                }
+            })
+
+            setFormData(prev => ({
+                ...prev,
+                city: newCity || prev.city,
+                state: newState || prev.state,
+                country: newCountry || prev.country,
+                zipcode: newZip || prev.zipcode,
+            }))
+        }
+    }
 
     useEffect(() => {
         fetchLicenses()
         fetchUsers()
     }, [])
-    
+
     const fetchUsers = async () => {
         try {
             // Fetch unassigned users (or all users)
@@ -112,7 +163,9 @@ export default function LicenseManagement() {
                 organizationName: '',
                 planType: 'Enterprise',
                 country: '',
+                state: '',
                 city: '',
+                zipcode: '',
                 userId: '',
             })
             fetchLicenses()
@@ -138,7 +191,7 @@ export default function LicenseManagement() {
                     </h1>
                     <p className="text-gray-400 mt-2">Manage client systems, geographic boundaries, and assign sub-admin operations teams.</p>
                 </div>
-                
+
                 <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
                     <DialogTrigger asChild>
                         <Button className="bg-yellow-400 text-slate-900 hover:bg-yellow-500 font-semibold shadow-lg">
@@ -148,7 +201,7 @@ export default function LicenseManagement() {
                     <DialogContent className="sm:max-w-[600px] bg-slate-900 text-white border-slate-700">
                         <DialogHeader>
                             <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                                <Shield className="h-6 w-6 text-yellow-400" /> 
+                                <Shield className="h-6 w-6 text-yellow-400" />
                                 Provision Client License
                             </DialogTitle>
                         </DialogHeader>
@@ -159,38 +212,75 @@ export default function LicenseManagement() {
                                     {error}
                                 </div>
                             )}
-                            
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2 col-span-2">
                                     <Label>Organization Name (License Holder)</Label>
-                                    <Input 
+                                    <Input
                                         required
-                                        placeholder="e.g. State of Arkansas" 
+                                        placeholder="e.g. State of Arkansas"
                                         value={formData.organizationName}
-                                        onChange={(e) => setFormData({...formData, organizationName: e.target.value})}
-                                        className="bg-slate-800 border-slate-700" 
+                                        onChange={(e) => setFormData({ ...formData, organizationName: e.target.value })}
+                                        className="bg-slate-800 border-slate-700"
                                     />
                                 </div>
-                                
+
+                                {isLoaded && (
+                                    <div className="space-y-2 col-span-2">
+                                        <Label>Search Address Location (Auto-fill)</Label>
+                                        <Autocomplete
+                                            onLoad={onPlaceLoaded}
+                                            onPlaceChanged={onPlaceChanged}
+                                        >
+                                            <Input
+                                                placeholder="Search location via Google Maps..."
+                                                className="bg-slate-800 border-slate-700"
+                                            />
+                                        </Autocomplete>
+                                    </div>
+                                )}
+
                                 <div className="space-y-2">
                                     <Label>Country Bound</Label>
-                                    <Input 
+                                    <Input
                                         required
-                                        placeholder="e.g. USA" 
+                                        placeholder="e.g. USA"
                                         value={formData.country}
-                                        onChange={(e) => setFormData({...formData, country: e.target.value})}
-                                        className="bg-slate-800 border-slate-700" 
+                                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                                        className="bg-slate-800 border-slate-700"
                                     />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label>City / State Bound</Label>
-                                    <Input 
+                                    <Label>State Bound</Label>
+                                    <Input
                                         required
-                                        placeholder="e.g. Arkansas" 
+                                        placeholder="e.g. Arkansas"
+                                        value={formData.state}
+                                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                                        className="bg-slate-800 border-slate-700"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>City Bound</Label>
+                                    <Input
+                                        required
+                                        placeholder="e.g. Little Rock"
                                         value={formData.city}
-                                        onChange={(e) => setFormData({...formData, city: e.target.value})}
-                                        className="bg-slate-800 border-slate-700" 
+                                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                        className="bg-slate-800 border-slate-700"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Zipcode Bound</Label>
+                                    <Input
+                                        required
+                                        placeholder="e.g. 72201"
+                                        value={formData.zipcode}
+                                        onChange={(e) => setFormData({ ...formData, zipcode: e.target.value })}
+                                        className="bg-slate-800 border-slate-700"
                                     />
                                 </div>
                             </div>
@@ -199,10 +289,10 @@ export default function LicenseManagement() {
                                 <h3 className="text-lg font-semibold mb-4 text-emerald-400">Assign Dedicated Sub-Admin</h3>
                                 <div className="space-y-2">
                                     <Label>Select User from Platform</Label>
-                                    <select 
+                                    <select
                                         required
                                         value={formData.userId}
-                                        onChange={(e) => setFormData({...formData, userId: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
                                         className="w-full flex h-10 items-center justify-between rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                         <option value="" disabled>-- Select a User --</option>
@@ -215,7 +305,7 @@ export default function LicenseManagement() {
                                     <p className="text-xs text-slate-500 mt-1">This user will be promoted to Sub-Admin and given control over this particular geographic license.</p>
                                 </div>
                             </div>
-                            
+
                             <div className="flex justify-end pt-4">
                                 <Button type="submit" className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-lg">
                                     Mint License & Assign Admin
@@ -278,11 +368,10 @@ export default function LicenseManagement() {
                                             </div>
                                         </TableCell>
                                         <TableCell className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                                lic.status === 'active' 
-                                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                                                : 'bg-red-500/10 text-red-500 border border-red-500/20'
-                                            }`}>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${lic.status === 'active'
+                                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                                    : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                                                }`}>
                                                 {lic.status.toUpperCase()}
                                             </span>
                                         </TableCell>

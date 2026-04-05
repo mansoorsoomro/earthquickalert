@@ -4,13 +4,27 @@ import EmergencyEvent from '@/models/EmergencyEvent';
 import IncidentReport from '@/models/IncidentReport';
 import WeatherAlertRecord from '@/models/WeatherAlertRecord';
 import { openaiService } from '@/lib/services/openai-service';
+import { getSession } from '@/lib/auth';
+import { getSubAdminTextLocationFilter } from '@/lib/admin-filters';
 
 export async function GET() {
     try {
         await connectDB();
 
+        const session = await getSession();
+        let eventFilter: any = null;
+        let incFilter: any = null;
+
+        if (session && session.user.role === 'sub-admin') {
+            eventFilter = await getSubAdminTextLocationFilter(session.user.id, 'location.address');
+            incFilter = await getSubAdminTextLocationFilter(session.user.id, 'location');
+        }
+
+        const recentIncidentQuery: any = { status: 'resolved' };
+        if (eventFilter) recentIncidentQuery.$and = [eventFilter];
+
         // Find the most recently resolved incident to review
-        const recentIncident: any = await EmergencyEvent.findOne({ status: 'resolved' })
+        const recentIncident: any = await EmergencyEvent.findOne(recentIncidentQuery)
             .sort({ updatedAt: -1 })
             .lean();
 
@@ -51,12 +65,15 @@ export async function GET() {
             };
         });
 
-        const incidentReports = await IncidentReport.countDocuments({
+        const incQuery: any = {
             createdAt: {
                 $gte: new Date(recentIncident.createdAt),
                 $lte: new Date(recentIncident.updatedAt),
             },
-        });
+        };
+        if (incFilter) incQuery.$and = [incFilter];
+
+        const incidentReports = await IncidentReport.countDocuments(incQuery);
 
         const highSeverityAlerts = await WeatherAlertRecord.countDocuments({
             severity: { $in: ['high', 'severe', 'extreme'] },
