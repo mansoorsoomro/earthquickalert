@@ -3,7 +3,31 @@
 import React, { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { AlertTriangle, MapPin, TrendingUp, AlertCircle, X, Loader2, Trash2, Shield, Clock } from 'lucide-react'
+import { 
+    AlertTriangle, 
+    MapPin, 
+    TrendingUp, 
+    AlertCircle, 
+    X, 
+    Loader2, 
+    Trash2, 
+    Shield, 
+    Clock, 
+    Send, 
+    Edit2,
+    Activity,
+    Target,
+    Zap,
+    Download,
+    Share2,
+    Filter,
+    Search,
+    ChevronRight,
+    ArrowUpRight,
+    Trophy,
+    Sparkles,
+    RefreshCw
+} from 'lucide-react'
 import { SendCommunityAlertModal } from '@/components/modals/send-community-alert-modal'
 import { ActiveEmergencyEventsModal } from '@/components/modals/active-emergency-events-modal'
 import { AlertDetailModal } from '@/components/modals/alert-detail-modal'
@@ -14,6 +38,7 @@ import { useEvents } from '@/lib/store/event-store'
 import { useAlerts } from '@/lib/store/alert-store'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { toast } from 'sonner'
 
 export default function EmergencyEventsPage() {
   const { events, isLoading: eventsLoading, deleteEvent, fetchEvents } = useEvents()
@@ -26,6 +51,7 @@ export default function EmergencyEventsPage() {
   const [showResourceMapModal, setShowResourceMapModal] = useState(false)
   const [showSitRepModal, setShowSitRepModal] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
+  const [selectedAlertForOverride, setSelectedAlertForOverride] = useState<any>(null)
 
   const handleManualSync = async () => {
     setIsSyncing(true)
@@ -36,229 +62,254 @@ export default function EmergencyEventsPage() {
   const activeEvents = events.filter(e => e.status === 'active' || e.status === 'monitoring')
   const currentEvent = activeEvents[0] || events[0]
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'bg-red-100 text-red-800 border-red-200'
-      case 'monitoring':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'resolved':
-        return 'bg-green-100 text-green-800 border-green-200'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical':
-      case 'extreme':
-        return 'text-red-600'
-      case 'severe':
-      case 'warning':
-        return 'text-orange-600'
-      default:
-        return 'text-blue-600'
-    }
-  }
-
   if (eventsLoading) {
     return (
-      <div className="flex items-center justify-center h-[80vh]">
-        <div className="flex flex-col items-center gap-4 text-slate-500">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
-          <p className="font-black text-xs uppercase tracking-[0.2em]">Synchronizing Real-Time Data...</p>
+      <div className="flex items-center justify-center h-[calc(100vh-64px)] bg-slate-50">
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative">
+              <Loader2 className="w-16 h-16 animate-spin text-blue-600" />
+              <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-blue-600">HQ</div>
+          </div>
+          <p className="font-black text-xs uppercase tracking-[0.4em] text-slate-400 animate-pulse">Synchronizing Tactical Matrix...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <main className="p-6 space-y-8 max-w-7xl mx-auto">
+    <main className="min-h-screen bg-slate-50 p-8 lg:p-12 space-y-12 overflow-hidden relative selection:bg-blue-600/10">
+      {/* Background Artifacts */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
+
       {/* Header Section */}
-      <div className="bg-white rounded-[2rem] border border-slate-100 p-8 shadow-sm">
-        <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-2">Emergency Events</h1>
-        <p className="text-slate-500 font-medium text-sm leading-relaxed max-w-3xl">
-          Monitor active emergency events, review official alerts, assess potential impacts, and manage community messaging in real time.
-        </p>
-      </div>
-
-      {/* Four Metric Cards Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Event Type */}
-        <Card className="p-6 border-slate-100 shadow-sm rounded-[1.5rem] bg-white hover:shadow-md transition-all">
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="font-bold text-slate-900 text-lg">Event Type</h3>
-            <div className="p-2 bg-purple-50 rounded-xl">
-              <AlertTriangle className="w-5 h-5 text-purple-500 transition-transform group-hover:scale-110" />
+      <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-8 border-b border-slate-200">
+        <div className="space-y-4">
+            <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-red-600/20">
+                    <Activity size={24} />
+                </div>
+                <div>
+                    <h1 className="text-4xl font-black text-slate-900 uppercase tracking-tighter">Emergency Events</h1>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Incident Tracking & Dispatch Protocol</p>
+                </div>
             </div>
-          </div>
-          <p className="text-sm font-bold text-slate-700">{currentEvent?.title || 'No Active Events'}</p>
-          <div className="mt-4 space-y-1">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status: <span className="text-slate-600 capitalize">{currentEvent?.status || 'N/A'}</span></p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Type: <span className="text-slate-600 capitalize">{currentEvent?.type || 'N/A'}</span></p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Last Updated: <span className="text-slate-600">{currentEvent ? new Date(currentEvent.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span></p>
-          </div>
-        </Card>
-
-        {/* Affected Area */}
-        <Card className="p-6 border-slate-100 shadow-sm rounded-[1.5rem] bg-white hover:shadow-md transition-all">
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="font-bold text-slate-900 text-lg">Affected Area</h3>
-            <div className="p-2 bg-emerald-50 rounded-xl">
-              <MapPin className="w-5 h-5 text-emerald-500" />
-            </div>
-          </div>
-          <p className="text-[11px] font-bold text-slate-700 leading-snug">
-            {currentEvent?.description?.substring(0, 60) || 'No area data available'}{currentEvent?.description && currentEvent.description.length > 60 ? '...' : ''}
-          </p>
-          <p className="text-[11px] font-medium text-slate-400 mt-2">
-            {currentEvent ? `Severity: ${currentEvent.severity}` : 'Exact coordinates applied to live map overlay'}
-          </p>
-        </Card>
-
-        {/* Potential Impacts */}
-        <Card className="p-6 border-slate-100 shadow-sm rounded-[1.5rem] bg-white hover:shadow-md transition-all">
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="font-bold text-slate-900 text-lg">Potential Impacts</h3>
-            <div className="p-2 bg-blue-50 rounded-xl">
-              <TrendingUp className="w-5 h-5 text-blue-500" />
-            </div>
-          </div>
-          <div className="space-y-1 text-[11px] font-bold text-slate-600">
-            {events.filter(e => e.status === 'active').length > 0 ? (
-              events.filter(e => e.status === 'active').slice(0, 3).map((e, idx) => (
-                <p key={idx} className="capitalize">{e.type}</p>
-              ))
-            ) : (
-              <p className="text-slate-400">No active incidents</p>
-            )}
-          </div>
-        </Card>
-
-        {/* Alerts */}
-        <Card className="p-6 border-slate-100 shadow-sm rounded-[1.5rem] bg-white hover:shadow-md transition-all">
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="font-bold text-slate-900 text-lg">Alerts</h3>
-            <div className="p-2 bg-red-50 rounded-xl">
-              <AlertCircle className="w-5 h-5 text-red-500" />
-            </div>
-          </div>
-          <div className="space-y-1">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Alerts: <span className="text-slate-600">{alerts.length}</span></p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Events: <span className="text-slate-600">{events.filter(e => e.status === 'active').length}</span></p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Monitoring: <span className="text-slate-600">{events.filter(e => e.status === 'monitoring').length}</span></p>
-          </div>
-        </Card>
-      </div>
-
-      {/* Main Content Sections: Alert Preview & Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Alert Message Preview */}
-        <div className="lg:col-span-2">
-          <Card className="p-8 border-slate-100 shadow-sm rounded-[2rem] bg-white h-full">
-            <h2 className="text-2xl font-bold text-slate-900 mb-8 tracking-tight">Alert Message Preview</h2>
-
-            <div className="bg-slate-50/50 p-8 rounded-2xl border-l-4 border-red-500 mb-8">
-              <h3 className="text-xl font-bold text-slate-900 mb-2">
-                {currentEvent?.title || 'No Active Emergency Event'}
-              </h3>
-              <p className="text-slate-600 font-medium leading-relaxed">
-                {currentEvent?.description || 'Monitor this page for emergency alerts. When an active event is created, its details and recommended actions will appear here.'}
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              <h4 className="font-bold text-slate-900 text-lg">Immediate Actions</h4>
-              <ul className="space-y-4">
-                {currentEvent ? (
-                  [
-                    `This is an active ${currentEvent.type} event currently in the ${currentEvent.status} phase.`,
-                    'Follow all official EOC directives and stay tuned to local emergency channels.',
-                    'Ensure your supply kits are accessible and emergency contacts are notified.',
-                  ]
-                ) : (
-                  [
-                    'Monitor active alerts from the Alerts & Communication page.',
-                    'Ensure your emergency plans and preparedness checklists are up to date.',
-                    'Stay connected with your community and responder network.',
-                  ]
-                ).map((action, idx) => (
-                  <li key={idx} className="flex items-start gap-3">
-                    <span className="text-blue-500 mt-1 font-black">✦</span>
-                    <span className="text-slate-600 font-bold text-sm tracking-tight">{action}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="mt-12 flex items-center gap-2">
-              <div className="w-5 h-5 flex items-center justify-center text-slate-400 underline">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-link-2"><path d="M9 17H7A5 5 0 0 1 7 7h2" /><path d="M15 7h2a5 5 0 0 1 0 10h-2" /><line x1="8" x2="16" y1="12" y2="12" /></svg>
-              </div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Emergency Management Agency – </span>
-              <a href="#" className="text-xs font-bold text-blue-500 hover:underline uppercase tracking-widest">View Local Conditions</a>
-            </div>
-          </Card>
         </div>
 
-        {/* Right Column: Stats & Quick Actions */}
-        <div className="space-y-6">
-          {/* Mini Stats Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Active Events</p>
-              <p className="text-lg font-bold text-slate-900">{events.filter(e => e.status === 'active').length}</p>
-            </div>
-            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Monitoring</p>
-              <p className="text-lg font-bold text-slate-900">{events.filter(e => e.status === 'monitoring').length}</p>
-            </div>
-            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Alerts</p>
-              <p className="text-lg font-bold text-slate-900">{alerts.length.toLocaleString()}</p>
-            </div>
-            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Last Update</p>
-              <p className="text-lg font-bold text-slate-900">{currentEvent ? new Date(currentEvent.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}</p>
-            </div>
-          </div>
-
-          {/* Quick Actions Card */}
-          <Card className="p-8 border-slate-100 shadow-sm rounded-[2rem] bg-white h-fit">
-            <h2 className="text-2xl font-bold text-slate-900 mb-8 tracking-tight">Quick Actions</h2>
-            <div className="flex flex-col gap-3">
-              <Button
-                onClick={() => setShowMapModal(true)}
-                className="w-full h-12 bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold rounded-xl shadow-sm active:scale-95 transition-all text-sm tracking-tight"
-              >
-                View Map
-              </Button>
-              <Button
+        <div className="flex items-center gap-4">
+            <Button
+                variant="ghost"
+                onClick={handleManualSync}
+                className="h-14 px-8 rounded-2xl bg-white border border-slate-200 text-slate-400 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 hover:text-slate-900 transition-all gap-3 shadow-sm"
+            >
+                {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4 text-emerald-600" />}
+                Sync Database
+            </Button>
+            <Button 
                 onClick={() => setShowSendAlertModal(true)}
-                className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl shadow-sm active:scale-95 transition-all text-sm tracking-tight"
-              >
-                Edit Community Message
-              </Button>
-              <Button
-                className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-sm active:scale-95 transition-all text-sm tracking-tight"
-              >
-                Resend Alert
-              </Button>
-              <Button
-                className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-sm active:scale-95 transition-all text-sm tracking-tight"
-              >
-                View Delivery Status
-              </Button>
-            </div>
-          </Card>
+                className="h-14 px-8 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[10px] shadow-2xl shadow-blue-600/20 gap-3"
+            >
+                 <Send size={16} /> Broadcast Alert
+            </Button>
         </div>
       </div>
 
-      {/* Old Alert Preview removed as it's replaced by the new section above */}
+      {/* KPI Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
+        {[
+            { label: 'Event Classification', value: currentEvent?.type || 'Clear', sub: 'Tactical Category', icon: Target, color: 'text-red-500', bg: 'bg-red-500/10' },
+            { label: 'Target Sector', value: typeof currentEvent?.location === 'string' ? currentEvent.location : (currentEvent?.location as any)?.address || 'Regional Area', sub: 'Deployment Zone', icon: MapPin, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+            { label: 'Active Personnel', value: '42 Units', sub: 'On-Site Resources', icon: Shield, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+            { label: 'Alert Frequency', value: alerts.length, sub: 'Messages Dispatched', icon: Zap, color: 'text-orange-500', bg: 'bg-orange-500/10' }
+        ].map((kpi, i) => (
+            <Card key={i} className="p-8 bg-white border border-slate-100 rounded-[40px] shadow-xl shadow-slate-200/50 group hover:bg-slate-50 transition-all relative overflow-hidden">
+                <div className={cn("absolute right-8 top-8 w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm border", kpi.bg, kpi.color, kpi.color.replace('text-', 'border-').replace('500', '100'))}>
+                    <kpi.icon size={24} />
+                </div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{kpi.label}</p>
+                <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{kpi.value}</h3>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">{kpi.sub}</p>
+            </Card>
+        ))}
+      </div>
 
-      <SendCommunityAlertModal isOpen={showSendAlertModal} onClose={() => setShowSendAlertModal(false)} />
+      {/* Point 5: AI-Generated Incident Report */}
+      <section className="relative z-10">
+         <div className="bg-blue-50 p-10 rounded-[48px] border border-blue-100 flex flex-col lg:flex-row gap-12 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-12 text-blue-600/5 grayscale group-hover:grayscale-0 transition-all duration-1000">
+               <Sparkles size={160} />
+            </div>
+            <div className="w-20 h-20 bg-blue-600 rounded-[30px] flex items-center justify-center text-white shadow-xl shadow-blue-600/20 shrink-0 relative z-10">
+               <Zap size={40} className="fill-white" />
+            </div>
+            <div className="relative z-10 space-y-4">
+               <div className="flex items-center gap-4">
+                  <h4 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">AI Incident Intelligence {currentEvent ? ` - ${currentEvent.type}` : ''}</h4>
+                  <Badge className="bg-blue-600/10 text-blue-600 border-none font-black text-[9px] px-3 uppercase tracking-widest">Live Analysis</Badge>
+               </div>
+               <p className="text-base font-medium text-slate-500 leading-relaxed max-w-5xl">
+                   {currentEvent?.description || 'Strategic monitoring active. Neural logic is parsing real-time signals from ground-level deployments and civilian reporting nodes.'}
+                   <br/><br/>
+                   <span className="text-blue-600 font-black uppercase tracking-widest text-xs italic">
+                       Strategic Threshold: 10 reports met. Initiating automated advisory protocols.
+                   </span>
+               </p>
+               <div className="pt-4 flex items-center gap-6">
+                   <Button onClick={() => toast.info('Generating predictive mapping model...')} variant="link" className="p-0 h-auto text-blue-500 font-black uppercase tracking-[0.2em] text-[10px] hover:text-blue-400 transition-colors">
+                      Run Strategic Predictive Mapping
+                   </Button>
+                   <div className="w-1 h-1 rounded-full bg-slate-800" />
+                   <Button onClick={() => setShowSendAlertModal(true)} variant="link" className="p-0 h-auto text-blue-600 font-black uppercase tracking-[0.2em] text-[10px] hover:text-blue-700 transition-colors">
+                      Authorize Global Dispatch (Radius Match)
+                   </Button>
+               </div>
+            </div>
+         </div>
+      </section>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        {/* Messages Log Column */}
+        <div className="lg:col-span-8 space-y-8">
+            <div className="flex items-center justify-between px-4">
+                <div>
+                    <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Signal History</h2>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Audit trail of incident broadcasts</p>
+                </div>
+                <div className="flex items-center gap-2 p-1.5 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <button className="h-10 px-6 bg-blue-600 rounded-xl text-[9px] font-black text-white uppercase tracking-widest">All</button>
+                    <button className="h-10 px-6 text-[9px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-colors">Tactical</button>
+                    <button className="h-10 px-6 text-[9px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-colors">Community</button>
+                </div>
+            </div>
+
+            <Card className="bg-white border border-slate-100 rounded-[48px] p-2 shadow-xl shadow-slate-200/50 overflow-hidden">
+                <div className="max-h-[600px] overflow-y-auto custom-scrollbar p-6 space-y-4">
+                    {alerts.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-24 opacity-20">
+                            <Send size={48} className="text-slate-900 mb-6" />
+                            <p className="text-[10px] font-black text-slate-900 uppercase tracking-[0.4em]">Signal Buffer Empty</p>
+                        </div>
+                    ) : (
+                        alerts.map((alert) => (
+                          <div key={alert.id} className="p-8 bg-white border border-slate-50 rounded-[32px] hover:bg-slate-50 transition-all group relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => {
+                                        setSelectedAlertForOverride(alert);
+                                        setShowSendAlertModal(true);
+                                    }}
+                                    className="h-12 w-12 rounded-2xl bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white transition-all"
+                                >
+                                    <Edit2 size={16} />
+                                </Button>
+                             </div>
+
+                             <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
+                                <div className="space-y-4 max-w-2xl">
+                                    <div className="flex items-center gap-4">
+                                        <span className={cn(
+                                            "h-8 px-4 rounded-xl flex items-center text-[9px] font-black uppercase tracking-widest border",
+                                            alert.source === 'admin_manual' ? "bg-blue-600/10 text-blue-400 border-blue-500/20" : "bg-emerald-600/10 text-emerald-400 border-emerald-500/20"
+                                        )}>
+                                            {alert.source === 'admin_manual' ? 'Manual Dispatch' : 'NWS Broadcast'}
+                                        </span>
+                                        <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                            <Clock size={12} /> {new Date(alert.createdAt).toLocaleString()}
+                                        </div>
+                                    </div>
+                                    <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter group-hover:text-blue-600 transition-colors lowercase first-letter:uppercase">{alert.title}</h3>
+                                    <p className="text-slate-500 font-bold leading-relaxed text-sm lowercase first-letter:uppercase">{alert.message}</p>
+                                </div>
+                             </div>
+                          </div>
+                        ))
+                    )}
+                </div>
+            </Card>
+        </div>
+
+        {/* Sidebar Column */}
+        <div className="lg:col-span-4 space-y-8">
+            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight px-4">Tactical Actions</h2>
+            <Card className="p-10 bg-white border border-slate-200 rounded-[48px] shadow-xl shadow-slate-200/50 space-y-6">
+                <Button
+                    onClick={() => setShowMapModal(true)}
+                    className="w-full h-18 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-[24px] shadow-xl shadow-blue-600/20 active:scale-95 transition-all text-[11px] uppercase tracking-[0.2em] gap-3"
+                >
+                    <MapPin size={18} /> Visualize Coverage
+                </Button>
+                <div className="grid grid-cols-1 gap-4">
+                    <Button
+                        onClick={() => setShowSendAlertModal(true)}
+                        className="w-full h-16 bg-white border border-slate-200 hover:bg-slate-50 text-slate-900 font-black rounded-[24px] transition-all text-[10px] uppercase tracking-[0.2em] gap-3 shadow-sm"
+                    >
+                         Message Lab
+                    </Button>
+                    <Button
+                        className="w-full h-16 bg-white border border-slate-200 hover:bg-slate-50 text-slate-900 font-black rounded-[24px] transition-all text-[10px] uppercase tracking-[0.2em] gap-3 shadow-sm"
+                    >
+                         Audit Logs
+                    </Button>
+                </div>
+                <div className="pt-6 border-t border-slate-100">
+                    <div className="bg-red-50 p-6 rounded-[28px] border border-red-100 flex gap-4">
+                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-red-600 shrink-0 shadow-sm">
+                            <AlertTriangle size={20} />
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-500 leading-snug lowercase first-letter:uppercase">
+                             Confirm critical thresholds before re-synchronizing alert chains. Signal propagation is immediate.
+                        </p>
+                    </div>
+                </div>
+            </Card>
+
+            {/* Event Analytics */}
+            <Card className="p-10 bg-white border border-slate-200 rounded-[48px] shadow-xl shadow-slate-200/50 relative overflow-hidden group">
+                 <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:scale-110 transition-transform">
+                        <TrendingUp size={120} />
+                 </div>
+                 <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-10">Deployment Metrics</h3>
+                 <div className="space-y-8 relative z-10">
+                    {[
+                        { label: 'Network Stability', val: '99.2%', status: 'nominal', color: 'bg-emerald-500' },
+                        { label: 'Dispatch Latency', val: '1.2s', status: 'optimal', color: 'bg-blue-500' },
+                        { label: 'Feedback Loop', val: '84%', status: 'action_required', color: 'bg-amber-500' }
+                    ].map((met, i) => (
+                        <div key={i} className="space-y-3">
+                            <div className="flex justify-between items-end">
+                                <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{met.label}</span>
+                                <span className="text-xs font-black text-slate-400">{met.val}</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                <div className={cn("h-full rounded-full transition-all duration-1000", met.color)} style={{ width: met.val }} />
+                            </div>
+                        </div>
+                    ))}
+                 </div>
+            </Card>
+        </div>
+      </div>
+
+      <SendCommunityAlertModal 
+        key={selectedAlertForOverride ? `override-${selectedAlertForOverride.id}` : 'new-alert'}
+        isOpen={showSendAlertModal} 
+        onClose={() => {
+            setShowSendAlertModal(false);
+            setSelectedAlertForOverride(null);
+        }} 
+        initialData={selectedAlertForOverride ? {
+            type: selectedAlertForOverride.type,
+            severity: selectedAlertForOverride.severity,
+            title: selectedAlertForOverride.title,
+            message: selectedAlertForOverride.message,
+            zones: selectedAlertForOverride.zones,
+            locations: selectedAlertForOverride.locations
+        } : undefined}
+      />
+      
       <ActiveEmergencyEventsModal isOpen={showEventsModal} onClose={() => setShowEventsModal(false)} />
+      
       {currentEvent && (
         <AlertDetailModal
           isOpen={showAlertDetailModal}
@@ -276,37 +327,40 @@ export default function EmergencyEventsPage() {
           }}
         />
       )}
+      
       <ResourceMapModal
         isOpen={showResourceMapModal}
         onClose={() => setShowResourceMapModal(false)}
         title="Affected Area Resources"
         resources={[]}
       />
+      
       <SituationReportModal
         isOpen={showSitRepModal}
         onClose={() => setShowSitRepModal(false)}
       />
 
       {showMapModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 md:p-10">
-          <div className="bg-white rounded-[3rem] w-full max-w-6xl h-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col border border-white/20 animate-in zoom-in-95 duration-500">
-            <div className="p-6 md:p-8 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-white">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center">
-                  <MapPin className="w-6 h-6 text-blue-400" />
+        <div className="fixed inset-0 bg-white/95 backdrop-blur-xl flex items-center justify-center z-[100] p-4 md:p-12">
+          <div className="bg-white rounded-[48px] w-full max-w-7xl h-full shadow-2xl flex flex-col border border-slate-200 relative overflow-hidden">
+             <div className="absolute inset-0 z-0 opacity-40">
+                <GISMap />
+             </div>
+             
+              <div className="relative z-10 p-10 bg-gradient-to-b from-white to-transparent flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                    <div className="w-14 h-14 bg-blue-600 rounded-[20px] flex items-center justify-center shadow-xl shadow-blue-600/20">
+                         <MapPin className="text-white" size={28} />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">Tactical Visualization</h2>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Live GIS Data Overlay & Asset Tracking</p>
+                    </div>
                 </div>
-                <div>
-                  <h2 className="text-2xl font-black tracking-tight uppercase">Live Map Overlay</h2>
-                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Real-time hazard monitoring & resource overlay</p>
-                </div>
-              </div>
-              <button onClick={() => setShowMapModal(false)} className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-hidden relative">
-              <GISMap />
-            </div>
+                <button onClick={() => setShowMapModal(false)} className="w-14 h-14 bg-white hover:bg-slate-50 border border-slate-200 rounded-[20px] flex items-center justify-center text-slate-900 transition-all hover:rotate-90 shadow-sm">
+                    <X size={28} />
+                </button>
+             </div>
           </div>
         </div>
       )}
@@ -314,23 +368,24 @@ export default function EmergencyEventsPage() {
   )
 }
 
-function ShieldAlert(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-      <path d="M12 8v4" />
-      <path d="M12 16h.01" />
-    </svg>
-  )
+function RefreshCw(props: any) {
+    return (
+      <svg
+        {...props}
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+        <path d="M21 3v5h-5" />
+        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+        <path d="M3 21v-5h5" />
+      </svg>
+    )
 }

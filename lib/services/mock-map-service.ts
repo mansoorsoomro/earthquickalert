@@ -9,7 +9,17 @@ interface Coordinates {
 
 // Real geocoding - convert address to coordinates using OpenStreetMap Nominatim
 export async function geocodeAddress(address: string): Promise<Coordinates> {
-    if (!address) return { lat: 37.7749, lng: -122.4194 }; // Default to SF if empty
+    // Default fallback coordinates (San Francisco)
+    const fallbackCoords = { lat: 37.7749, lng: -122.4194 };
+
+    if (!address) return fallbackCoords;
+
+    // Fast check for placeholders that would surely fail geocoding
+    const lowerAddress = address.toLowerCase();
+    const placeholders = ['n/a', 'unknown', 'to be determined', 'pending', 'location not provided', 'none'];
+    if (placeholders.some(p => lowerAddress.includes(p))) {
+        return fallbackCoords;
+    }
 
     try {
         const url = `/api/geocode?address=${encodeURIComponent(address)}`;
@@ -22,10 +32,11 @@ export async function geocodeAddress(address: string): Promise<Coordinates> {
         clearTimeout(timeoutId);
 
         if (!response.ok) {
+            // Silently return fallback for 404s or non-ok responses
             if (response.status !== 404) {
-                console.warn(`Geocoding API responded with status: ${response.status}`);
+                console.warn(`Geocoding API responded with status: ${response.status}. Using fallback.`);
             }
-            throw new Error('Geocoding failed');
+            return fallbackCoords;
         }
 
         const data = await response.json();
@@ -37,25 +48,28 @@ export async function geocodeAddress(address: string): Promise<Coordinates> {
         }
     } catch (error: any) {
         if (error.name === 'AbortError') {
-            console.error('Geocoding request timed out');
+            console.warn('Geocoding request timed out. Using fallback.');
         } else {
-            console.error('Geocoding error:', error);
+            // Log as warning instead of error to keep console clean
+            console.warn('Geocoding warning:', error.message || error);
         }
     }
 
-    // Fallback simulated geocoding
+    // Fallback simulated geocoding based on address hash to keep markers distinct but stable
     const hash = address.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
     return {
-        lat: 37.7749 + (hash % 100) / 1000, // San Francisco area
-        lng: -122.4194 + (hash % 100) / 1000,
+        lat: 37.7749 + (hash % 100) / 500, // Spread markers slightly more around SF
+        lng: -122.4194 + (hash % 100) / 500,
     }
 }
 
 // Real reverse geocoding - convert coordinates to address using our API proxy
 export async function reverseGeocode(lat: number, lng: number): Promise<string> {
+    const fallbackAddress = `Location (${lat.toFixed(2)}, ${lng.toFixed(2)})`;
+
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased to 10s
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         const response = await fetch(`/api/reverse-geocode?lat=${lat}&lng=${lng}`, {
             signal: controller.signal
@@ -66,18 +80,18 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string> 
             if (response.status !== 404) {
                 console.warn(`Reverse geocoding API responded with status: ${response.status}`);
             }
-            throw new Error('Reverse geocoding failed');
+            return fallbackAddress;
         }
 
         const data = await response.json();
-        return data.name || data.address?.city || 'Unknown Area';
+        return data.name || data.address?.city || 'Selected Area';
     } catch (error: any) {
         if (error.name === 'AbortError') {
-            console.error(`Reverse geocoding timed out for ${lat},${lng}`);
+            console.warn(`Reverse geocoding timed out for ${lat},${lng}`);
         } else {
-            console.error('Reverse geocoding error:', error);
+            console.warn('Reverse geocoding warning:', error.message || error);
         }
-        return `Location (${lat.toFixed(2)}, ${lng.toFixed(2)})`; // Better fallback than hardcoded address
+        return fallbackAddress;
     }
 }
 

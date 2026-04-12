@@ -4,6 +4,11 @@ const CommunityAlertSchema = new Schema({
     source: {
         type: String,
         default: 'admin_manual',
+        enum: ['admin_manual', 'nws', 'other'],
+    },
+    isPinned: {
+        type: Boolean,
+        default: false,
     },
     severity: {
         type: String,

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
+import CommunityAlert from '@/models/CommunityAlert';
 import WeatherAlertRecord from '@/models/WeatherAlertRecord';
 import EOCSettings from '@/models/EOCSettings';
 import WeatherAlertTypeConfig from '@/models/WeatherAlertTypeConfig';
@@ -242,6 +243,7 @@ async function dispatchZoneMatchedWeatherNotifications(
             .filter((value): value is { lat: number; lon: number } => Boolean(value));
 
         for (const alert of alerts) {
+            const entry = alert.event ? configMap.get(alert.event) : null;
             const channels = channelsForEvent(alert.event, configMap);
             if (channels.length === 0) continue;
 
@@ -262,13 +264,38 @@ async function dispatchZoneMatchedWeatherNotifications(
 
             if (!matchesByArea && !matchesByDistance) continue;
 
+            // Use custom template if available
+            let finalMessage = alert.description;
+            if (entry && (entry as any).template) {
+                finalMessage = (entry as any).template
+                    .replace(/{{event}}/g, alert.event || 'Emergency')
+                    .replace(/{{severity}}/g, alert.severity || 'Moderate')
+                    .replace(/{{location}}/g, alert.affectedAreas?.[0] || 'your area');
+            }
+
+            // Log this broadcast to the community log if not already logged
+            const existingLog = await CommunityAlert.findOne({ eventId: alert.id }).select('_id').lean();
+            if (!existingLog) {
+                await CommunityAlert.create({
+                    source: 'nws',
+                    severity: (alert.severity as any)?.toLowerCase() || 'warning',
+                    title: alert.title,
+                    description: finalMessage,
+                    affectedAreas: alert.affectedAreas || [],
+                    adminName: 'Automated System',
+                    adminEmail: 'system@ready2go.gov',
+                    eventId: alert.id,
+                    expiresAt: alert.expiresAt,
+                });
+            }
+
             const delivery = await notificationService.dispatchWeatherAlertNotification({
                 userId,
                 alertId: alert.id,
                 title: alert.title,
-                message: alert.description,
+                message: finalMessage,
                 channels: preferredChannels,
-                providerUrl: 'https://api.weather.gov/alerts/active',
+                providerUrl: ' National Weather Service ', // Updated to a more user-friendly string
                 event: alert.event,
                 severity: alert.severity,
                 expiresAt: alert.expiresAt,

@@ -1,84 +1,133 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/card'
-import { AlertTriangle, Radio, Users, Settings } from 'lucide-react'
+import { AlertTriangle, Radio, Users, Settings, Activity, Zap, Shield, Target, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 export function DashboardStats() {
+  const [statsData, setStatsData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('/api/admin/stats')
+        const data = await res.json()
+        if (data.success) {
+          setStatsData(data.data)
+        }
+      } catch (err) {
+        console.error('Failed to fetch stats', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchStats()
+  }, [])
+
+  const stats = [
+    {
+      title: 'Active Emergencies',
+      value: loading ? '...' : (statsData?.quakeCount + statsData?.weatherCount + statsData?.totalIncidents) || 0,
+      unit: 'Events',
+      icon: AlertTriangle,
+      color: 'text-red-500',
+      bg: 'bg-red-500/10',
+      border: 'border-red-500/20',
+      details: [
+        { label: 'Weather Alerts', sub: statsData?.weatherCount || 0, active: !!statsData?.weatherCount },
+        { label: 'Incident Reports', sub: statsData?.totalIncidents || 0, active: !!statsData?.totalIncidents }
+      ]
+    },
+    {
+      title: 'Total Community (C)',
+      value: loading ? '...' : statsData?.totalUsers?.toLocaleString() || '0',
+      unit: 'Downloads',
+      icon: Users,
+      color: 'text-amber-500',
+      bg: 'bg-amber-500/10',
+      border: 'border-amber-500/20',
+      details: [
+        { label: 'Safe Verified (C)', sub: statsData?.safeUsers || 0, active: false }
+      ]
+    },
+    {
+      title: 'Pending Access (B)',
+      value: loading ? '...' : statsData?.pendingSubAdmins || 0,
+      unit: 'Adm. Requests',
+      icon: Radio,
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10',
+      border: 'border-blue-500/20',
+      details: [
+        { label: 'Auth Pipeline', sub: 'Ready for Review', active: !!statsData?.pendingSubAdmins }
+      ]
+    },
+    {
+      title: 'Approved SubAdmins',
+      value: loading ? '...' : statsData?.approvedSubAdmins || 0,
+      unit: 'Admin Nodes',
+      icon: Shield,
+      color: 'text-emerald-500',
+      bg: 'bg-emerald-500/10',
+      border: 'border-emerald-500/20',
+      details: [
+        { label: 'Authorized (B)', sub: 'Operational', active: false },
+        { label: 'Super Admins', sub: statsData?.superAdmins || 0, active: false }
+      ]
+    }
+  ]
+
+  if (loading) {
+      return (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map((i) => (
+                  <Card key={i} className="bg-white border-slate-100 rounded-[32px] p-8 shadow-xl shadow-slate-200/50 flex flex-col items-center justify-center h-48">
+                      <Loader2 className="w-8 h-8 animate-spin text-slate-200" />
+                  </Card>
+              ))}
+          </div>
+      )
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {/* Active Emergencies (Red) */}
-      <Card className="p-5 border-l-[3px] border-l-[#1E1B4B] bg-white shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex justify-between items-start mb-4">
-          <h3 className="text-base font-bold text-slate-900 tracking-tight">Active Emergencies</h3>
-          <AlertTriangle className="w-5 h-5 text-[#EF4444]" />
-        </div>
-        <div className="flex items-baseline gap-2 mb-4">
-          <span className="text-5xl font-bold text-[#EF4444] leading-none">02</span>
-          <span className="text-sm font-medium text-slate-500">Active Events</span>
-        </div>
-        <ul className="space-y-2">
-          <li className="flex items-center gap-2 text-sm font-medium text-slate-600">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
-            Tornado Warning - Zone A
-          </li>
-          <li className="flex items-center gap-2 text-sm font-medium text-slate-600">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
-            Flash Flood - East District
-          </li>
-        </ul>
-      </Card>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {stats.map((stat, i) => (
+        <Card key={i} className="bg-white border-slate-100 rounded-[32px] p-8 shadow-xl shadow-slate-200/50 hover:bg-slate-50/50 transition-all group relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
+            <stat.icon size={80} />
+          </div>
+          
+          <div className="flex justify-between items-start mb-6">
+            <div className="space-y-1">
+              <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{stat.title}</h3>
+              <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest leading-none">Global Matrix Scan</p>
+            </div>
+            <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xl transition-all group-hover:scale-110", stat.bg, stat.color)}>
+              <stat.icon size={20} />
+            </div>
+          </div>
 
-      {/* Emergencies (Blue) */}
-      <Card className="p-5 border-l-[3px] border-l-[#1E1B4B] bg-white shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex justify-between items-start mb-4">
-          <h3 className="text-base font-bold text-slate-900 tracking-tight">Emergencies</h3>
-          <Radio className="w-5 h-5 text-[#3B82F6]" />
-        </div>
-        <div className="flex items-baseline gap-2 mb-4">
-          <span className="text-5xl font-bold text-[#3B82F6] leading-none">18</span>
-          <span className="text-sm font-medium text-slate-500">Alerts Sent</span>
-        </div>
-        <p className="text-sm font-medium text-slate-500 leading-snug">
-          Preparedness, Action Alerts,<br />Resource Updates
-        </p>
-      </Card>
+          <div className="mb-6 flex items-baseline gap-3">
+            <span className={cn("text-5xl font-black tracking-tighter leading-none transition-all", stat.color)}>{stat.value}</span>
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{stat.unit}</span>
+          </div>
 
-      {/* Ready2Go Users Impacted (Yellow) */}
-      <Card className="p-5 border-l-[3px] border-l-[#1E1B4B] bg-white shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex justify-between items-start mb-4">
-          <h3 className="text-base font-bold text-slate-900 tracking-tight leading-tight">
-            Ready2Go Users<br />Impacted
-          </h3>
-          <Users className="w-5 h-5 text-[#EAB308]" />
-        </div>
-        <div className="mb-4">
-          <span className="text-5xl font-bold text-[#EAB308] leading-none">12,457</span>
-        </div>
-        <p className="text-sm font-medium text-slate-500">
-          Citizens in affected zones
-        </p>
-      </Card>
-
-      {/* Virtual EOC Status (Green) */}
-      <Card className="p-5 border-l-[3px] border-l-[#1E1B4B] bg-white shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex justify-between items-start mb-4">
-          <h3 className="text-base font-bold text-slate-900 tracking-tight leading-tight">
-            Virtual EOC Status
-          </h3>
-          <Settings className="w-5 h-5 text-[#22C55E]" />
-        </div>
-        <div className="mb-4">
-          <Badge variant="outline" className="bg-[#DCFCE7] text-[#15803D] border-none px-3 py-1 flex items-center gap-2 w-fit font-semibold">
-            <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
-            Inactive
-          </Badge>
-        </div>
-        <p className="text-sm font-medium text-slate-500 leading-snug">
-          Virtual EOC is only activated for major and catastrophic events.
-        </p>
-      </Card>
+          <div className="space-y-3 pt-6 border-t border-slate-100">
+            {stat.details.map((detail, j) => (
+              <div key={j} className="flex items-center justify-between group/detail">
+                <div className="flex items-center gap-3">
+                  {detail.active && <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]", stat.color === 'text-red-500' ? 'bg-red-500' : 'bg-blue-500')} />}
+                  <span className="text-[11px] font-bold text-slate-700 uppercase tracking-tight group-hover/detail:text-slate-900 transition-colors">{detail.label}</span>
+                </div>
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">{detail.sub}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ))}
     </div>
   )
 }

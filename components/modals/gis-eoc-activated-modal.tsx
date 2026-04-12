@@ -7,14 +7,7 @@ import { Card } from '@/components/ui/card'
 import dynamic from 'next/dynamic'
 import { cn } from '@/lib/utils'
 
-const LeafletMap = dynamic(() => import('@/components/leaflet-map'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-80 bg-slate-50 animate-pulse flex items-center justify-center rounded-lg border border-slate-100">
-      <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Loading Map Engine...</p>
-    </div>
-  ),
-})
+import { GoogleMap } from '@/components/google-map'
 
 interface GISEOCActivatedModalProps {
   isOpen: boolean
@@ -29,23 +22,56 @@ const mapLayers = [
   'Restricted & Impacted Areas',
 ]
 
-const citizenReports = [
+const initialReports = [
   {
+    id: 1,
     name: 'Elvira Davis',
     time: '5 Minutes ago',
     location: '626 Jerrold Stravenue, Cloverburgh 76058',
     status: 'pending' as const,
+    pos: { lat: 41.8850, lng: -87.6350 }
   },
   {
+    id: 2,
     name: 'Sidney White',
     time: '10 Minutes ago',
     location: '60728 Will Causeway, Lake Felton 36352-6134',
     status: 'verified' as const,
+    pos: { lat: 41.8750, lng: -87.6250 }
   },
 ]
 
+const tabData: Record<string, any[]> = {
+  'Shelter-in-Place Locations': [
+    { id: 's1', position: { lat: 41.8827, lng: -87.6233 }, title: 'Millennium Park Shelter', type: 'condition', color: '#3b82f6', description: 'Large capacity underground shelter.' },
+    { id: 's2', position: { lat: 41.8781, lng: -87.6298 }, title: 'Union Station Safe Zone', type: 'condition', color: '#10b981', description: 'Verified safety point.' },
+  ],
+  'Evacuation Routes': [
+    { id: 'e1', position: { lat: 41.8800, lng: -87.6400 }, title: 'I-90 Westbound (Verified)', type: 'incident', status: 'Clear', description: 'Primary evacuation route for Loop traffic.' },
+    { id: 'e2', position: { lat: 41.8700, lng: -87.6200 }, title: 'Lake Shore Drive North', type: 'incident', status: 'Congested', description: 'Secondary route, use with caution.' },
+  ],
+  'Hospitals & Emergency Care': [
+    { id: 'h1', position: { lat: 41.8950, lng: -87.6200 }, title: 'Northwestern Memorial', type: 'condition', color: '#ef4444', description: 'Trauma center Level 1.' },
+  ],
+  'Open Pharmacies': [
+    { id: 'p1', position: { lat: 41.8800, lng: -87.6300 }, title: 'Walgreens 24h', type: 'condition', color: '#3b82f6', description: 'Supplies available.' },
+  ],
+  'Restricted & Impacted Areas': [
+    { id: 'r1', position: { lat: 41.8880, lng: -87.6320 }, title: 'Impact Zone A', type: 'earthquake', magnitude: 4, radius: 2000, description: 'High priority restricted area.' },
+  ],
+}
+
 export function GISEOCActivatedModal({ isOpen, onClose }: GISEOCActivatedModalProps) {
   const [activeLayer, setActiveLayer] = useState('Shelter-in-Place Locations')
+  const [reports, setReports] = useState(initialReports)
+
+  const handleVerify = (id: number) => {
+    setReports(prev => prev.map(r => r.id === id ? { ...r, status: 'verified' } : r))
+  }
+
+  const handleDeny = (id: number) => {
+    setReports(prev => prev.filter(r => r.id !== id))
+  }
 
   if (!isOpen) return null
 
@@ -73,8 +99,8 @@ export function GISEOCActivatedModal({ isOpen, onClose }: GISEOCActivatedModalPr
                 className={cn(
                   "px-4 py-2 rounded-lg font-bold text-[11px] transition-all",
                   activeLayer === layer
-                    ? "bg-[#2D3142] text-white shadow-md shadow-slate-900/10"
-                    : "bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]"
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/10"
+                    : "bg-slate-50 text-slate-500 hover:bg-slate-100"
                 )}
               >
                 {layer}
@@ -83,30 +109,35 @@ export function GISEOCActivatedModal({ isOpen, onClose }: GISEOCActivatedModalPr
           </div>
 
           {/* Map Container */}
-          <div className="w-full h-[350px] rounded-lg overflow-hidden border border-slate-100 shadow-sm relative">
-            <LeafletMap
+          <div className="w-full h-[380px] rounded-2xl overflow-hidden border border-slate-100 shadow-inner relative group">
+            <GoogleMap
               center={{ lat: 41.8781, lng: -87.6298 }}
-              resources={[]} // Modal map usually has specific layers
               zoom={13}
+              markers={[
+                ...tabData[activeLayer],
+                ...reports.map(r => ({
+                  id: `rep-${r.id}`,
+                  position: r.pos,
+                  title: r.name,
+                  type: 'user' as const,
+                  isSafe: r.status === 'verified',
+                  status: r.status === 'verified' ? 'Verified Location' : 'Pending Verification',
+                  description: r.location
+                }))
+              ]}
             />
-            {/* Simulation of the red circles from the design */}
-            <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
-              <div className="relative w-full h-full opacity-40">
-                <div className="absolute top-[10%] left-[35%] w-12 h-12 bg-red-400 rounded-full blur-sm border border-red-500/20" />
-                <div className="absolute top-[25%] left-[28%] w-16 h-16 bg-red-400 rounded-full blur-sm border border-red-500/20" />
-                <div className="absolute top-[35%] left-[40%] w-20 h-20 bg-red-400 rounded-full blur-sm border border-red-500/20" />
-                <div className="absolute top-[55%] left-[28%] w-14 h-14 bg-red-400 rounded-full blur-sm border border-red-500/20" />
-                <div className="absolute top-[45%] left-[32%] w-10 h-10 bg-red-400 rounded-full blur-sm border border-red-500/20" />
-              </div>
+            {/* Design overlay simulating strategic view */}
+            <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-white/80 backdrop-blur-md rounded-full border border-slate-200">
+              <span className="text-[8px] font-black text-slate-900 uppercase tracking-widest">Tactical Layer: {activeLayer}</span>
             </div>
           </div>
 
           {/* Verification Rows */}
-          <div className="space-y-2.5">
-            {citizenReports.map((report, idx) => (
+          <div className="space-y-3 pt-2">
+            {reports.map((report) => (
               <div
-                key={idx}
-                className="grid grid-cols-[1.2fr_1.8fr_auto] items-center gap-6 p-4 bg-[#F8F9FB] rounded-xl hover:shadow-sm transition-all"
+                key={report.id}
+                className="grid grid-cols-[1.2fr_1.8fr_auto] items-center gap-6 p-4 bg-slate-50/50 rounded-2xl hover:bg-slate-50 transition-all border border-slate-100/50"
               >
                 <div>
                   <p className="font-extrabold text-[#111827] text-base leading-none mb-1">{report.name}</p>
@@ -114,17 +145,17 @@ export function GISEOCActivatedModal({ isOpen, onClose }: GISEOCActivatedModalPr
                 </div>
 
                 <div className="flex items-start gap-2.5">
-                  <MapPin className="w-4 h-4 text-[#2D3142] mt-0.5 flex-shrink-0" />
-                  <p className="text-[12px] font-bold text-[#475569] leading-tight max-w-[280px]">
+                  <MapPin className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-[12px] font-bold text-slate-600 leading-tight max-w-[280px]">
                     {report.location}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2.5 min-w-[160px] justify-end">
+                <div className="flex items-center gap-2.5 min-w-[170px] justify-end">
                   {report.status === 'verified' ? (
                     <Button
                       disabled
-                      className="w-full bg-[#E2E8F0] text-[#64748B] font-bold text-[12px] h-9 border-none rounded-lg"
+                      className="w-full bg-[#E2E8F0] text-[#94A3B8] font-black uppercase tracking-widest text-[10px] h-10 border-none rounded-xl"
                     >
                       Verified
                     </Button>
@@ -132,12 +163,14 @@ export function GISEOCActivatedModal({ isOpen, onClose }: GISEOCActivatedModalPr
                     <>
                       <Button
                         variant="ghost"
-                        className="bg-[#E2E8F0]/50 hover:bg-[#E2E8F0] text-[#64748B] font-bold text-[12px] h-9 px-6 rounded-lg"
+                        onClick={() => handleDeny(report.id)}
+                        className="bg-white hover:bg-red-50 text-[#64748B] hover:text-red-600 font-bold text-[12px] h-10 px-6 rounded-xl border border-slate-200 transition-all"
                       >
                         Deny
                       </Button>
                       <Button
-                        className="bg-[#2D3142] hover:bg-[#1A1D29] text-white font-bold text-[12px] h-9 px-6 rounded-lg"
+                        onClick={() => handleVerify(report.id)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-[12px] h-10 px-6 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95"
                       >
                         Verify
                       </Button>
@@ -146,6 +179,11 @@ export function GISEOCActivatedModal({ isOpen, onClose }: GISEOCActivatedModalPr
                 </div>
               </div>
             ))}
+            {reports.length === 0 && (
+              <div className="py-12 text-center">
+                <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">All reports processed.</p>
+              </div>
+            )}
           </div>
         </div>
       </Card>

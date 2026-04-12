@@ -146,7 +146,7 @@ export function NotifyLeadersModal({ isOpen, onClose }: NotifyLeadersModalProps)
                             {isSent ? (
                                 <>
                                     <Check className="w-6 h-6" />
-                                    Notifications Dispatched Successfully
+                                    Notifications Sent Successfully
                                 </>
                             ) : sendingStatus === 'sending' ? (
                                 <>
@@ -161,14 +161,14 @@ export function NotifyLeadersModal({ isOpen, onClose }: NotifyLeadersModalProps)
                             ) : (
                                 <>
                                     <Send className="w-5 h-5" />
-                                    Send message
+                                    SEND MESSAGE
                                 </>
                             )}
                         </Button>
 
                         {isSent && (
                             <p className="text-center text-[10px] text-green-600 font-bold uppercase tracking-widest mt-4 animate-in fade-in slide-in-from-top-2">
-                                Dispatched to stakeholders via {Object.entries(deliveryMethods).filter(([_, v]) => v).map(([k]) => k.toUpperCase()).join(', ')}
+                                Sent to stakeholders via {Object.entries(deliveryMethods).filter(([_, v]) => v).map(([k]) => k.toUpperCase()).join(', ')}
                             </p>
                         )}
                     </div>

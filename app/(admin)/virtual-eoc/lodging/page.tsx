@@ -3,8 +3,25 @@
 import React from 'react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Bed, MapPin, Phone, Info, Star, ChevronRight } from 'lucide-react'
+import { 
+    Bed, 
+    MapPin, 
+    Phone, 
+    Info, 
+    Star, 
+    ChevronRight,
+    Activity,
+    Target,
+    ArrowUpRight,
+    Search,
+    Plus,
+    Hotel,
+    Coffee,
+    Fuel
+} from 'lucide-react'
 import Image from 'next/image'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 const LODGING_DATA = [
   {
@@ -41,99 +58,123 @@ const LODGING_DATA = [
 
 export default function LodgingPage() {
   return (
-    <div className="flex-1 overflow-auto bg-slate-50 min-h-screen p-8">
-      <div className="max-w-[1400px] mx-auto space-y-8">
-        
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
-                    <Bed size={20} />
+    <main className="min-h-screen bg-[#0A0B10] p-8 lg:p-12 space-y-12 overflow-hidden relative">
+      {/* Background Glows */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-600/5 rounded-full blur-[120px] pointer-events-none" />
+
+      {/* Header Section */}
+      <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-8 border-b border-white/5">
+        <div className="space-y-4">
+            <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-indigo-600/20">
+                    <Bed size={24} />
                 </div>
-                <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tight">Lodging & Essentials</h1>
+                <div>
+                    <h1 className="text-4xl font-black text-white uppercase tracking-tighter">Lodging Matrix</h1>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Shelter Availability & Logistics Monitoring</p>
+                </div>
             </div>
-            <p className="text-slate-500 font-medium">Real-time room availability and emergency shelter tracking for the affected region.</p>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="bg-white px-6 py-3 rounded-2xl border border-slate-100 shadow-sm text-center">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Capacity</p>
-                <p className="text-xl font-black text-slate-900">562 <span className="text-sm text-slate-400">Slots</span></p>
-            </div>
-            <div className="bg-emerald-50 px-6 py-3 rounded-2xl border border-emerald-100 shadow-sm text-center">
-                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Available</p>
-                <p className="text-xl font-black text-emerald-700">128</p>
-            </div>
-          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {LODGING_DATA.map((item, idx) => (
-                <Card key={idx} className="group overflow-hidden rounded-[32px] border-slate-100 shadow-xl shadow-slate-200/50 hover:shadow-2xl transition-all border-none">
-                    <div className="relative h-48 w-full">
-                        <Image src={item.image} alt={item.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
-                        <div className="absolute top-4 right-4">
-                            <Badge className={item.status === 'Available' ? "bg-emerald-500" : item.status === 'Limited' ? "bg-amber-500" : "bg-rose-500"}>
-                                {item.status}
-                            </Badge>
-                        </div>
-                    </div>
-                    <div className="p-6 space-y-4">
-                        <div>
-                            <h3 className="text-lg font-black text-slate-900 leading-tight uppercase tracking-tight">{item.name}</h3>
-                            <p className="text-xs font-bold text-slate-400 mt-1 flex items-center gap-1">
-                                <MapPin size={12} /> {item.address} • {item.distance}
-                            </p>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-3 py-4 border-y border-slate-50">
-                            <div>
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Contact</p>
-                                <p className="text-xs font-bold text-slate-700">{item.phone}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Current</p>
-                                <p className={`text-xs font-black ${item.status === 'Full' ? 'text-rose-600' : 'text-slate-900'}`}>{item.capacity}</p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-2">
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-                                    <Info size={14} />
-                                </div>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{item.type}</span>
-                            </div>
-                            <button className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center hover:bg-indigo-600 transition-colors shadow-lg">
-                                <ChevronRight size={18} />
-                            </button>
-                        </div>
-                    </div>
-                </Card>
-            ))}
-        </div>
-
-        {/* Support Resources */}
-        <div className="bg-indigo-900 rounded-[40px] p-10 text-white relative overflow-hidden shadow-2xl shadow-indigo-900/20">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32" />
-            <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                <div className="space-y-4">
-                    <Badge className="bg-white/20 text-white border-none text-[10px] uppercase font-black tracking-widest px-4 py-1.5 rounded-full">Essential Supplies</Badge>
-                    <h2 className="text-3xl font-black tracking-tight leading-none uppercase">Need water or food assistance?</h2>
-                    <p className="text-indigo-100/80 font-medium">LDS and Red Cross distribution centers are now active across all safe zones. Check your map for the nearest pickup point.</p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-4 justify-end">
-                    <button className="bg-white text-indigo-900 font-black uppercase text-[11px] tracking-widest px-8 py-4 rounded-2xl hover:bg-indigo-50 transition-all shadow-xl">
-                        Find Food Banks
-                    </button>
-                    <button className="bg-emerald-500 text-white font-black uppercase text-[11px] tracking-widest px-8 py-4 rounded-2xl hover:bg-emerald-600 transition-all shadow-xl">
-                        Water Stations
-                    </button>
-                </div>
+        <div className="flex items-center gap-6">
+            <div className="bg-white/5 px-6 py-3 rounded-2xl border border-white/10 text-center">
+                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Capacity</p>
+                <p className="text-xl font-black text-white tracking-tight">562 <span className="text-[10px] text-slate-500 uppercase">Slots</span></p>
+            </div>
+            <div className="bg-emerald-600/10 px-6 py-3 rounded-2xl border border-emerald-500/20 text-center">
+                <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Live Available</p>
+                <p className="text-xl font-black text-emerald-500 tracking-tight">128</p>
             </div>
         </div>
       </div>
-    </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
+          {LODGING_DATA.map((item, idx) => (
+              <Card key={idx} className="group bg-slate-900/40 backdrop-blur-3xl border border-white/5 rounded-[48px] overflow-hidden shadow-2xl hover:bg-white/[0.02] transition-all flex flex-col">
+                  <div className="relative h-64 w-full">
+                      <Image 
+                          src={item.image} 
+                          alt={item.name} 
+                          fill 
+                          className="object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000" 
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0A0B10] via-transparent to-transparent" />
+                      <div className="absolute top-6 right-6">
+                          <Badge className={cn(
+                              "border-none py-1.5 px-4 font-black uppercase text-[9px] tracking-widest rounded-lg shadow-2xl",
+                              item.status === 'Available' ? "bg-emerald-600 text-white" : 
+                              item.status === 'Limited' ? "bg-amber-600 text-white" : 
+                              "bg-rose-600 text-white"
+                          )}>
+                              {item.status}
+                          </Badge>
+                      </div>
+                      <div className="absolute bottom-6 left-8 right-8">
+                          <h3 className="text-2xl font-black text-white leading-tight uppercase tracking-tighter">{item.name}</h3>
+                          <div className="flex items-center gap-2 mt-2">
+                                <MapPin size={12} className="text-blue-500" />
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{item.address} • {item.distance}</p>
+                          </div>
+                      </div>
+                  </div>
+                  
+                  <div className="p-8 space-y-8 flex-1 flex flex-col">
+                      <div className="grid grid-cols-2 gap-4">
+                          <div className="p-4 bg-white/5 border border-white/5 rounded-2xl">
+                              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Operational Line</p>
+                              <p className="text-[11px] font-black text-white uppercase tracking-tight">{item.phone}</p>
+                          </div>
+                          <div className="p-4 bg-white/5 border border-white/5 rounded-2xl">
+                              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Current Load</p>
+                              <p className={cn(
+                                  "text-[11px] font-black uppercase tracking-tight",
+                                  item.status === 'Full' ? 'text-rose-500' : 'text-white'
+                              )}>{item.capacity}</p>
+                          </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 py-4 border-y border-white/5">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400">
+                              <Info size={18} />
+                          </div>
+                          <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 leading-tight italic">{item.type}</span>
+                      </div>
+
+                      <div className="pt-4 mt-auto">
+                          <Button className="w-full h-14 rounded-2xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all gap-3">
+                               Confirm Details <ChevronRight size={16} />
+                          </Button>
+                      </div>
+                  </div>
+              </Card>
+          ))}
+      </div>
+
+      {/* Support Resources Section */}
+      <section className="bg-indigo-900/20 rounded-[64px] border border-indigo-500/20 p-12 lg:p-20 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-12 text-indigo-500/5 rotate-12 group-hover:rotate-0 transition-transform duration-1000">
+              <Coffee size={280} />
+          </div>
+          
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+              <div className="space-y-6">
+                  <Badge className="bg-indigo-600/30 text-indigo-400 border-none text-[10px] uppercase font-black tracking-[0.2em] px-4 py-2 rounded-full">Essential Logistics</Badge>
+                  <h2 className="text-5xl font-black text-white uppercase tracking-tighter">Humanitarian Support Feed</h2>
+                  <p className="text-xl font-medium text-slate-400 leading-relaxed max-w-2xl italic">
+                      Coordinated LDS and Red Cross distribution hubs are active across all secure quadrants. Verify map coordinates for real-time supply node status.
+                  </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-6 justify-end">
+                  <Button className="h-16 px-10 rounded-[28px] bg-white text-indigo-900 font-black uppercase tracking-widest text-[11px] hover:bg-slate-200 transition-all shadow-2xl">
+                       Identify Feed Nodes
+                  </Button>
+                  <Button className="h-16 px-10 rounded-[28px] bg-emerald-600 text-white font-black uppercase tracking-widest text-[11px] hover:bg-emerald-700 transition-all shadow-2xl shadow-emerald-600/20">
+                       Hydration Stations
+                  </Button>
+              </div>
+          </div>
+      </section>
+    </main>
   )
 }

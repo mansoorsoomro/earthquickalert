@@ -9,18 +9,27 @@ export async function GET(req: Request) {
     }
 
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
         // Photon geocoding - no API key required, more lenient usage policy
         const url = `https://photon.komoot.io/api?q=${encodeURIComponent(address)}&limit=1`;
 
         const response = await fetch(url, {
             headers: {
                 'Accept': 'application/json',
-                'User-Agent': 'EmergencyDashboard/1.0 (contact: admin@example.com)'
-            }
+                'User-Agent': 'EmergencyDashboard/1.0'
+            },
+            signal: controller.signal
         });
 
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
-            throw new Error(`Photon returned ${response.status}`);
+            return NextResponse.json(
+                { error: `Geocoding service returned ${response.status}` }, 
+                { status: response.status === 404 ? 404 : 502 }
+            );
         }
 
         const data = await response.json();
@@ -33,9 +42,12 @@ export async function GET(req: Request) {
             });
         }
 
-        return NextResponse.json({ error: 'No results' }, { status: 404 });
+        return NextResponse.json({ error: 'No results found for this address' }, { status: 404 });
     } catch (error: any) {
-        console.error('Geocoding proxy error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        if (error.name === 'AbortError') {
+            return NextResponse.json({ error: 'Geocoding request timed out' }, { status: 504 });
+        }
+        console.warn('Geocoding proxy warning:', error.message);
+        return NextResponse.json({ error: 'Failed to process geocoding request' }, { status: 500 });
     }
 }

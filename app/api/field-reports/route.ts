@@ -11,17 +11,30 @@ export async function GET(req: NextRequest) {
             .lean();
 
         // Transform for UI (e.g., date formatting)
-        const formattedReports = (reports as any[]).map(rep => ({
-            id: rep._id.toString(),
-            name: rep.name,
-            category: rep.category,
-            // Format "20/Dec/2025" style for table
-            date: new Date(rep.incidentDate).toLocaleDateString('en-GB', {
-                day: '2-digit', month: 'short', year: 'numeric'
-            }).replace(/ /g, '/'),
-            file: rep.fileReference,
-            status: rep.status,
-        }));
+        const formattedReports = (reports as any[]).map(rep => {
+            let displayDate = 'N/A';
+            try {
+                if (rep.incidentDate) {
+                    const dateObj = new Date(rep.incidentDate);
+                    if (!isNaN(dateObj.getTime())) {
+                        displayDate = dateObj.toLocaleDateString('en-GB', {
+                            day: '2-digit', month: 'short', year: 'numeric'
+                        }).replace(/ /g, '/');
+                    }
+                }
+            } catch (dateErr) {
+                console.warn('Error formatting date for report:', rep._id);
+            }
+
+            return {
+                id: rep._id.toString(),
+                name: rep.name || 'Untitled Report',
+                category: rep.category || 'General',
+                date: displayDate,
+                file: rep.fileReference || '',
+                status: rep.status || 'Review',
+            };
+        });
 
         return NextResponse.json({
             success: true,

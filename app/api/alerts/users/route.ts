@@ -92,7 +92,7 @@ export async function GET() {
         await connectDB();
 
         const session = await getSession();
-        const isAdmin = session?.user?.role === 'admin';
+        const isAdmin = session?.user?.role === 'admin' || session?.user?.role === 'super-admin' || session?.user?.role === 'sub-admin';
 
         let users: any[] = [];
         if (session?.user && !isAdmin) {

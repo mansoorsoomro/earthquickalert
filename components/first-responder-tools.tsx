@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { FileText, ListTodo, Building2, ShieldCheck, Zap } from 'lucide-react'
+import { FileText, ListTodo, Building2, ShieldCheck, Zap, Activity, Shield, Terminal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SituationReportModal } from '@/components/modals/situation-report-modal'
 import { NotifyLeadersModal } from '@/components/modals/notify-leaders-modal'
@@ -21,49 +21,63 @@ export function FirstResponderTools() {
     };
 
     const tools = [
-        // {
-        //     icon: FileText,
-        //     label: 'Submit Situation Report',
-        //     color: 'text-blue-600',
-        //     bg: 'bg-blue-50/50',
-        //     badge: 'AI Draft Ready',
-        //     onClick: () => toggleModal('sitRep', true)
-        // },
-        // {
-        //     icon: ListTodo,
-        //     label: 'Assign Task',
-        //     color: 'text-amber-600',
-        //     bg: 'bg-amber-50/50',
-        //     badge: '3 Pending',
-        //     onClick: () => toggleModal('assignTask', true)
-        // },
         {
             icon: Building2,
-            label: 'Update Infrastructure Status',
-            color: 'text-purple-600',
-            bg: 'bg-purple-50/50',
-            badge: '3 Pending',
+            label: 'Infrastructure Status',
+            sub: 'Critical Assets',
+            color: 'text-purple-400',
+            bg: 'bg-purple-500/10',
+            badge: '03 Pending',
             onClick: () => toggleModal('infrastructure', true)
         },
-        // {
-        //     icon: ShieldCheck,
-        //     label: 'Approve Resource Activation',
-        //     color: 'text-emerald-600',
-        //     bg: 'bg-emerald-50/50',
-        //     onClick: () => toggleModal('resource', true)
-        // }
+        {
+            icon: Activity,
+            label: 'Real-Time SitRep',
+            sub: 'Operational Logic',
+            color: 'text-blue-400',
+            bg: 'bg-blue-500/10',
+            badge: 'AI Active',
+            onClick: () => toggleModal('sitRep', true)
+        },
+        {
+            icon: Shield,
+            label: 'Authorize Resource',
+            sub: 'FEMA Pipeline',
+            color: 'text-emerald-400',
+            bg: 'bg-emerald-500/10',
+            badge: 'Encrypted',
+            onClick: () => toggleModal('resource', true)
+        },
+        {
+            icon: Terminal,
+            label: 'Command Dispatch',
+            sub: 'Unit Coordination',
+            color: 'text-amber-400',
+            bg: 'bg-amber-500/10',
+            badge: 'Locked',
+            onClick: () => toggleModal('assignTask', true)
+        }
     ]
 
     return (
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 h-full relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-5">
-                <ShieldCheck className="w-24 h-24 rotate-12" />
+        <div className="bg-white border border-slate-100 rounded-[40px] p-8 h-full relative overflow-hidden group shadow-xl shadow-slate-200/50">
+            {/* Background Artifact */}
+            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
+                <ShieldCheck size={140} className="rotate-12" />
             </div>
 
-            <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                First Responder Tools
-                <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
-            </h2>
+            <div className="relative z-10 flex items-center justify-between mb-10">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-200">
+                        <Terminal size={24} />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tighter leading-none">Field Command Tools</h2>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Responder-Grade Tactical Utilities</p>
+                    </div>
+                </div>
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
                 {tools.map((tool, index) => (
@@ -71,24 +85,28 @@ export function FirstResponderTools() {
                         key={index}
                         onClick={tool.onClick}
                         className={cn(
-                            "flex flex-col items-start gap-4 p-5 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] border border-slate-100 group",
-                            tool.bg,
-                            "hover:shadow-md hover:border-slate-200"
+                            "flex flex-col items-start gap-4 p-6 rounded-[32px] transition-all hover:bg-slate-50/50 active:scale-[0.98] border border-slate-100 group/btn shadow-sm",
+                            tool.bg.replace('500/10', '50/50')
                         )}
                     >
                         <div className="flex items-center justify-between w-full">
-                            <div className={cn("p-2.5 rounded-xl bg-white shadow-sm group-hover:shadow transition-all", tool.color)}>
-                                <tool.icon className="w-5 h-5" />
+                            <div className={cn("w-10 h-10 rounded-2xl bg-white border border-slate-100 flex items-center justify-center shadow-sm group-hover/btn:scale-110 transition-transform", tool.color.replace('400', '600'))}>
+                                <tool.icon size={20} />
                             </div>
                             {tool.badge && (
-                                <span className="px-2 py-0.5 rounded-full bg-white/80 text-[10px] font-black uppercase tracking-widest text-slate-500 border border-slate-100">
+                                <span className="px-3 py-1 rounded-full bg-slate-50 text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 border border-slate-100 group-hover/btn:text-slate-900 transition-colors">
                                     {tool.badge}
                                 </span>
                             )}
                         </div>
-                        <span className="text-sm font-bold text-slate-700 text-left leading-tight pr-4">
-                            {tool.label}
-                        </span>
+                        <div className="space-y-1">
+                            <span className="text-[14px] font-black text-slate-900 uppercase tracking-tight text-left block">
+                                {tool.label}
+                            </span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-left block group-hover/btn:text-slate-600 transition-colors">
+                                {tool.sub}
+                            </span>
+                        </div>
                     </button>
                 ))}
             </div>

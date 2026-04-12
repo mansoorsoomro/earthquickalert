@@ -4,6 +4,7 @@ import User from '@/models/User';
 import IncidentReport from '@/models/IncidentReport';
 import EmergencyEvent from '@/models/EmergencyEvent';
 import WeatherAlertRecord from '@/models/WeatherAlertRecord';
+import Partner from '@/models/Partner';
 import { getSession } from '@/lib/auth';
 import { getSubAdminUserFilter, getSubAdminTextLocationFilter } from '@/lib/admin-filters';
 
@@ -54,7 +55,8 @@ export async function GET() {
         const responderQuery: any = { role: { $in: ['admin', 'responder', 'eoc-manager', 'eoc-observer', 'manager'] } };
         if (userFilter) responderQuery.$and = [userFilter];
         const responders = await User.find(responderQuery).lean();
-        const activePersonnelCount = responders.length;
+        const partnersCount = await Partner.countDocuments({});
+        const activeResourcesCount = responders.length + partnersCount;
 
         const safeQuery: any = { role: 'user', isSafe: true };
         if (userFilter) safeQuery.$and = [userFilter];
@@ -138,7 +140,7 @@ export async function GET() {
             data: {
                 kpis: {
                     activeIncidents: activeEvents,
-                    responderActionsCompleted: activePersonnelCount,
+                    resourcesActivated: activeResourcesCount,
                     citizenReportsReceived: totalCitizenReports,
                     areWeSafeCheckins: safeUsers,
                     totalUsers: allUsers,

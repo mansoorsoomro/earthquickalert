@@ -25,10 +25,10 @@ export async function GET() {
         // 2. Active responders — field personnel
         const respondersRaw = await User.find(
             { role: 'responder' },
-            'name email role location'
+            'name email role location responderFunction'
         ).lean();
 
-        // Get the most recent active/monitoring event for assignment label
+        // Get the most recent active/monitoring event for assignment label (fallback)
         const currentEvent = await EmergencyEvent.findOne(
             { status: { $in: ['active', 'monitoring'] } }
         ).sort({ createdAt: -1 }).lean() as any;
@@ -42,7 +42,7 @@ export async function GET() {
             name: r.name || r.email,
             role: 'Field Responder',
             agency: 'Emergency Response Unit',
-            incident: incidentLabel,
+            function: r.responderFunction || incidentLabel,
             status: 'Active',
         }));
 

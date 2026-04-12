@@ -129,6 +129,10 @@ const UserSchema = new Schema({
         ref: 'User',
         default: null,
     },
+    responderFunction: {
+        type: String,
+        default: '',
+    },
     createdAt: {
         type: Date,
         default: Date.now,

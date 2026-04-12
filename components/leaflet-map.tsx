@@ -26,6 +26,7 @@ interface LeafletMapProps {
     zoom?: number
     className?: string
     interactive?: boolean
+    variant?: 'standard' | 'satellite' | 'dark'
 }
 
 // Separate component to handle map view updates and capture the map instance
@@ -104,7 +105,8 @@ export default function LeafletMap({
     resources,
     zoom = 13,
     className = "h-full w-full",
-    interactive = true
+    interactive = true,
+    variant = 'standard'
 }: LeafletMapProps) {
     const [isMounted, setIsMounted] = useState(false)
 
@@ -115,6 +117,32 @@ export default function LeafletMap({
     if (!isMounted) return null
 
     const mapCenter: [number, number] = [center.lat, center.lng]
+
+    const getTileLayer = () => {
+        switch (variant) {
+            case 'satellite':
+                return (
+                    <TileLayer
+                        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                        attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                    />
+                )
+            case 'dark':
+                return (
+                    <TileLayer
+                        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    />
+                )
+            default:
+                return (
+                    <TileLayer
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    />
+                )
+        }
+    }
 
     return (
         <div className={className}>
@@ -129,10 +157,7 @@ export default function LeafletMap({
                 className="h-full w-full outline-none"
             >
                 <MapReadyHandler center={mapCenter} zoom={zoom}>
-                    <TileLayer
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    />
+                    {getTileLayer()}
 
                     <ResourceMarkers resources={resources} />
 

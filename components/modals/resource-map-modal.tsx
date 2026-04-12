@@ -41,15 +41,15 @@ export function ResourceMapModal({
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="bg-[#34385E] text-white p-6 flex items-center justify-between sticky top-0 z-[500]">
+                <div className="bg-slate-50 text-slate-900 border-b border-slate-100 p-6 flex items-center justify-between sticky top-0 z-[500]">
                     <div className="flex items-center gap-3">
-                        <MapPin className="w-8 h-8 text-blue-400" />
+                        <MapPin className="w-8 h-8 text-blue-600" />
                         <div>
                             <h2 className="text-xl font-black uppercase tracking-tight">{title}</h2>
-                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Active Search Coverage: 1000km</p>
+                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Active Search Coverage: 1000km</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                    <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-xl transition-all text-slate-400 hover:text-slate-900 border border-transparent hover:border-slate-200">
                         <X className="w-7 h-7" />
                     </button>
                 </div>

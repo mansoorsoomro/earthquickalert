@@ -37,6 +37,22 @@ const LicenseSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'User',
     },
+    billingContact: {
+        type: String,
+    },
+    billingAddress: {
+        type: String,
+    },
+    billingEmail: {
+        type: String,
+    },
+    phoneNumber: {
+        type: String,
+    },
+    radiusMile: {
+        type: Number,
+        default: 5,
+    },
 }, {
     timestamps: true,
 });

@@ -14,7 +14,7 @@ export function SituationReportModal({ isOpen, onClose }: SituationReportModalPr
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-500">
-                <div className="bg-slate-900 p-6 text-white flex items-center justify-between">
+                <div className="bg-slate-50 p-6 text-slate-900 flex items-center justify-between border-b border-slate-100">
                     <div className="flex items-center gap-3">
                         <FileText className="w-8 h-8 text-blue-400" />
                         <div>
@@ -22,7 +22,7 @@ export function SituationReportModal({ isOpen, onClose }: SituationReportModalPr
                             <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">Report ID: R2G-2026-0423-01</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                    <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded-full transition-colors text-slate-400 hover:text-slate-900">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
@@ -83,7 +83,7 @@ export function SituationReportModal({ isOpen, onClose }: SituationReportModalPr
                         <Button variant="outline" className="flex-1 py-6 rounded-xl font-bold border-2 border-slate-200 hover:bg-slate-50">
                             Download PDF
                         </Button>
-                        <Button className="flex-1 py-6 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold shadow-lg shadow-slate-200 transition-all active:scale-95">
+                        <Button className="flex-1 py-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-200 transition-all active:scale-95">
                             Distribute to Agencies
                         </Button>
                     </div>

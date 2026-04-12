@@ -12,6 +12,7 @@ import { VirtualEOCOperations } from '@/components/virtual-eoc-operations'
 import { PreparednessTasks } from '@/components/preparedness-tasks'
 import { FirstResponderTools } from '@/components/first-responder-tools'
 import { SetupWizard } from '@/components/setup-wizard'
+import { Shield, Activity, Radio, Command, Terminal, Cpu } from 'lucide-react'
 
 export default function Dashboard() {
   const [showSendAlertModal, setShowSendAlertModal] = useState(false)
@@ -50,15 +51,17 @@ export default function Dashboard() {
   if (checkingSetup) {
     return (
       <div className="flex-1 flex items-center justify-center bg-slate-50 min-h-screen">
-        <div className="animate-pulse text-slate-400 font-bold text-lg">Initializing Terminal...</div>
+        <div className="flex flex-col items-center gap-4">
+           <Cpu className="w-12 h-12 text-blue-600 animate-spin" />
+           <div className="text-blue-600 font-black text-xs uppercase tracking-[0.5em] animate-pulse">Initializing Command Terminal...</div>
+        </div>
       </div>
     )
   }
 
   if (requiresSetup && !isOrphan) {
     return (
-      <div className="flex-1 relative bg-slate-50">
-        {/* The wizard intercepts the entire screen */}
+      <div className="flex-1 relative bg-white">
         <SetupWizard
           licenseId={licenseData.id}
           organizationName={licenseData.orgName}
@@ -69,66 +72,104 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex-1 overflow-auto bg-slate-50">
-      <main className="p-6 space-y-6 max-w-[1600px] mx-auto">
+    <div className="flex-1 overflow-auto bg-slate-50 selection:bg-blue-600/10">
+      <main className="p-10 space-y-12 max-w-[1800px] mx-auto relative">
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
+        
         {/* Dashboard Header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center shadow-lg shadow-red-200">
-                <span className="text-white text-xl font-bold">🚨</span>
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 pb-10 border-b border-slate-200">
+          <div className="space-y-4">
+            <div className="flex items-center gap-6">
+              <div className="w-16 h-16 bg-blue-600 rounded-[28px] flex items-center justify-center shadow-2xl shadow-blue-600/20 group hover:scale-110 transition-transform cursor-pointer">
+                <Command size={32} className="text-white group-hover:rotate-90 transition-transform duration-500" />
               </div>
-              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 uppercase">Emergency Operations Dashboard</h1>
+              <div className="space-y-1">
+                <h1 className="text-4xl font-black tracking-tighter text-slate-900 uppercase leading-none">Emergency Operations Dashboard</h1>
+                <div className="flex items-center gap-4">
+                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Operational Node Alpha-9</p>
+                  <div className="h-1 w-1 rounded-full bg-slate-700" />
+                  <div className="text-blue-500 text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
+                     <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                     Live System Link
+                  </div>
+                </div>
+              </div>
             </div>
-            <p className="text-slate-500 font-medium ml-13">Civilian monitoring and multi-hazard response coordination terminal interface system.</p>
+          </div>
+          <div className="flex items-center gap-3">
+             <div className="px-6 py-3 bg-white border border-slate-200 rounded-2xl flex items-center gap-4 group hover:bg-slate-50 transition-colors cursor-pointer shadow-sm">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]" />
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-900 transition-colors">Global Connectivity Active</span>
+             </div>
           </div>
         </div>
 
         {/* Tactical Alert Grid */}
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-1 bg-red-600 rounded-full" />
-            <h2 className="text-sm font-black text-slate-800 uppercase tracking-[0.2em]">Tactical Alert Grid</h2>
+        <section className="space-y-8 relative z-10">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-1 bg-blue-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.5)]" />
+            <h2 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.4em]">Tactical Alert Matrix</h2>
           </div>
           <DashboardStats />
         </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-1 bg-indigo-600 rounded-full" />
-              <h2 className="text-sm font-black text-slate-800 uppercase tracking-[0.2em]">GIS Impact Map</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 relative z-10">
+          {/* Main Map Area */}
+          <div className="lg:col-span-8 space-y-6">
+            <div className="flex items-center justify-between px-2">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-1 bg-blue-500 rounded-full" />
+                <h2 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] flex items-center gap-3">
+                   <Radio size={14} className="text-blue-500" /> GIS Strategic Map
+                </h2>
+              </div>
+              <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest italic">Live Multi-Vector Overlay</span>
             </div>
             <GISMap />
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-1 bg-amber-600 rounded-full" />
-              <h2 className="text-sm font-black text-slate-800 uppercase tracking-[0.2em]">Threat Monitoring</h2>
+          {/* Side Threat Panel */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="flex items-center gap-4 px-2">
+              <div className="w-10 h-1 bg-amber-500 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
+              <h2 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] flex items-center gap-3">
+                 <Shield size={14} className="text-amber-500" /> Signal Monitoring
+              </h2>
             </div>
             <ThreatMonitoring />
           </div>
 
-          <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Operational Tools Grid */}
+          <div className="lg:col-span-12 grid grid-cols-1 lg:grid-cols-2 gap-10 pt-6">
             <FirstResponderTools />
             <VirtualEOCOperations />
           </div>
 
-          {/* <div className="lg:col-span-3">
-            <CommunicationsCenter />
-          </div> */}
-
-          <div className="lg:col-span-3">
+          {/* Task Management */}
+          <div className="lg:col-span-12 space-y-8 pt-6">
+            <div className="flex items-center gap-4 px-2">
+              <div className="w-12 h-1 bg-emerald-500 rounded-full" />
+              <h2 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">Post-Event & Recovery Logic</h2>
+            </div>
             <PreparednessTasks />
           </div>
 
-          <div className="lg:col-span-3">
+          {/* Quick Command Interface */}
+          <div className="lg:col-span-12 pt-6">
             <QuickActionButtons
               onSendAlert={() => setShowSendAlertModal(true)}
               onOpenEvents={() => setShowEventsModal(true)}
             />
           </div>
+        </div>
+
+        {/* Footer Info */}
+        <div className="pt-20 pb-10 flex flex-col items-center justify-center gap-4 opacity-30 group">
+           <Terminal size={24} className="text-slate-500 group-hover:text-blue-500 transition-colors" />
+           <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.5em] text-center max-w-[600px] leading-relaxed">
+              Official Operational Monitoring Platform • Security Level 4 • All Session Activities Are Logged Under Readiness Resilience Protocol v4.0.01
+           </p>
         </div>
       </main>
 

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Zap, Bell, Eye, CheckCircle, AlertCircle } from 'lucide-react'
+import { Zap, Bell, Eye, CheckCircle, AlertCircle, Shield, Terminal, Radio, Activity, Target } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SendCommunityAlertModal } from './modals/send-community-alert-modal'
 import { ActiveEmergencyEventsModal } from './modals/active-emergency-events-modal'
@@ -33,55 +33,61 @@ export function QuickActionButtons({
   const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false)
 
   const actions = [
-    {
-      icon: Bell,
-      label: 'Send Alert',
-      color: 'bg-blue-600 hover:bg-blue-700',
-      onClick: () => setIsAlertModalOpen(true),
-    },
-    {
-      icon: Eye,
-      label: 'View Active Events',
-      color: 'bg-slate-800 hover:bg-slate-900',
-      onClick: () => setIsEventsModalOpen(true),
-    },
+    { label: 'Activate Virtual EOC', color: 'bg-red-600 hover:bg-red-500 shadow-red-600/20', icon: Zap, onClick: () => setIsEOCModalOpen(true), badge: 'Command' },
+    { label: 'Broadcast Alert', color: 'bg-blue-600 hover:bg-blue-500 shadow-blue-600/20', icon: Bell, onClick: () => setIsAlertModalOpen(true), badge: 'Signal' },
+    { label: 'Event Monitoring', color: 'bg-blue-700 hover:bg-blue-800 shadow-blue-700/20', icon: Radio, onClick: () => setIsEventsModalOpen(true), badge: 'Live' },
+    { label: 'SitRep Matrix', color: 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20', icon: Activity, onClick: () => setIsSitRepModalOpen(true), badge: 'Core' },
+    { label: 'Recovery Suite', color: 'bg-amber-600 hover:bg-amber-500 shadow-amber-600/20', icon: Shield, onClick: () => setIsRecoveryModalOpen(true), badge: 'Vault' }
   ]
 
   return (
     <>
-      <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none">
-          <Zap className="w-24 h-24 rotate-12" />
+      <div className="bg-white border border-slate-100 rounded-[40px] p-8 relative overflow-hidden group shadow-xl shadow-slate-200/50">
+        {/* Background Artifact */}
+        <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity pointer-events-none">
+          <Terminal size={120} className="rotate-12" />
         </div>
 
-        <h3 className="text-xl font-bold text-slate-900 mb-6 relative z-10">Quick Action Buttons</h3>
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 relative z-10">Administrative Control</p>
+        <div className="relative z-10 flex items-center justify-between mb-10">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-200">
+              <Terminal size={24} />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter leading-none">Command Interface</h3>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">High-Priority Administrative Actions</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+             <Target size={12} className="text-blue-500" />
+             <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Operational Console</span>
+          </div>
+        </div>
 
-        <div className="flex flex-wrap gap-3 relative z-10">
-          {[
-            { label: 'Activate Virtual EOC', color: 'bg-red-500 hover:bg-red-600', icon: Zap, onClick: () => setIsEOCModalOpen(true), badge: 'Command' },
-            { label: 'Send Community Alert', color: 'bg-blue-500 hover:bg-blue-600', icon: Bell, onClick: () => setIsAlertModalOpen(true), badge: 'Broadcast' },
-            { label: 'View All Events', color: 'bg-slate-700 hover:bg-slate-800', icon: Eye, onClick: () => setIsEventsModalOpen(true), badge: 'Live' },
-            { label: 'Generate Situation Report', color: 'bg-emerald-600 hover:bg-emerald-700', icon: CheckCircle, onClick: () => setIsSitRepModalOpen(true), badge: 'AI' },
-            { label: 'Open Recovery Tools', color: 'bg-amber-400 hover:bg-amber-500', icon: AlertCircle, onClick: () => setIsRecoveryModalOpen(true), badge: 'Verify' }
-          ].map((action, idx) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 relative z-10">
+          {actions.map((action, idx) => (
             <Button
               key={idx}
               onClick={action.onClick}
               className={cn(
-                "h-12 px-5 text-white text-[11px] font-black uppercase rounded-xl flex items-center gap-3 border-none transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm hover:shadow-md",
+                "h-auto flex-col items-start gap-4 p-6 rounded-[32px] border border-slate-100 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg text-white group/btn",
                 action.color
               )}
             >
-              <action.icon className="w-4 h-4" />
-              <div className="flex flex-col items-start gap-0.5">
-                <span className="leading-none">{action.label}</span>
-                {action.badge && (
-                  <span className="text-[8px] opacity-70 font-black tracking-[0.2em]">{action.badge}</span>
-                )}
+              <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center group-hover/btn:scale-110 transition-transform">
+                <action.icon size={20} />
+              </div>
+              <div className="flex flex-col items-start gap-1">
+                <span className="text-[13px] font-black uppercase tracking-tight leading-none text-left">{action.label}</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] opacity-40 group-hover/btn:opacity-100 transition-opacity">{action.badge} ACCESS</span>
               </div>
             </Button>
           ))}
+        </div>
+
+        <div className="mt-8 pt-6 border-t border-slate-100 flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-[0.4em] italic">
+           <span>Authorization Req: Super Admin Level 4</span>
+           <span>ECC-256 Signature Validated</span>
         </div>
       </div>
 

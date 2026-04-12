@@ -13,6 +13,7 @@ import {
   LifeBuoy,
   BriefcaseMedical, // Added BriefcaseMedical icon
   ShieldAlert,
+  LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
@@ -28,6 +29,7 @@ export const menuItems = [
   { icon: Bell, label: 'Alerts', href: '/user/alerts' },
   { icon: MapPin, label: 'My Locations', href: '/user/my-locations' },
   { icon: Shield, label: 'Preparedness', href: '/user/preparedness' },
+  { icon: Newspaper, label: 'News Updates', href: '/user/news-updates' },
   { icon: Cloud, label: 'Regional Weather', href: '/user/weather' },
 ]
 
@@ -75,8 +77,7 @@ export function UserSidebar() {
         })}
       </nav>
 
-      {/* Footer commented out to hide Sign Out button */}
-      {/* <div className="border-t border-border/50 p-4">
+      <div className="border-t border-border/50 p-4 mt-auto">
         <button
           onClick={async () => {
             try {
@@ -92,9 +93,10 @@ export function UserSidebar() {
           }}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sidebar-foreground hover:bg-sidebar-accent transition-colors text-sm"
         >
+          <LogOut className="w-5 h-5 flex-shrink-0" />
           <span>Sign Out</span>
         </button>
-      </div> */}
+      </div>
     </div>
   )
 }

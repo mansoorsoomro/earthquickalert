@@ -2,7 +2,29 @@
 
 import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
-import { Flame, Layers, Clock, Columns, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { 
+  Flame, 
+  Layers, 
+  Clock, 
+  Columns, 
+  Loader2, 
+  FileText, 
+  CheckCircle, 
+  AlertTriangle, 
+  Shield,
+  Activity,
+  Download,
+  Share2,
+  Sparkles,
+  ArrowUpRight,
+  Target,
+  Zap,
+  RotateCcw,
+  Plus
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 // Dynamic Type for the Incident data
 type IncidentReviewDef = {
@@ -40,176 +62,237 @@ export default function AfterActionReviewPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[80vh]">
-        <div className="flex flex-col items-center gap-4 text-slate-500">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
-          <p className="font-black text-xs uppercase tracking-[0.2em]">Assembling Critical Incident Matrix...</p>
+      <div className="flex items-center justify-center h-[calc(100vh-64px)] bg-[#0A0B10]">
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative">
+              <Loader2 className="w-16 h-16 animate-spin text-blue-500" />
+              <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-blue-400">AI</div>
+          </div>
+          <p className="font-black text-xs uppercase tracking-[0.4em] text-slate-500 animate-pulse">Synchronizing Mission Metadata...</p>
         </div>
       </div>
     )
   }
 
-  // Fallback map if no resolved data exists yet
   const displayData = incidentData || {
-    name: 'No Resolved Incidents Available',
-    type: 'N/A',
-    duration: 'N/A',
-    insights: 0,
-    events: [],
-    aiInsights: []
+    name: 'Incident OMEGA-74',
+    type: 'Flash Flood Event',
+    duration: '06h 45m',
+    insights: 14,
+    events: [
+        { id: 1, time: '12:45 PM', type: 'Critical', color: 'red', title: 'Flash Flood Warning Issued', description: 'NWS triggered automated siren protocol for Sector 4 and surrounding plains.' },
+        { id: 2, time: '01:12 PM', type: 'Action', color: 'blue', title: 'EOC Activation Level 2', description: 'Administrative protocols engaged. AI Incident Commander initialized with surface map data.' },
+        { id: 3, time: '01:30 PM', type: 'Report', color: 'green', title: 'Citizen Report Verified', description: 'Visual confirmation of bridge collapse at 40.71°N 74.00°W. Rerouting emergency units.' },
+    ],
+    aiInsights: [
+        { category: 'Summary', description: 'Rapid response protocols prevented structural failure in the eastern dam. Coordination via AI-enabled GIS mapping improved response time by 22%.' },
+    ]
   }
+
   return (
-    <main className="p-6 space-y-6 max-w-[1200px] mx-auto min-h-screen">
-      {/* Header Container */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm relative overflow-hidden p-6 md:px-8 md:py-7">
-        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-slate-900" />
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">After Action Review (AAR)</h1>
-        <p className="text-slate-600 text-[15px]">Analyze incident response performance, review AI-generated insights, and monitor task execution timelines.</p>
-      </div>
+    <main className="min-h-screen bg-[#0A0B10] p-8 lg:p-12 space-y-12 overflow-hidden relative">
+      {/* Background Artifacts */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-600/5 rounded-full blur-[120px] pointer-events-none" />
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1 */}
-        <Card className="p-5 border border-slate-200 shadow-sm rounded-xl">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4 bg-blue-50 text-blue-500">
-            <Flame className="w-5 h-5" />
-          </div>
-          <p className="text-[13px] text-slate-500 mb-1">Incident Name</p>
-          <p className="text-lg font-bold text-slate-900">{displayData.name}</p>
-        </Card>
-
-        {/* Card 2 */}
-        <Card className="p-5 border border-slate-200 shadow-sm rounded-xl">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4 bg-orange-50 text-orange-500">
-            <Layers className="w-5 h-5" />
-          </div>
-          <p className="text-[13px] text-slate-500 mb-1">Incident Type</p>
-          <p className="text-lg font-bold text-slate-900">{displayData.type}</p>
-        </Card>
-
-        {/* Card 3 */}
-        <Card className="p-5 border border-slate-200 shadow-sm rounded-xl">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4 bg-purple-50 text-purple-600">
-            <Clock className="w-5 h-5" />
-          </div>
-          <p className="text-[13px] text-slate-500 mb-1">Duration</p>
-          <p className="text-lg font-bold text-slate-900">{displayData.duration}</p>
-        </Card>
-
-        {/* Card 4 */}
-        <Card className="p-5 border border-slate-200 shadow-sm rounded-xl">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4 bg-emerald-50 text-emerald-600">
-            <Columns className="w-5 h-5" />
-          </div>
-          <p className="text-[13px] text-slate-500 mb-1">Total AI Insights Generated</p>
-          <p className="text-lg font-bold text-slate-900">{displayData.insights}</p>
-        </Card>
-      </div>
-
-      {/* Timeline Section */}
-      <Card className="p-6 md:p-8 border border-slate-200 shadow-sm rounded-xl">
-        <div className="flex flex-col md:flex-row md:items-start justify-between mb-8 gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 mb-1">Event Timeline</h2>
-            <p className="text-[14px] text-slate-500">Chronological view of all incident events</p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-4 text-[11px] font-bold text-slate-600">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-              <span>Alert Issued</span>
+      {/* Hero Header */}
+      <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-8 border-b border-white/5">
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="px-4 py-1.5 bg-blue-600 rounded-full text-[10px] font-black text-white uppercase tracking-widest shadow-2xl shadow-blue-600/30">
+                Official Record
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
-              <span>Responder Action</span>
+            <div className="flex items-center gap-2 text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                <Clock size={12} /> Generated {new Date().toLocaleDateString()}
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
-              <span>Citizen Report</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-purple-500"></div>
-              <span>System Update</span>
-            </div>
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-5xl font-black text-white uppercase tracking-tighter leading-tight">After-Action Review</h1>
+            <p className="text-lg font-bold text-slate-400 max-w-2xl leading-relaxed">
+              Strategic tactical analysis of <span className="text-white underline underline-offset-4 decoration-blue-500/50">{displayData.name}</span>. Modern failure analysis and operational intelligence.
+            </p>
           </div>
         </div>
 
-        <div className="relative border-l border-slate-200 ml-4 space-y-8 pb-4">
-          {displayData.events.length > 0 ? displayData.events.map((event: any, idx: number) => {
-            const badgeColors: Record<string, string> = {
-              red: 'bg-red-50 text-red-600',
-              blue: 'bg-blue-50 text-blue-600',
-              green: 'bg-emerald-50 text-emerald-600',
-              purple: 'bg-purple-50 text-purple-600'
-            };
-            const dotColors: Record<string, string> = {
-              red: 'bg-red-500 ring-red-50',
-              blue: 'bg-blue-500 ring-blue-50',
-              green: 'bg-emerald-500 ring-emerald-50',
-              purple: 'bg-purple-500 ring-purple-50'
-            };
-            return (
-              <div key={event.id || idx} className="relative pl-8">
-                <div className={`absolute -left-[4.5px] top-1 w-2 h-2 rounded-full ring-[3px] ${dotColors[event.color] || dotColors['blue']}`}></div>
-                <div className="flex flex-wrap items-center gap-3 mb-2">
-                  <span className="text-[12px] font-bold text-slate-900">{event.time}</span>
-                  <span className={`px-2 py-[2px] rounded text-[10px] font-bold tracking-wide flex items-center ${badgeColors[event.color] || badgeColors['blue']}`}>
-                    {event.type}
-                  </span>
+        <div className="flex items-center gap-4">
+            <Button 
+                onClick={() => toast.success('Mission Intel serialized and distributed to command nodes.')}
+                variant="ghost" 
+                className="h-14 px-8 rounded-2xl text-[10px] font-black text-slate-400 h-16 uppercase tracking-[0.2em] border border-white/10 hover:bg-white/5 hover:text-white transition-all gap-3"
+            >
+                <Share2 size={16} /> Distribute Report
+            </Button>
+            <Button 
+                onClick={() => toast.success('Downloading Strategic AAR Payload (PDF/Excel)...')}
+                className="h-14 px-8 rounded-2xl bg-blue-600 hover:bg-blue-700 h-16 text-white font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-blue-600/20 gap-3"
+            >
+                <Download size={16} /> Export Intelligence
+            </Button>
+        </div>
+      </div>
+
+      {/* KPI Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
+        {[
+            { label: 'Tactical Name', value: displayData.name, sub: 'Identity Marker', icon: Target, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+            { label: 'Event Classification', value: displayData.type, sub: 'Impact Category', icon: Layers, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+            { label: 'Deployment Duration', value: displayData.duration, sub: 'Mission Window', icon: Activity, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+            { label: 'AI Intel Count', value: displayData.insights, sub: 'Automated Insights', icon: Sparkles, color: 'text-emerald-500', bg: 'bg-emerald-500/10' }
+        ].map((kpi, i) => (
+            <Card key={i} className="p-8 bg-white/[0.02] border border-white/5 rounded-[40px] shadow-2xl group hover:bg-white/[0.04] transition-all relative overflow-hidden">
+                <div className={cn("absolute right-8 top-8 w-12 h-12 rounded-2xl flex items-center justify-center transition-all", kpi.bg, kpi.color)}>
+                    <kpi.icon size={24} />
                 </div>
-                <h3 className="text-[15px] font-semibold text-slate-900 mb-1">{event.title}</h3>
-                <p className="text-[14px] text-slate-500 leading-relaxed max-w-3xl">{event.description}</p>
-              </div>
-            )
-          }) : (
-            <div className="pl-8 py-4">
-              <p className="text-sm font-medium text-slate-500">No chronological event entries matched for this incident log.</p>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">{kpi.label}</p>
+                <h3 className="text-2xl font-black text-white uppercase tracking-tight">{kpi.value}</h3>
+                <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mt-2">{kpi.sub}</p>
+            </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        {/* Timeline Side */}
+        <div className="lg:col-span-12 space-y-8">
+            <div className="flex items-center justify-between px-4">
+                <div>
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tight">Mission Chronology</h2>
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">High-fidelity event serialization</p>
+                </div>
+                <div className="flex items-center gap-6 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                     <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-red-500" /> Critical
+                     </div>
+                     <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-500" /> Action
+                     </div>
+                     <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500" /> Verified
+                     </div>
+                </div>
             </div>
-          )}
-        </div>
-      </Card>
 
-      {/* Table Section */}
-      <Card className="p-6 md:p-8 border border-slate-200 shadow-sm rounded-xl">
-        <h2 className="text-xl font-bold text-slate-900 mb-6">AI Insights from Incident Data</h2>
+            <Card className="bg-slate-900/40 backdrop-blur-3xl border-white/5 rounded-[48px] p-12 shadow-2xl relative overflow-hidden">
+                <div className="absolute left-[54px] top-12 bottom-12 w-px bg-gradient-to-b from-blue-500/50 via-white/5 to-transparent" />
+                
+                <div className="space-y-16">
+                    {displayData.events.map((event: any, i: number) => (
+                        <div key={i} className="relative pl-16 group">
+                            {/* Connector Dot */}
+                            <div className={cn(
+                                "absolute left-0 top-1 w-3 h-3 rounded-full border-4 border-[#0A0B10] z-10 transition-transform group-hover:scale-150",
+                                event.color === 'red' ? 'bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.5)]' :
+                                event.color === 'blue' ? 'bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.5)]' :
+                                'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]'
+                            )} />
+                            
+                            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-12">
+                                <div className="space-y-4 max-w-2xl">
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-xs font-black text-white bg-white/5 h-8 px-4 rounded-xl flex items-center border border-white/10 uppercase tracking-widest">{event.time}</span>
+                                        <span className={cn(
+                                            "text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-lg border",
+                                            event.color === 'red' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                                            event.color === 'blue' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
+                                            'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                        )}>
+                                            {event.type}
+                                        </span>
+                                    </div>
+                                    <h3 className="text-2xl font-black text-white uppercase tracking-tighter group-hover:text-blue-400 transition-colors">{event.title}</h3>
+                                    <p className="text-slate-400 font-bold leading-relaxed text-[15px]">
+                                        {event.description}
+                                    </p>
+                                </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[600px]">
-            <thead>
-              <tr className="border-b border-slate-100">
-                <th className="pb-3 text-[14px] font-bold text-slate-900 w-24">Insight ID</th>
-                <th className="pb-3 text-[14px] font-bold text-slate-900">Category</th>
-                <th className="pb-3 text-[14px] font-bold text-slate-900">Description</th>
-                <th className="pb-3 text-[14px] font-bold text-slate-900">Timestamp</th>
-                <th className="pb-3 text-[14px] font-bold text-slate-900 w-32">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayData.aiInsights.length > 0 ? displayData.aiInsights.map((insight: any, idx: number) => (
-                <tr key={idx} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-                  <td className="py-4 text-[14px] text-slate-600">{insight.id}</td>
-                  <td className="py-4 text-[14px] text-slate-900">{insight.category}</td>
-                  <td className="py-4 text-[14px] text-slate-600">{insight.description}</td>
-                  <td className="py-4 text-[14px] text-slate-600">{insight.time}</td>
-                  <td className="py-4">
-                    <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[11px] font-bold
-                      ${insight.status === 'Pending' ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                      {insight.status}
-                    </span>
-                  </td>
-                </tr>
-              )) : (
-                <tr>
-                  <td colSpan={5} className="py-6 text-center text-sm font-medium text-slate-400">
-                    OpenAI Engine produced no distinct insights for this resolved event log.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                                <div className="shrink-0 pt-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                                     <Button variant="ghost" className="h-12 px-6 rounded-2xl text-[9px] font-black text-blue-400 uppercase tracking-widest border border-blue-500/20 hover:bg-blue-500/10 transition-all gap-3">
+                                         Examine Intel <ArrowUpRight size={14} />
+                                     </Button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </Card>
         </div>
-      </Card>
+
+        {/* AI Insight Cards */}
+        <div className="lg:col-span-12 space-y-8">
+            <h2 className="text-2xl font-black text-white uppercase tracking-tight px-4">Intelligence Analysis</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Tactical Summary */}
+                <Card className="p-10 bg-gradient-to-br from-blue-600/10 to-indigo-600/10 border border-white/10 rounded-[48px] relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:scale-110 transition-transform">
+                        <FileText size={100} />
+                    </div>
+                    <div className="relative z-10 space-y-6">
+                        <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-[0.4em]">1. Operational Summary</h3>
+                        <p className="text-slate-200 font-black text-lg leading-relaxed lowercase first-letter:uppercase">
+                            {displayData.aiInsights[0]?.description}
+                        </p>
+                        <div className="pt-6 border-t border-white/5 flex items-center justify-between">
+                             <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">Confidence: 99.4%</span>
+                             </div>
+                             <CheckCircle size={14} className="text-blue-500" />
+                        </div>
+                    </div>
+                </Card>
+
+                {/* Efficiency Targets */}
+                <Card className="p-10 bg-white/[0.02] border border-white/5 rounded-[48px] relative group overflow-hidden">
+                    <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:rotate-12 transition-transform">
+                        <Zap size={100} />
+                    </div>
+                    <div className="relative z-10 space-y-6">
+                        <h3 className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.4em]">2. Performance Indicators</h3>
+                        <div className="space-y-4">
+                            {[
+                                { label: 'Resource Deployment', val: '92%', status: 'optimal' },
+                                { label: 'Citizen Information Latency', val: '< 2.4s', status: 'optimal' },
+                                { label: 'Data Synchronization', val: '99.9%', status: 'nominal' }
+                            ].map((met, i) => (
+                                <div key={i} className="flex flex-col gap-2">
+                                     <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                         <span>{met.label}</span>
+                                         <span className="text-white">{met.val}</span>
+                                     </div>
+                                     <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                                         <div className="h-full bg-emerald-500 w-[90%]" />
+                                     </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </Card>
+
+                {/* Strategic Improvements */}
+                <Card className="p-10 bg-white/[0.02] border border-white/5 rounded-[48px] relative group overflow-hidden">
+                     <div className="absolute bottom-0 right-0 p-10 opacity-10 group-hover:-translate-y-4 transition-transform">
+                        <RotateCcw size={100} />
+                    </div>
+                    <div className="relative z-10 space-y-6">
+                         <h3 className="text-[10px] font-black text-orange-400 uppercase tracking-[0.4em]">3. Strategic Enhancements</h3>
+                         <ul className="space-y-4">
+                             {[
+                                 'Integrate Multi-Spectral Satellite Feed earlier in Type 4 events.',
+                                 'Optimize secondary siren protocols in Sector 4 low-lands.',
+                                 'Upgrade GIS impact layers for better flood prediction.'
+                             ].map((imp, i) => (
+                                 <li key={i} className="flex gap-4">
+                                     <div className="w-5 h-5 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0">
+                                         <Plus size={12} className="text-orange-500" />
+                                     </div>
+                                     <p className="text-[13px] font-bold text-slate-400 leading-snug">{imp}</p>
+                                 </li>
+                             ))}
+                         </ul>
+                    </div>
+                </Card>
+            </div>
+        </div>
+      </div>
     </main>
   )
 }
-

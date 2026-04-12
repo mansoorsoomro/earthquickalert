@@ -33,9 +33,11 @@ export async function POST(req: NextRequest) {
         await connectDB();
         const session = await getSession();
 
-        if (!session || session.user?.role !== 'admin') {
+        const isAdmin = session?.user?.role === 'admin' || session?.user?.role === 'super-admin' || session?.user?.role === 'sub-admin';
+
+        if (!session || !isAdmin) {
             return NextResponse.json(
-                { success: false, error: 'Unauthorized - Admin access required' },
+                { success: false, error: 'Unauthorized - Administrative access required' },
                 { status: 401 },
             );
         }

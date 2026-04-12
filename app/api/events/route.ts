@@ -4,16 +4,21 @@ import EmergencyEvent from '@/models/EmergencyEvent';
 import { getSession } from '@/lib/auth';
 
 export async function GET() {
+    console.log('GET /api/events - Fetching active incidents');
     try {
         await dbConnect();
         const events = await EmergencyEvent.find({
             status: { $in: ['active', 'monitoring'] }
-        }).sort({ createdAt: -1 });
+        }).sort({ createdAt: -1 }).lean();
 
-        return NextResponse.json(events);
-    } catch (error) {
+        console.log(`Found ${events.length} active incidents`);
+        return NextResponse.json(events || []);
+    } catch (error: any) {
         console.error('Events GET error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ 
+            error: 'Failed to fetch incident reports',
+            message: error.message 
+        }, { status: 500 });
     }
 }
 

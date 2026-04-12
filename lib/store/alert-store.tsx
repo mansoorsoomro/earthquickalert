@@ -45,6 +45,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
                         createdBy: item.adminName || 'Admin',
                         eventId: item.eventId,
                         isRead: item.isRead || false,
+                        isPinned: item.isPinned || false,
                     }))
                     setAlerts(mappedAlerts)
                 }
@@ -77,6 +78,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
                     affectedAreas: alertData.zones,
                     expiresAt: alertData.expiresAt,
                     eventId: alertData.eventId,
+                    isPinned: alertData.isPinned,
                 })
             })
 

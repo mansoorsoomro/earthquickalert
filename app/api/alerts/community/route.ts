@@ -45,6 +45,7 @@ export async function POST(request: Request) {
             priority,
             targetUsers,
             channels,
+            isPinned,
         } = body;
 
         const normalizedChannels: NotificationChannel[] = Array.isArray(channels) && channels.length > 0
@@ -59,6 +60,7 @@ export async function POST(request: Request) {
             affectedAreas,
             priority,
             targetUsers,
+            isPinned: isPinned === true,
             adminName: session.user.name || 'Admin',
             adminEmail: session.user.email,
         });

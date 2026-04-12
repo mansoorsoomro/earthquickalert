@@ -1,16 +1,43 @@
 'use client'
+
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { AlertTriangle, MapPin, FileText, CheckCircle, Shield, Users, Loader2 } from 'lucide-react'
+import {
+    AlertTriangle,
+    FileText,
+    CheckCircle,
+    Shield,
+    Users,
+    Loader2,
+    ChevronDown,
+    Layers,
+    MapPin,
+    Download,
+    Sparkles,
+    Circle,
+    Activity,
+    Target,
+    Navigation2,
+    Zap,
+    Search
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import dynamic from 'next/dynamic'
 import { useMemo, useEffect, useState } from 'react'
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 
 const LeafletMap = dynamic(() => import('@/components/leaflet-map'), {
     ssr: false,
     loading: () => (
-        <div className="w-full h-full min-h-[400px] bg-slate-100 animate-pulse flex items-center justify-center rounded-lg border border-slate-200">
-            <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Loading Map Engine...</p>
+        <div className="w-full h-full bg-slate-50 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+                <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Initializing Global Positioning System...</p>
+            </div>
         </div>
     ),
 })
@@ -19,19 +46,26 @@ export default function VirtualEOCAICenterPage() {
     const mapResources = useMemo(() => [], [])
 
     const [isLoading, setIsLoading] = useState(true)
+    const [activeLayers, setActiveLayers] = useState(['public_safety', 'informational', 'shelters'])
     const [stats, setStats] = useState({
         kpis: {
-            activeIncidents: 0,
-            responderActionsCompleted: 0,
-            citizenReportsReceived: 0,
-            areWeSafeCheckins: 0,
-            totalUsers: 0,
-            gisLayersActive: 0
+            activeIncidents: 12,
+            resourcesActivated: 45,
+            citizenReportsReceived: 128,
+            areWeSafeCheckins: 842,
+            totalUsers: 1200,
+            gisLayersActive: 6
         },
         responderTasks: [],
         citizenReports: [],
         checkins: []
     })
+
+    const [aiFeed, setAiFeed] = useState([
+        { id: 1, type: 'critical', title: 'Flash Flood Risk Detected', detail: 'Analysis suggests 85% probability in Sector B within 45 mins.', time: 'Just Now' },
+        { id: 2, type: 'warning', title: 'Resource Gap Identified', detail: 'Shelter capacity in Zone 4 reaching 90%. Deployment recommended.', time: '2m ago' },
+        { id: 3, type: 'info', title: 'Traffic Realignment', detail: 'Evacuation route 7 cleared. Updating citizen guidance.', time: '5m ago' },
+    ])
 
     useEffect(() => {
         async function fetchVirtualEOCData() {
@@ -56,9 +90,9 @@ export default function VirtualEOCAICenterPage() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center h-[80vh]">
-                <div className="flex flex-col items-center gap-4 text-slate-500">
-                    <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
+            <div className="flex items-center justify-center h-[80vh] bg-slate-50">
+                <div className="flex flex-col items-center gap-4 text-slate-400">
+                    <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
                     <p className="font-black text-xs uppercase tracking-[0.2em]">Synchronizing Live EOC Data...</p>
                 </div>
             </div>
@@ -66,208 +100,210 @@ export default function VirtualEOCAICenterPage() {
     }
 
     return (
-        <main className="p-8 space-y-8 bg-slate-50/30 min-h-screen">
-            {/* Page Header */}
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-                <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">Virtual EOC / AI Center</h1>
-                <p className="text-slate-500 font-medium text-lg max-w-3xl leading-relaxed">
-                    Monitor responder activity, citizen engagement, and incident insights in real time.
-                </p>
+        <main className="h-screen w-full relative overflow-hidden bg-slate-50 selection:bg-blue-600/10">
+            {/* Background Map Layer */}
+            <div className="absolute inset-0 z-0">
+                <LeafletMap
+                    center={{ lat: 40.7128, lng: -74.0060 }}
+                    resources={mapResources}
+                    zoom={13}
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-slate-50/40 via-transparent to-slate-50/80 pointer-events-none" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_0%,white_100%)] opacity-40 pointer-events-none" />
             </div>
 
-            {/* KPIs */}
-            <div className="grid grid-cols-6 gap-4">
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between min-h-[100px]">
-                    <div className="text-xs font-semibold text-slate-500 mb-4 tracking-tight">Active Incidents</div>
-                    <div className="flex justify-between items-end">
-                        <span className="text-2xl font-black text-slate-900">{stats.kpis.activeIncidents}</span>
-                        <span className="text-red-500"><AlertTriangle className="w-6 h-6" /></span>
+            {/* Top Command Bar */}
+            <header className="absolute top-0 left-0 right-0 z-20 p-6 flex items-center justify-between pointer-events-none">
+                <div className="flex items-center gap-4 pointer-events-auto">
+                    <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl px-6 py-4 flex items-center gap-6 shadow-xl">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest leading-none mb-1">Operational Hub</span>
+                            <span className="text-lg font-black text-slate-900 uppercase tracking-tight">Virtual EOC AI Center</span>
+                        </div>
+                        <div className="h-8 w-px bg-slate-200" />
+                        <div className="flex items-center gap-3">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-20" />
+                                <Circle className="w-3 h-3 text-emerald-500 fill-emerald-500" />
+                            </div>
+                            <span className="text-xs font-black text-emerald-500 uppercase tracking-widest">System Online</span>
+                        </div>
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between min-h-[100px]">
-                    <div className="text-xs font-semibold text-slate-500 mb-4 tracking-tight">Active Responders</div>
-                    <div className="flex justify-between items-end">
-                        <span className="text-2xl font-black text-slate-900">{stats.kpis.responderActionsCompleted}</span>
-                        <span className="text-green-500"><CheckCircle className="w-6 h-6" /></span>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between min-h-[100px]">
-                    <div className="text-xs font-semibold text-slate-500 mb-4 tracking-tight">Citizen Reports Received</div>
-                    <div className="flex justify-between items-end">
-                        <span className="text-2xl font-black text-slate-900">{stats.kpis.citizenReportsReceived}</span>
-                        <span className="text-blue-500"><FileText className="w-6 h-6 fill-blue-50/50" /></span>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between min-h-[100px]">
-                    <div className="text-xs font-semibold text-slate-500 mb-4 tracking-tight">"Are We Safe"<br />Check-ins</div>
-                    <div className="flex justify-between items-end">
-                        <span className="text-2xl font-black text-slate-900">{stats.kpis.areWeSafeCheckins}/{stats.kpis.totalUsers}</span>
-                        <span className="text-purple-500"><Shield className="w-6 h-6 fill-purple-50/50" /></span>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between min-h-[100px]">
-                    <div className="text-xs font-semibold text-slate-500 mb-4 tracking-tight">Users Leveraging Virtual EOC</div>
-                    <div className="flex justify-between items-end">
-                        <span className="text-2xl font-black text-slate-900">{stats.kpis.totalUsers}</span>
-                        <span className="text-yellow-500"><Users className="w-6 h-6 fill-yellow-50/50" /></span>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between min-h-[100px]">
-                    <div className="text-xs font-semibold text-slate-500 mb-4 tracking-tight">GIS Layers Active</div>
-                    <div className="flex justify-between items-end">
-                        <span className="text-2xl font-black text-slate-900">{stats.kpis.gisLayersActive}</span>
-                        <span className="text-yellow-600"><MapPin className="w-6 h-6 fill-yellow-50/50" /></span>
-                    </div>
-                </div>
-            </div>
 
-            {/* GIS Mapping Section */}
-            <Card className="p-0 overflow-hidden rounded-[2.5rem] border-slate-100 shadow-xl shadow-slate-200/50 bg-white">
-                <div className="p-8 pb-4 flex items-center justify-between">
-                    <h2 className="text-xl font-extrabold text-slate-900">GIS Mapping & Incident Visualization</h2>
-                    <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 bg-blue-50 text-blue-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-blue-100/50">Public Safety</span>
-                        <span className="px-3 py-1 bg-green-50 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-green-100/50">Informational</span>
-                        <span className="px-3 py-1 bg-yellow-50 text-yellow-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-yellow-100/50">Moderate / Caution</span>
+                <div className="flex items-center gap-3 pointer-events-auto">
+                    <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-1 flex shadow-xl">
+                        <Button variant="ghost" className="rounded-xl px-4 py-2 text-[10px] font-black text-slate-600 hover:bg-slate-50 uppercase tracking-widest gap-2">
+                            <Layers size={14} /> Layers
+                        </Button>
+                        <Button variant="ghost" className="rounded-xl px-4 py-2 text-[10px] font-black text-slate-600 hover:bg-slate-50 uppercase tracking-widest gap-2">
+                             <Target size={14} /> Center Office
+                        </Button>
+                    </div>
+                    <Button className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl shadow-blue-600/20">
+                        Initiate Broadcast
+                    </Button>
+                </div>
+            </header>
+
+            {/* Left Sidebar: AI Intelligence & Live Feed */}
+            <aside className="absolute left-6 top-32 bottom-6 w-[400px] z-20 flex flex-col gap-6 pointer-events-none">
+                {/* AI Incident Commander */}
+                <Card className="pointer-events-auto bg-white/80 backdrop-blur-2xl border border-slate-200 rounded-[32px] p-8 shadow-xl flex flex-col relative overflow-hidden group hover:border-blue-500/30 transition-all duration-500 shadow-slate-200/50">
+                    <div className="absolute top-0 right-0 -mr-12 -mt-12 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl group-hover:bg-blue-600/20 transition-all" />
+                    
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400">
+                            <Sparkles size={24} className="animate-pulse" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">AI Commander</h3>
+                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Real-Time Strategic Analysis</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 flex-1">
+                        {aiFeed.map((item) => (
+                            <div key={item.id} className="p-5 rounded-[24px] bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-all space-y-2 group/item shadow-sm">
+                                <div className="flex justify-between items-center">
+                                    <span className={cn(
+                                        "px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest",
+                                        item.type === 'critical' ? "bg-red-500/20 text-red-500" :
+                                        item.type === 'warning' ? "bg-amber-500/20 text-amber-500" :
+                                        "bg-blue-500/20 text-blue-500"
+                                    )}>
+                                        {item.type}
+                                    </span>
+                                    <span className="text-[8px] font-bold text-slate-500">{item.time}</span>
+                                </div>
+                                <h4 className="text-xs font-black text-slate-900 uppercase tracking-tight group-hover/item:text-blue-600 transition-colors uppercase">{item.title}</h4>
+                                <p className="text-[10px] font-medium text-slate-500 leading-relaxed italic">{item.detail}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-8 pt-6 border-t border-slate-100">
+                         <Button className="w-full h-12 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 shadow-sm transition-all">
+                            Full Analysis Report
+                         </Button>
+                    </div>
+                </Card>
+
+                {/* Tactical KPI Stream */}
+                <div className="pointer-events-auto grid grid-cols-2 gap-4">
+                     <div className="bg-white/80 backdrop-blur-2xl border border-slate-200 rounded-3xl p-5 shadow-xl shadow-slate-200/50">
+                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Alerts</p>
+                         <p className="text-2xl font-black text-slate-900">{stats.kpis.activeIncidents}</p>
+                         <div className="h-1 w-full bg-red-600/10 rounded-full mt-2 overflow-hidden">
+                            <div className="h-full bg-red-600 w-[65%]" />
+                         </div>
+                     </div>
+                     <div className="bg-white/80 backdrop-blur-2xl border border-slate-200 rounded-3xl p-5 shadow-xl shadow-slate-200/50">
+                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Safety Check</p>
+                         <p className="text-2xl font-black text-slate-900">{Math.round((stats.kpis.areWeSafeCheckins / stats.kpis.totalUsers) * 100)}%</p>
+                         <div className="h-1 w-full bg-emerald-600/10 rounded-full mt-2 overflow-hidden">
+                            <div className="h-full bg-emerald-600 w-[84%]" />
+                         </div>
+                     </div>
+                </div>
+            </aside>
+
+            {/* Right Sidebar: Active Reports & Resources */}
+            <aside className="absolute right-6 top-32 bottom-6 w-[400px] z-20 flex flex-col gap-6 pointer-events-none">
+                 {/* Live Field Reports */}
+                 <Card className="pointer-events-auto flex-1 bg-white/80 backdrop-blur-2xl border border-slate-200 rounded-[32px] p-8 shadow-xl shadow-slate-200/50 flex flex-col overflow-hidden">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                             <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">Field Reports</h3>
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Verified Multi-Source Input</p>
+                        </div>
+                        <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 border border-slate-100 shadow-sm">
+                            <Activity size={18} />
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+                         {stats.citizenReports.length > 0 ? stats.citizenReports.map((report: any) => (
+                             <div key={report.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-all group">
+                                <div className="flex items-center justify-between mb-2">
+                                     <div className="flex items-center gap-2">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                                          <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest">{report.type}</span>
+                                     </div>
+                                     <span className="text-[8px] font-bold text-slate-500">{report.timestamp}</span>
+                                </div>
+                                <p className="text-xs font-bold text-slate-700 leading-tight mb-2">{report.location}</p>
+                                <div className="flex items-center gap-4">
+                                     <span className="text-[9px] font-bold text-slate-500 italic">Reported by: {report.submittedBy}</span>
+                                </div>
+                             </div>
+                         )) : (
+                             <div className="flex flex-col items-center justify-center h-40 opacity-20">
+                                 <FileText size={48} className="mb-4 text-white" />
+                                 <p className="text-[10px] font-black uppercase tracking-widest text-white">No Active Reports</p>
+                             </div>
+                         )}
+                    </div>
+
+                    <div className="mt-8 pt-6 border-t border-slate-100">
+                        <Button className="w-full h-12 bg-blue-600/10 hover:bg-blue-600/20 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-blue-600/20 gap-2 transition-all">
+                             <MapPin size={14} /> Map Verified Zones
+                        </Button>
+                    </div>
+                 </Card>
+
+                 {/* Resource Grid Overflow */}
+                 <div className="pointer-events-auto grid grid-cols-1 gap-4">
+                    <div className="bg-white/80 backdrop-blur-2xl border border-slate-200 rounded-3xl p-6 shadow-xl shadow-slate-200/50 flex items-center justify-between pointer-events-auto">
+                         <div className="flex items-center gap-4">
+                             <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
+                                 <Users size={24} />
+                             </div>
+                             <div>
+                                 <p className="text-xl font-black text-slate-900">{stats.kpis.resourcesActivated}</p>
+                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Responders Deployed</p>
+                             </div>
+                         </div>
+                         <Button variant="ghost" size="icon" className="text-slate-500">
+                             <Navigation2 size={18} />
+                         </Button>
+                    </div>
+                 </div>
+            </aside>
+
+            {/* Bottom Status Bar */}
+            <footer className="absolute bottom-6 left-[430px] right-[430px] z-20 pointer-events-none">
+                <div className="pointer-events-auto bg-white/80 backdrop-blur-2xl border border-slate-200 rounded-[32px] p-4 px-8 flex items-center justify-between shadow-xl shadow-slate-200/50">
+                    <div className="flex items-center gap-8">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500">
+                                <Zap size={16} />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Active Threats</span>
+                                <span className="text-xs font-black text-slate-900 uppercase">{stats.kpis.activeIncidents} Detected</span>
+                            </div>
+                        </div>
+                        <div className="h-6 w-px bg-slate-200" />
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                <Activity size={16} />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Network Load</span>
+                                <span className="text-xs font-black text-slate-900 uppercase">Optimal (24ms)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 bg-slate-50 p-1 rounded-2xl border border-slate-200">
+                        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white cursor-pointer hover:bg-blue-700 transition-colors">
+                            <Search size={18} />
+                        </div>
+                        <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest pr-20">Command Search Filter...</p>
                     </div>
                 </div>
-                <div className="px-8 pb-8">
-                    <div className="w-full h-[500px] rounded-[2rem] overflow-hidden border border-slate-100 relative z-0">
-                        <LeafletMap
-                            center={{ lat: 40.5488, lng: -74.1517 }}
-                            resources={mapResources}
-                            zoom={14}
-                        />
-                    </div>
-                </div>
-            </Card>
-
-            {/* Responder Task Management */}
-            <Card className="p-8 rounded-[2.5rem] border-slate-100 shadow-xl shadow-slate-200/50 bg-white">
-                <h2 className="text-xl font-extrabold text-slate-900 mb-6">Responder Task Management</h2>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b border-slate-100">
-                                <th className="text-left pb-4 font-bold text-slate-900">Responder</th>
-                                <th className="text-left pb-4 font-bold text-slate-900">Role</th>
-                                <th className="text-left pb-4 font-bold text-slate-900">Checklist Status</th>
-                                <th className="text-left pb-4 font-bold text-slate-900">Assigned Incident</th>
-                                <th className="text-left pb-4 font-bold text-slate-900">Last Update</th>
-                                <th className="text-left pb-4 font-bold text-slate-900">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50">
-                            {stats.responderTasks.length > 0 ? stats.responderTasks.map((task: any) => (
-                                <tr key={task.id} className="hover:bg-slate-50/50">
-                                    <td className="py-5 font-bold text-slate-900">{task.name}</td>
-                                    <td className="py-5 font-medium text-slate-600">{task.role}</td>
-                                    <td className="py-5">
-                                        <span className={cn("px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest",
-                                            task.status === 'Completed' ? 'bg-green-50 text-green-600' :
-                                                task.status === 'Not Started' ? 'bg-blue-50 text-blue-500' :
-                                                    'bg-yellow-50 text-yellow-600'
-                                        )}>
-                                            {task.status}
-                                        </span>
-                                    </td>
-                                    <td className="py-5 font-medium text-slate-600">{task.assignedIncident}</td>
-                                    <td className="py-5 font-medium text-slate-600">{task.lastUpdate}</td>
-                                    <td className="py-5 flex items-center gap-2">
-                                        <Button size="sm" className="bg-[#2D8CFF] hover:bg-blue-600 text-white rounded-lg h-8 px-6 text-[10px] font-black uppercase tracking-widest">View</Button>
-                                    </td>
-                                </tr>
-                            )) : (
-                                <tr>
-                                    <td colSpan={6} className="py-8 text-center text-slate-400 font-medium">No active responders mapped currently.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </Card>
-
-            {/* Field Reports from the Public */}
-            <Card className="p-8 rounded-[2.5rem] border-slate-100 shadow-xl shadow-slate-200/50 bg-white">
-                <h2 className="text-xl font-extrabold text-slate-900 mb-6">Field Reports from the Public</h2>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b border-slate-100">
-                                <th className="text-left pb-4 font-bold text-slate-900">Report ID</th>
-                                <th className="text-left pb-4 font-bold text-slate-900">Submitted By</th>
-                                <th className="text-left pb-4 font-bold text-slate-900">Location</th>
-                                <th className="text-left pb-4 font-bold text-slate-900">Type</th>
-                                <th className="text-left pb-4 font-bold text-slate-900">Status</th>
-                                <th className="text-left pb-4 font-bold text-slate-900">Timestamp</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50">
-                            {stats.citizenReports.length > 0 ? stats.citizenReports.map((report: any) => (
-                                <tr key={report.id} className="hover:bg-slate-50/50">
-                                    <td className="py-5 font-bold text-slate-900">#{report.id?.substring(0, 6).toUpperCase()}</td>
-                                    <td className="py-5 font-medium text-slate-600">{report.submittedBy}</td>
-                                    <td className="py-5 font-medium text-slate-600">{report.location}</td>
-                                    <td className="py-5 font-medium text-slate-600">{report.type}</td>
-                                    <td className="py-5">
-                                        <span className={cn("px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest",
-                                            report.status === 'Resolved' || report.status === 'Verified' ? 'bg-green-50 text-green-600' :
-                                                report.status === 'Active' ? 'bg-red-50 text-red-600' :
-                                                    'bg-yellow-50 text-yellow-600'
-                                        )}>
-                                            {report.status}
-                                        </span>
-                                    </td>
-                                    <td className="py-5 font-medium text-slate-600">{report.timestamp}</td>
-                                </tr>
-                            )) : (
-                                <tr>
-                                    <td colSpan={6} className="py-8 text-center text-slate-400 font-medium">No recent field reports.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </Card>
-
-            {/* Community Safety Check-ins */}
-            <Card className="p-8 rounded-[2.5rem] border-slate-100 shadow-xl shadow-slate-200/50 bg-white">
-                <h2 className="text-xl font-extrabold text-slate-900 mb-6">Community Safety Check-ins</h2>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b border-slate-100">
-                                <th className="text-left pb-4 font-bold text-slate-900">User</th>
-                                <th className="text-left pb-4 font-bold text-slate-900">Location</th>
-                                <th className="text-left pb-4 font-bold text-slate-900">Status</th>
-                                <th className="text-left pb-4 font-bold text-slate-900">Last Check-in</th>
-                                <th className="text-left pb-4 font-bold text-slate-900">Incident</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50">
-                            {stats.checkins.length > 0 ? stats.checkins.map((checkin: any) => (
-                                <tr key={checkin.id} className="hover:bg-slate-50/50">
-                                    <td className="py-5 font-bold text-slate-900">{checkin.name}</td>
-                                    <td className="py-5 font-medium text-slate-600">{checkin.location || 'Unknown'}</td>
-                                    <td className="py-5">
-                                        <span className={cn("px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest",
-                                            checkin.status === 'Safe' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'
-                                        )}>
-                                            {checkin.status}
-                                        </span>
-                                    </td>
-                                    <td className="py-5 font-medium text-slate-600">{checkin.lastCheckin}</td>
-                                    <td className="py-5 font-medium text-slate-600">{checkin.incident}</td>
-                                </tr>
-                            )) : (
-                                <tr>
-                                    <td colSpan={5} className="py-8 text-center text-slate-400 font-medium">No recent community check-ins.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </Card>
+            </footer>
         </main>
     )
 }

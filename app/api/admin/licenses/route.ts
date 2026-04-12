@@ -35,35 +35,68 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized. Only Super Admin can create licenses.' }, { status: 401 });
         }
 
-        const { organizationName, planType, endDate, userId, country, state, city, zipcode } = await req.json();
+        const { 
+            organizationName, 
+            planType, 
+            endDate, 
+            userId, 
+            country, 
+            state, 
+            city, 
+            zipcode,
+            billingContact,
+            billingAddress,
+            billingEmail,
+            phoneNumber,
+            radiusMile,
+            isNewUser
+        } = await req.json();
 
-        if (!organizationName || !userId) {
-            return NextResponse.json({ error: 'Missing required fields (organizationName and userId)' }, { status: 400 });
+        if (!organizationName || (!userId && !isNewUser)) {
+            return NextResponse.json({ error: 'Missing required fields (organizationName and user assignation)' }, { status: 400 });
         }
 
-        // 1. Fetch the user to be assigned
-        let assignedSubAdmin = await User.findById(userId);
+        let assignedSubAdmin;
+
+        if (isNewUser) {
+            // Check if user already exists
+            const existingUser = await User.findOne({ email: billingEmail.toLowerCase() });
+            if (existingUser) {
+                assignedSubAdmin = existingUser;
+            } else {
+                // Create new user
+                const hashedPassword = await bcrypt.hash('Ready2Go@2026', 12);
+                assignedSubAdmin = await User.create({
+                    name: billingContact,
+                    email: billingEmail.toLowerCase(),
+                    password: hashedPassword,
+                    role: 'sub-admin',
+                    accountStatus: 'approved',
+                    country,
+                    state,
+                    city,
+                    zipcode,
+                    phoneNumber
+                });
+            }
+        } else {
+            // Fetch the existing user to be assigned
+            assignedSubAdmin = await User.findById(userId);
+        }
 
         if (!assignedSubAdmin) {
             return NextResponse.json({ error: 'Selected user not found' }, { status: 404 });
         }
 
-        // Check if there is already a sub-admin for this city/state/country
-        if (city && state && country) {
-            const subAdminInCity = await User.findOne({ role: 'sub-admin', city, state, country, _id: { $ne: assignedSubAdmin._id } });
-            if (subAdminInCity) {
-                return NextResponse.json({ error: `A sub-admin already exists for ${city}, ${state}, ${country}` }, { status: 400 });
-            }
-        }
-
-        // Upgrade user to sub-admin status
+        // Upgrade user to sub-admin status if they aren't already
         assignedSubAdmin.role = 'sub-admin';
         assignedSubAdmin.accountStatus = 'approved';
-        assignedSubAdmin.requestedLicense = false; // Clear request flag
+        assignedSubAdmin.requestedLicense = false;
         if (country) assignedSubAdmin.country = country;
         if (state) assignedSubAdmin.state = state;
         if (city) assignedSubAdmin.city = city;
         if (zipcode) assignedSubAdmin.zipcode = zipcode;
+        if (phoneNumber) assignedSubAdmin.phoneNumber = phoneNumber;
         await assignedSubAdmin.save();
 
         // 2. Create the License
@@ -73,7 +106,12 @@ export async function POST(req: NextRequest) {
                 planType: planType || 'Enterprise',
                 endDate: endDate ? new Date(endDate) : null
             },
-            assignedSubAdminId: assignedSubAdmin._id
+            assignedSubAdminId: assignedSubAdmin._id,
+            billingContact,
+            billingAddress,
+            billingEmail,
+            phoneNumber,
+            radiusMile: Number(radiusMile) || 5
         });
 
         // 3. Update the sub-admin to point to this new license

@@ -12,18 +12,9 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, Building2, Shield, AlertTriangle } from 'lucide-react'
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import { useJsApiLoader, Autocomplete } from '@react-google-maps/api'
-
-const libraries: "places"[] = ["places"]
+import { Plus, Search, Building2, Shield, AlertTriangle, Command, Terminal, Activity, Radio, Cpu, MousePointerClick } from 'lucide-react'
+import { GrantLicenseModal } from '@/components/modals/grant-license-modal'
+import { cn } from "@/lib/utils"
 
 interface License {
     _id: string;
@@ -48,64 +39,6 @@ export default function LicenseManagement() {
     const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-    const [error, setError] = useState('')
-
-    // Form string state
-    const [formData, setFormData] = useState({
-        organizationName: '',
-        planType: 'Enterprise',
-        country: '',
-        state: '',
-        city: '',
-        zipcode: '',
-        userId: '',
-    })
-
-    const [autocompleteInfo, setAutocompleteInfo] = useState<any>(null)
-
-    const { isLoaded } = useJsApiLoader({
-        id: 'google-map-script',
-        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
-        libraries: libraries,
-    })
-
-    const onPlaceLoaded = (autocomplete: any) => {
-        setAutocompleteInfo(autocomplete)
-    }
-
-    const onPlaceChanged = () => {
-        if (autocompleteInfo) {
-            const place = autocompleteInfo.getPlace()
-            let newCity = ''
-            let newState = ''
-            let newCountry = ''
-            let newZip = ''
-
-            place.address_components?.forEach((component: any) => {
-                const types = component.types
-                if (types.includes('locality')) {
-                    newCity = component.long_name
-                }
-                if (types.includes('administrative_area_level_1')) {
-                    newState = component.long_name
-                }
-                if (types.includes('country')) {
-                    newCountry = component.long_name
-                }
-                if (types.includes('postal_code')) {
-                    newZip = component.long_name
-                }
-            })
-
-            setFormData(prev => ({
-                ...prev,
-                city: newCity || prev.city,
-                state: newState || prev.state,
-                country: newCountry || prev.country,
-                zipcode: newZip || prev.zipcode,
-            }))
-        }
-    }
 
     useEffect(() => {
         fetchLicenses()
@@ -114,11 +47,9 @@ export default function LicenseManagement() {
 
     const fetchUsers = async () => {
         try {
-            // Fetch unassigned users (or all users)
             const res = await fetch('/api/admin/users')
             if (res.ok) {
                 const data = await res.json()
-                // Only show users that are not super-admins (so we don't accidentally re-assign them)
                 setAvailableUsers(data.users.filter((u: any) => u.role !== 'super-admin'))
             }
         } catch (error) {
@@ -140,256 +71,173 @@ export default function LicenseManagement() {
         }
     }
 
-    const handleCreateLicense = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setError('')
-        try {
-            const res = await fetch('/api/admin/licenses', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            })
-
-            const data = await res.json()
-
-            if (!res.ok) {
-                setError(data.error || 'Failed to create license')
-                return
-            }
-
-            // Success
-            setIsCreateModalOpen(false)
-            setFormData({
-                organizationName: '',
-                planType: 'Enterprise',
-                country: '',
-                state: '',
-                city: '',
-                zipcode: '',
-                userId: '',
-            })
-            fetchLicenses()
-
-        } catch (error) {
-            setError('Network error processing request')
-            console.error(error)
-        }
-    }
-
     const filteredLicenses = licenses.filter(lic =>
         lic.organizationName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         lic.assignedSubAdminId?.email.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
     return (
-        <div className="p-8 space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-2">
-                        <Building2 className="h-8 w-8 text-yellow-400" />
-                        License & Organization Manager
-                    </h1>
-                    <p className="text-gray-400 mt-2">Manage client systems, geographic boundaries, and assign sub-admin operations teams.</p>
+        <div className="flex-1 overflow-auto bg-slate-50 selection:bg-blue-600/10">
+            <main className="p-10 space-y-12 max-w-[1800px] mx-auto relative pb-32">
+                {/* Decorative elements */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-blue-600/5 blur-[120px] rounded-full pointer-events-none" />
+
+                <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 pb-10 border-b border-slate-200">
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-6">
+                            <div className="w-16 h-16 bg-blue-600 rounded-[28px] flex items-center justify-center shadow-2xl shadow-blue-600/20 group hover:scale-110 transition-transform cursor-pointer">
+                                <Building2 size={32} className="text-white group-hover:rotate-12 transition-transform duration-500" />
+                            </div>
+                            <div className="space-y-1">
+                                <h1 className="text-4xl font-black tracking-tighter text-slate-900 uppercase leading-none">Organization Licensing</h1>
+                                <div className="flex items-center gap-4">
+                                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Master Client Registry</p>
+                                    <div className="h-1 w-1 rounded-full bg-slate-700" />
+                                    <div className="text-blue-500 text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                                        Deployment Management
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <Button 
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="bg-blue-600 hover:bg-blue-500 text-white rounded-[24px] shadow-2xl shadow-blue-600/20 gap-4 h-16 px-10 font-black text-xs uppercase tracking-widest group border border-blue-400/20 active:scale-95 transition-all"
+                    >
+                        Issue New Protocol License
+                        <Plus size={20} className="group-hover:rotate-90 transition-transform" />
+                    </Button>
+
+                    <GrantLicenseModal 
+                        isOpen={isCreateModalOpen}
+                        onClose={() => setIsCreateModalOpen(false)}
+                        onSuccess={fetchLicenses}
+                        user={null}
+                    />
                 </div>
 
-                <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="bg-yellow-400 text-slate-900 hover:bg-yellow-500 font-semibold shadow-lg">
-                            <Plus className="mr-2 h-4 w-4" /> Issue New License
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[600px] bg-slate-900 text-white border-slate-700">
-                        <DialogHeader>
-                            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                                <Shield className="h-6 w-6 text-yellow-400" />
-                                Provision Client License
-                            </DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleCreateLicense} className="space-y-6 mt-4">
-                            {error && (
-                                <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded flex items-center gap-2">
-                                    <AlertTriangle className="h-5 w-5" />
-                                    {error}
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2 col-span-2">
-                                    <Label>Organization Name (License Holder)</Label>
-                                    <Input
-                                        required
-                                        placeholder="e.g. State of Arkansas"
-                                        value={formData.organizationName}
-                                        onChange={(e) => setFormData({ ...formData, organizationName: e.target.value })}
-                                        className="bg-slate-800 border-slate-700"
-                                    />
-                                </div>
-
-                                {isLoaded && (
-                                    <div className="space-y-2 col-span-2">
-                                        <Label>Search Address Location (Auto-fill)</Label>
-                                        <Autocomplete
-                                            onLoad={onPlaceLoaded}
-                                            onPlaceChanged={onPlaceChanged}
-                                        >
-                                            <Input
-                                                placeholder="Search location via Google Maps..."
-                                                className="bg-slate-800 border-slate-700"
-                                            />
-                                        </Autocomplete>
-                                    </div>
-                                )}
-
-                                <div className="space-y-2">
-                                    <Label>Country Bound</Label>
-                                    <Input
-                                        required
-                                        placeholder="e.g. USA"
-                                        value={formData.country}
-                                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                                        className="bg-slate-800 border-slate-700"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>State Bound</Label>
-                                    <Input
-                                        required
-                                        placeholder="e.g. Arkansas"
-                                        value={formData.state}
-                                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                                        className="bg-slate-800 border-slate-700"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>City Bound</Label>
-                                    <Input
-                                        required
-                                        placeholder="e.g. Little Rock"
-                                        value={formData.city}
-                                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                                        className="bg-slate-800 border-slate-700"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>Zipcode Bound</Label>
-                                    <Input
-                                        required
-                                        placeholder="e.g. 72201"
-                                        value={formData.zipcode}
-                                        onChange={(e) => setFormData({ ...formData, zipcode: e.target.value })}
-                                        className="bg-slate-800 border-slate-700"
-                                    />
-                                </div>
+                <div className="space-y-8 relative z-10">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-1 bg-blue-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.5)]" />
+                            <h2 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.4em]">Active Operational Registry</h2>
+                        </div>
+                        <div className="relative group w-full md:w-96">
+                            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                                <Search className="h-4 w-4 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
                             </div>
-
-                            <div className="border-t border-slate-700 pt-4">
-                                <h3 className="text-lg font-semibold mb-4 text-emerald-400">Assign Dedicated Sub-Admin</h3>
-                                <div className="space-y-2">
-                                    <Label>Select User from Platform</Label>
-                                    <select
-                                        required
-                                        value={formData.userId}
-                                        onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                                        className="w-full flex h-10 items-center justify-between rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        <option value="" disabled>-- Select a User --</option>
-                                        {availableUsers.map(user => (
-                                            <option key={user._id} value={user._id}>
-                                                {user.name} ({user.email}) - {user.role}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <p className="text-xs text-slate-500 mt-1">This user will be promoted to Sub-Admin and given control over this particular geographic license.</p>
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end pt-4">
-                                <Button type="submit" className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-lg">
-                                    Mint License & Assign Admin
-                                </Button>
-                            </div>
-                        </form>
-                    </DialogContent>
-                </Dialog>
-            </div>
-
-            <Card className="bg-slate-900 border-slate-800 shadow-xl overflow-hidden rounded-xl">
-                <CardHeader className="bg-slate-900/50 border-b border-slate-800 p-6">
-                    <div className="flex justify-between items-center">
-                        <CardTitle className="text-xl font-medium text-white">Active Operational Licenses</CardTitle>
-                        <div className="relative w-72">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                             <Input
-                                placeholder="Search by client or email..."
+                                placeholder="SEARCH CLIENT / NODE ID..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10 bg-slate-800/50 border-slate-700 text-slate-200 placeholder-slate-500 rounded-full"
+                                className="pl-12 bg-white border-slate-200 text-slate-900 placeholder-slate-400 rounded-2xl h-12 text-[10px] font-black uppercase tracking-widest focus-visible:ring-blue-600/20 focus-visible:border-blue-600 transition-all"
                             />
                         </div>
                     </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                    <Table>
-                        <TableHeader className="bg-slate-800/30">
-                            <TableRow className="border-slate-800">
-                                <TableHead className="text-slate-400 font-medium py-4 px-6">Client / Organization</TableHead>
-                                <TableHead className="text-slate-400 font-medium py-4 px-6">Assigned Sub-Admin</TableHead>
-                                <TableHead className="text-slate-400 font-medium py-4 px-6">Status</TableHead>
-                                <TableHead className="text-slate-400 font-medium py-4 px-6">Date Created</TableHead>
-                                <TableHead className="text-slate-400 font-medium py-4 px-6">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {isLoading ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="text-center py-12 text-slate-500">
-                                        Loading licenses...
-                                    </TableCell>
-                                </TableRow>
-                            ) : filteredLicenses.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="text-center py-12 text-slate-500">
-                                        No organization licenses found. Issue one to get started.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                filteredLicenses.map((lic) => (
-                                    <TableRow key={lic._id} className="border-slate-800 hover:bg-slate-800/20 transition-colors">
-                                        <TableCell className="font-medium text-white px-6 py-4">
-                                            {lic.organizationName}
-                                        </TableCell>
-                                        <TableCell className="px-6 py-4 text-slate-300">
-                                            <div className="flex flex-col">
-                                                <span>{lic.assignedSubAdminId?.name || 'Unassigned'}</span>
-                                                <span className="text-xs text-slate-500">{lic.assignedSubAdminId?.email}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${lic.status === 'active'
-                                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                                    : 'bg-red-500/10 text-red-500 border border-red-500/20'
-                                                }`}>
-                                                {lic.status.toUpperCase()}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="text-slate-400 px-6 py-4">
-                                            {new Date(lic.createdAt).toLocaleDateString()}
-                                        </TableCell>
-                                        <TableCell className="px-6 py-4">
-                                            <Button variant="outline" size="sm" className="bg-transparent border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
-                                                Manage
-                                            </Button>
-                                        </TableCell>
+
+                    <Card className="bg-white border-slate-100 rounded-[40px] overflow-hidden shadow-xl shadow-slate-200/50">
+                        <CardContent className="p-0">
+                            <Table>
+                                <TableHeader className="border-b border-slate-100">
+                                    <TableRow className="border-none hover:bg-transparent">
+                                        <TableHead className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] h-16 px-10">Organization / Unified ID</TableHead>
+                                        <TableHead className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] h-16 px-10">Assigned Operations Sub-Admin</TableHead>
+                                        <TableHead className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] h-16 px-10">Status</TableHead>
+                                        <TableHead className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] h-16 px-10">Initial Mint Date</TableHead>
+                                        <TableHead className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] h-16 px-10 text-right">Actions</TableHead>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+                                </TableHeader>
+                                <TableBody>
+                                    {isLoading ? (
+                                        Array.from({ length: 4 }).map((_, i) => (
+                                            <TableRow key={i} className="border-b border-slate-50 hover:bg-transparent animate-pulse">
+                                                <TableCell colSpan={5} className="p-10">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-12 h-12 bg-slate-100 rounded-2xl" />
+                                                        <div className="space-y-2">
+                                                            <div className="h-4 w-48 bg-slate-100 rounded" />
+                                                            <div className="h-3 w-64 bg-slate-100 rounded" />
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : filteredLicenses.length === 0 ? (
+                                        <TableRow className="border-none hover:bg-transparent">
+                                            <TableCell colSpan={5} className="py-32 text-center space-y-6">
+                                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-slate-100">
+                                                    <Shield size={32} className="text-slate-300" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <p className="text-lg font-black text-slate-900 uppercase tracking-tighter">No Operational Records Found</p>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest max-w-xs mx-auto italic">Master registry is currently empty. Initialize a new license deployment to populate the grid.</p>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        filteredLicenses.map((lic) => (
+                                            <TableRow key={lic._id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors group/row">
+                                                <TableCell className="px-10 py-8">
+                                                    <div className="flex items-center gap-5">
+                                                        <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 border border-slate-100 group-hover/row:border-blue-200 group-hover/row:text-blue-600 transition-all shadow-sm">
+                                                            <Building2 size={24} />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <div className="text-lg font-black text-slate-900 uppercase tracking-tighter leading-none">{lic.organizationName}</div>
+                                                            <div className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Node ID: {lic._id.slice(-8).toUpperCase()}</div>
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="px-10 py-8">
+                                                    <div className="space-y-1.5 flex flex-col">
+                                                        <span className="text-xs font-black text-slate-700 uppercase tracking-tight">{lic.assignedSubAdminId?.name || 'TERMINAL UNASSIGNED'}</span>
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none flex items-center gap-2">
+                                                            <Terminal size={10} className="text-blue-500" />
+                                                            {lic.assignedSubAdminId?.email || 'N/A'}
+                                                        </span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="px-10 py-8">
+                                                    <div className={cn(
+                                                        "inline-flex items-center gap-2.5 px-4 py-1.5 rounded-xl border shadow-lg",
+                                                        lic.status === 'active'
+                                                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 shadow-emerald-500/5'
+                                                            : 'bg-rose-500/10 border-rose-500/20 text-rose-500 shadow-rose-500/5'
+                                                    )}>
+                                                        <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", 
+                                                            lic.status === 'active' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-rose-500 shadow-[0_0_8px_rgba(225,29,72,0.5)]'
+                                                        )} />
+                                                        <span className="text-[9px] font-black uppercase tracking-widest">{lic.status.toUpperCase()}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="px-10 py-8">
+                                                    <div className="text-xs font-black text-slate-400 uppercase tracking-widest italic">{new Date(lic.createdAt).toLocaleDateString()}</div>
+                                                </TableCell>
+                                                <TableCell className="px-10 py-8 text-right">
+                                                    <Button className="bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-[16px] border border-slate-200 h-12 px-8 text-[10px] font-black uppercase tracking-[0.2em] transition-all group/btn overflow-hidden relative">
+                                                        <span className="relative z-10">Access Node</span>
+                                                        <div className="absolute inset-0 bg-blue-600/0 group-hover/btn:bg-blue-600/5 transition-colors" />
+                                                        <MousePointerClick size={14} className="ml-3 group-hover/btn:scale-125 transition-transform" />
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                        <div className="bg-blue-600 p-8 flex flex-col items-center justify-center space-y-2 relative z-10">
+                            <div className="flex items-center gap-3 text-white">
+                                <Cpu size={14} className="animate-spin duration-[3000ms]" />
+                                <p className="text-[10px] font-black uppercase tracking-[0.4em]">Operational Metadata Stream Active</p>
+                            </div>
+                            <p className="text-[7px] text-blue-200 font-black uppercase tracking-[0.6em] opacity-40">Systemic integrity scan complete • All licenses verified under protocol v4.0.01</p>
+                        </div>
+                    </Card>
+                </div>
+            </main>
         </div>
     )
 }

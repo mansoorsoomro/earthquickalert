@@ -2,6 +2,7 @@
 
 import React, { useMemo, useCallback, useState } from 'react'
 import { GoogleMap as GoogleMapComponent, useJsApiLoader, Marker, InfoWindow, Circle } from '@react-google-maps/api'
+import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_LIBRARIES, GOOGLE_MAPS_LOADER_ID } from '@/lib/constants/google-maps-config'
 
 interface MapMarker {
     id: string
@@ -38,8 +39,9 @@ const defaultCenter = {
 
 export function GoogleMap({ address, markers = [], center, zoom = 10 }: GoogleMapProps) {
     const { isLoaded } = useJsApiLoader({
-        id: 'google-map-script',
-        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "AIzaSyBq2yjNcUbJoOOwyLa3HzO4xRPVGD9EQI4"
+        id: GOOGLE_MAPS_LOADER_ID,
+        googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+        libraries: GOOGLE_MAPS_LIBRARIES
     })
 
     const mapCenter = useMemo(() => {
@@ -120,7 +122,10 @@ export function GoogleMap({ address, markers = [], center, zoom = 10 }: GoogleMa
                                     url: 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png',
                                     scaledSize: new google.maps.Size(42, 42)
                                 } : marker.type === 'incident' ? {
-                                    url: 'https://maps.google.com/mapfiles/ms/icons/caution.png', // Fallback
+                                    url: (marker as any).icon === 'fire' ? 'https://maps.google.com/mapfiles/ms/icons/firedept.png' :
+                                         (marker as any).icon === 'police' ? 'https://maps.google.com/mapfiles/ms/icons/police.png' :
+                                         (marker as any).icon === 'medical' ? 'https://maps.google.com/mapfiles/ms/icons/hospital.png' :
+                                         'https://maps.google.com/mapfiles/ms/icons/caution.png',
                                     scaledSize: new google.maps.Size(32, 32)
                                 } : marker.type === 'condition' ? {
                                     path: google.maps.SymbolPath.CIRCLE,

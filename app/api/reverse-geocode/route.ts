@@ -10,19 +10,28 @@ export async function GET(req: Request) {
     }
 
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
         // Photon reverse geocoding - no key required, no rate-limiting issues
         const url = `https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}&limit=1`;
 
         const response = await fetch(url, {
             headers: {
                 'Accept': 'application/json',
-                'User-Agent': 'EmergencyDashboard/1.0 (contact: admin@example.com)'
+                'User-Agent': 'EmergencyDashboard/1.0'
             },
-            next: { revalidate: 60 }
+            signal: controller.signal,
+            next: { revalidate: 3600 } // Cache for 1 hour to reduce outgoing requests
         });
 
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
-            throw new Error(`Photon API returned ${response.status} ${response.statusText}`);
+            return NextResponse.json(
+                { error: `Geocoding service returned ${response.status}` }, 
+                { status: response.status === 404 ? 404 : 502 }
+            );
         }
 
         const data = await response.json();
@@ -34,9 +43,12 @@ export async function GET(req: Request) {
             return NextResponse.json({ name, address: p });
         }
 
-        return NextResponse.json({ error: 'No results' }, { status: 404 });
+        return NextResponse.json({ error: 'No results found for these coordinates' }, { status: 404 });
     } catch (error: any) {
-        console.error('Reverse geocoding proxy error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        if (error.name === 'AbortError') {
+            return NextResponse.json({ error: 'Reverse geocoding request timed out' }, { status: 504 });
+        }
+        console.warn('Reverse geocoding proxy warning:', error.message);
+        return NextResponse.json({ error: 'Failed to process reverse geocoding request' }, { status: 500 });
     }
 }

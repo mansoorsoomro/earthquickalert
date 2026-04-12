@@ -20,6 +20,7 @@ export interface Alert {
     eventId?: string // Link to emergency event
     isRead?: boolean // For user tracking
     source?: AlertSourceType
+    isPinned?: boolean
 }
 
 export interface EmergencyEvent {

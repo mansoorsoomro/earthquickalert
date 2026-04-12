@@ -32,13 +32,13 @@ import { Button } from '@/components/ui/button'
 export const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/admin-dashboard' },
   { icon: AlertCircle, label: 'Emergency Events', href: '/emergency-events' },
-  { icon: Bell, label: 'Alerts & Communication', href: '/alerts-communication' },
   { icon: Map, label: 'GIS & Mapping', href: '/gis-mapping' },
-  { icon: Users, label: 'Responders & Agencies', href: '/responders-agencies' },
+  { icon: Bell, label: 'Alerts & Communication', href: '/alerts-communication' },
   { icon: Brain, label: 'Virtual EOC / AI Center', href: '/virtual-eoc-ai-center' },
   { icon: ClipboardList, label: 'After Action Review', href: '/after-action-review' },
-  { icon: FileText, label: 'Emergency Plan', href: '/emergency-plan' },
+  { icon: FileText, label: 'COOP/BC Plans', href: '/emergency-plan' },
   { icon: FileText, label: 'Preparedness Information', href: '/preparedness-information' },
+  { icon: Users, label: 'Responders & Agencies', href: '/responders-agencies' },
 ]
 
 export const bottomItems = [
@@ -72,22 +72,23 @@ export function Sidebar() {
 
   const adminMenuItems = isSuperAdminRole
     ? [
-        { icon: LayoutDashboard, label: 'Dashboard', href: '/super-admin-dashboard' },
-        { icon: Building2, label: 'Licenses', href: '/admin/licenses' },
-        { icon: Shield, label: 'Sub-Admins', href: '/admin/sub-admins' },
-        { icon: Users, label: 'User Approval', href: '/admin/users' }
-      ]
+      { icon: LayoutDashboard, label: 'Dashboard', href: '/super-admin-dashboard' },
+      { icon: Bell, label: 'Alerts & Communication', href: '/alerts-communication' },
+      { icon: FileText, label: 'Preparedness Information', href: '/preparedness-information' },
+      { icon: Building2, label: 'Licenses', href: '/admin/licenses' },
+      { icon: Shield, label: 'Sub-Admins', href: '/admin/sub-admins' },
+      { icon: Users, label: 'Responder and Leader Approval', href: '/admin/users' }
+    ]
     : isEOCRole
-    ? eocMenuItems
-    : isOperationalAdmin
-    ? [
-        { icon: LayoutDashboard, label: 'Dashboard', href: '/admin-dashboard' },
-        { icon: Users, label: 'User Approval', href: '/admin/users' },
-        ...menuItems.filter(item => item.href !== '/admin-dashboard')
-      ]
-    : [
-        ...menuItems,
-      ]
+      ? eocMenuItems
+      : isOperationalAdmin
+        ? [
+          ...menuItems,
+          { icon: Users, label: 'Responder and Leader Approval', href: '/admin/users' },
+        ]
+        : [
+          ...menuItems,
+        ]
 
   return (
     <div className="hidden md:flex w-72 bg-sidebar text-sidebar-foreground flex-col h-full border-r border-border">

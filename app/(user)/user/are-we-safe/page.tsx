@@ -106,10 +106,14 @@ export default function AreWeSafePage() {
     useEffect(() => {
         const fetchMemberMetrics = async () => {
             const newMetrics: Record<string, { temp: number; condition: string; seismic: string }> = { ...memberMetrics }
-            let hasNew = false
+            
+            // Filter members that need fetching
+            const membersToFetch = familyMembers.filter(member => member.location && !memberMetrics[member._id])
+            
+            if (membersToFetch.length === 0) return
 
-            for (const member of familyMembers) {
-                if (member.location && !memberMetrics[member._id]) {
+            try {
+                const fetchPromises = membersToFetch.map(async (member) => {
                     try {
                         const coords = await geocodeAddress(member.location)
                         const [wData, eqAlerts] = await Promise.all([
@@ -117,20 +121,35 @@ export default function AreWeSafePage() {
                             earthquakeAPI.fetchEarthquakesByLocation(coords.lat, coords.lng, 500)
                         ])
                         const latestEq = eqAlerts.length > 0 ? eqAlerts[0] : null
-                        newMetrics[member._id] = {
-                            temp: wData.current.temp,
-                            condition: wData.current.condition.toUpperCase(),
-                            seismic: latestEq ? `${latestEq.magnitude.toFixed(1)} ${latestEq.severity.toUpperCase()}` : 'STABLE'
+                        return {
+                            id: member._id,
+                            metrics: {
+                                temp: wData.current.temp,
+                                condition: wData.current.condition.toUpperCase(),
+                                seismic: latestEq ? `${latestEq.magnitude.toFixed(1)} ${latestEq.severity.toUpperCase()}` : 'STABLE'
+                            }
                         }
-                        hasNew = true
                     } catch (err) {
                         console.error(`Error fetching metrics for ${member.name}:`, err)
+                        return null
                     }
-                }
-            }
+                })
 
-            if (hasNew) {
-                setMemberMetrics(newMetrics)
+                const results = await Promise.all(fetchPromises)
+                
+                let hasChanges = false
+                results.forEach(res => {
+                    if (res) {
+                        newMetrics[res.id] = res.metrics
+                        hasChanges = true
+                    }
+                })
+
+                if (hasChanges) {
+                    setMemberMetrics(newMetrics)
+                }
+            } catch (err) {
+                console.error('Error in parallel metric fetching:', err)
             }
         }
 

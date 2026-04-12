@@ -26,9 +26,18 @@ import {
     UserCheck,
     Search,
     ChevronRight,
-    RefreshCw
+    RefreshCw,
+    Activity,
+    Target,
+    Navigation2,
+    Sparkles,
+    Shield,
+    Globe,
+    Clock
 } from 'lucide-react'
-import Image from 'next/image'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 export default function VirtualEOCDashboard() {
     const [userName, setUserName] = React.useState('User Name')
@@ -40,265 +49,257 @@ export default function VirtualEOCDashboard() {
     }, [])
 
     return (
-        <div className="flex-1 overflow-auto bg-white min-h-screen">
+        <main className="min-h-screen bg-slate-50 p-8 lg:p-12 space-y-12 overflow-hidden relative selection:bg-blue-600/10">
+            {/* Background Artifacts */}
+            <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-600/5 rounded-full blur-[180px] pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[150px] pointer-events-none" />
 
-            {/* Main Content */}
-            <main className="p-8 space-y-12 max-w-[1600px] mx-auto">
-
-                {/* I. Virtual EOC Hero Banner */}
-                <section style={{ backgroundColor: "#1e293b" }} className="relative rounded-[24px] overflow-hidden h-[240px] flex flex-col justify-center p-12 text-white shadow-2xl shadow-indigo-900/10 group">
-                    {/* <div className="absolute inset-0 z-0">
-                        <Image
-                            src="/Users/maria/.gemini/antigravity/brain/49071f9b-62e6-4ab3-a06a-afc26564e3d7/eoc_hero_clouds_1775152615062.png"
-                            alt="Stormy Clouds"
-                            fill
-                            className="object-cover brightness-75 transition-transform duration-[10s] ease-linear group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-slate-900/40" />
-                    </div> */}
-
-                    <div className="relative z-10 space-y-2">
-                        <h1 className="text-5xl font-black tracking-tight drop-shadow-lg">Virtual Emergency Operations Center</h1>
-                        <p className="text-xl text-white/90 font-medium max-w-2xl">Critical life-safety information and resources for your area — updated in real time</p>
-                    </div>
-
-                    <div className="absolute bottom-8 right-12 z-20 flex items-center gap-6">
-                        <Badge className="bg-emerald-500 text-white font-black tracking-widest text-[10px] py-2 px-6 rounded-full flex items-center gap-2 border-none shadow-lg">
-                            <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                            ACTIVE
-                        </Badge>
-                        <div className="text-right">
-                            <p className="text-[10px] font-black text-white/60 uppercase tracking-widest leading-none mb-1">Last Updated</p>
-                            <p className="text-xs font-black text-white">12:45 PM EST</p>
+            {/* Header Section */}
+            <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-8 border-b border-slate-200">
+                <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-600 border border-slate-200 shadow-sm">
+                            <Activity size={24} />
                         </div>
-                    </div>
-                </section>
-
-                {/* II. Hurricane Alert Banner (Section 2) */}
-                <section className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
-                    <div className="flex">
-                        <div className="w-1.5 bg-rose-600" />
-                        <div className="p-8 flex-1 space-y-8">
-                            <div>
-                                <h2 className="text-[26px] font-black text-slate-900 tracking-tight">Hurricane Erin - Category 3</h2>
-                                <p className="text-[15px] font-medium text-slate-500 mt-2 leading-relaxed">
-                                    Major hurricane approaching coastal areas. Immediate evacuation required for zones A, B, and C. Sustained winds of 115 mph with dangerous storm surge expected.
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                <IncidentTile icon={<Navigation size={20} />} title="Evacuate" sub="Zones A, B, C" color="bg-rose-50 text-rose-500" />
-                                <IncidentTile icon={<Home size={20} />} title="Shelter-in-Place" sub="Zone 3" color="bg-orange-50 text-orange-500" />
-                                <IncidentTile icon={<ShieldAlert size={20} />} title="Avoid Travel" sub="All Roads" color="bg-amber-50 text-amber-500" />
-                                <IncidentTile icon={<CloudLightning size={20} />} title="Weather Alert" sub="Active" color="bg-purple-50 text-purple-500" />
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* III. Main Tactical Grid (Section 3) */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-
-                    {/* Life-Safety Grid */}
-                    <div className="lg:col-span-2 space-y-8">
                         <div>
-                            <h3 className="text-xl font-black text-slate-900 tracking-tight mb-1">Life-Safety Action Buttons</h3>
-                            <p className="text-[13px] text-slate-400 font-medium tracking-tight">Use these quick actions to stay safe during severe weather events.</p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <TacticalButton icon={<Phone size={24} className="text-rose-600" />} title="911 Speed Dial" sub="Direct connection to local 911" />
-                            <TacticalButton icon={<Building2 size={24} className="text-blue-600" />} title="Hospital Locator" sub="Nearest medical facilities" />
-                            <TacticalButton icon={<Navigation size={24} className="text-emerald-600" />} title="Evacuation Routes" sub="GPS navigation to safety" />
-                            <TacticalButton icon={<Map size={24} className="text-purple-600" />} title="Shelter Locations" sub="Safe shelter sites nearby" />
-                            <TacticalButton icon={<FileBarChart size={24} className="text-amber-500" />} title="Report Conditions" sub="Share updates" />
-                        </div>
-
-                        {/* IV. Activated Emergency Resources (Section 4) */}
-                        <div className="space-y-6 pt-6">
-                            <h3 className="text-xl font-black text-slate-900 tracking-tight px-2">Activated Emergency Resources</h3>
-                            <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
-                                <ResourceItem icon={<UserCheck className="text-blue-500" />} label="Pop-up Medical Clinics" count="3 locations" />
-                                <ResourceItem icon={<Briefcase className="text-amber-500" />} label="Private and Non-Profit Sector" count="4 locations" />
-                                <ResourceItem icon={<Stethoscope className="text-emerald-500" />} label="FEMA Assistance Booths" count="2 locations" />
-                                <ResourceItem icon={<Heart className="text-rose-500" />} label="Red Cross Stations" count="5 locations" />
-                                <ResourceItem icon={<Users className="text-purple-500" />} label="Family Reunification" count="1 location" />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Weather & Traffic Widget */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-[#1e293b] text-white rounded-[32px] p-8 space-y-10 shadow-2xl relative overflow-hidden min-h-[600px] flex flex-col">
-                            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Real-Time Weather & Traffic</h3>
-
-                            <div className="space-y-2">
-                                <h4 className="text-[72px] font-black leading-none tracking-tighter">72°F</h4>
-                                <p className="text-[17px] font-black text-slate-400 uppercase tracking-widest ml-1">Partly Cloudy</p>
-                            </div>
-
-                            <div className="flex-1 space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <h5 className="text-[11px] font-black uppercase tracking-widest text-slate-200">Active Alerts</h5>
-                                    <Badge className="bg-rose-500/10 text-rose-500 border border-rose-500/20 font-black text-[9px] uppercase tracking-tighter px-2 rounded-full">CRITICAL</Badge>
-                                </div>
-
-                                <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/5 space-y-4">
-                                    <ul className="space-y-5 text-[13px] font-bold text-slate-200">
-                                        <li className="flex gap-4 leading-relaxed">
-                                            <div className="w-2 h-2 bg-rose-500 rounded-full mt-1.5 shrink-0 shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
-                                            I-95 South: Closed due to flooding
-                                        </li>
-                                        <li className="flex gap-4 leading-relaxed">
-                                            <div className="w-2 h-2 bg-amber-400 rounded-full mt-1.5 shrink-0 shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
-                                            Downtown: High wind zone - avoid tall buildings
-                                        </li>
-                                        <li className="flex gap-4 leading-relaxed">
-                                            <div className="w-2 h-2 bg-indigo-400 rounded-full mt-1.5 shrink-0 shadow-[0_0_8px_rgba(129,140,248,0.5)]" />
-                                            Storm surge @ 12 feet above normal
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-white/95 rounded-2xl p-5 text-center space-y-2 cursor-pointer hover:bg-white transition-all shadow-lg">
-                                    <Eye className="w-6 h-6 text-blue-500 mx-auto" />
-                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Visibility</p>
-                                    <p className="text-sm font-black text-slate-900 tracking-tight italic">0.5 miles</p>
-                                </div>
-                                <div className="bg-white/95 rounded-2xl p-5 text-center space-y-2 cursor-pointer hover:bg-white transition-all shadow-lg">
-                                    <Wind className="w-6 h-6 text-slate-500 mx-auto" />
-                                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Wind Speed</p>
-                                    <p className="text-sm font-black text-slate-900 tracking-tight italic">115 mph</p>
-                                </div>
-                            </div>
+                            <h1 className="text-4xl font-black text-slate-900 uppercase tracking-tighter">Virtual EOC Hub</h1>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Live Operational Awareness & Resource Matrix</p>
                         </div>
                     </div>
                 </div>
 
-                {/* V. Lodging & Essential Resources (Section 5) */}
-                <section className="bg-white rounded-[32px] border border-slate-100 p-10 space-y-12 shadow-sm">
-                    <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase italic px-2">Lodging & Essential Resources</h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-16 px-2">
-                        <div className="space-y-8">
-                            <div className="flex items-center gap-3 border-b border-slate-50 pb-4">
-                                <Hotel className="w-5 h-5 text-slate-400" />
-                                <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-800">Available Hotels</h4>
-                            </div>
-                            <div className="space-y-5">
-                                <LogEntry label="Hampton Inn Downtown" status="Available" statusColor="text-emerald-500" />
-                                <LogEntry label="Holiday Inn Express" status="Limited" statusColor="text-amber-500" />
-                            </div>
-                        </div>
-
-                        <div className="space-y-8">
-                            <div className="flex items-center gap-3 border-b border-slate-50 pb-4">
-                                <Coffee className="w-5 h-5 text-slate-400" />
-                                <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-800">Food & Essentials</h4>
-                            </div>
-                            <div className="space-y-5">
-                                <LogEntry label="Community Food Pantry" status="Open" statusColor="text-emerald-500" />
-                                <LogEntry label="Walmart Supercenter" status="Open" statusColor="text-emerald-500" />
-                            </div>
-                        </div>
-
-                        <div className="space-y-8">
-                            <div className="flex items-center gap-3 border-b border-slate-50 pb-4">
-                                <Fuel className="w-5 h-5 text-slate-400" />
-                                <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-800">Gas Stations</h4>
-                            </div>
-                            <div className="space-y-5">
-                                <LogEntry label="Shell Station (Main St)" status="Fuel Available" statusColor="text-emerald-500" />
-                                <LogEntry label="BP Gas (Highway 101)" status="No Fuel" statusColor="text-rose-500" />
-                            </div>
+                <div className="flex items-center gap-6">
+                    <div className="flex flex-col text-right">
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">System Pulse</span>
+                        <div className="flex items-center gap-2">
+                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                             <span className="text-xs font-black text-slate-900 uppercase tracking-tight">Active Protocol</span>
                         </div>
                     </div>
-                </section>
-
-                {/* VI. Recovery Resources (Section 6) */}
-                <section className="bg-white rounded-[32px] border border-slate-100 p-10 space-y-4 shadow-sm pb-16">
-                    <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase italic px-2">Recovery Resources (Post-Disaster)</h3>
-                    <p className="text-[13px] text-slate-400 font-medium px-2 mb-10">This section will be activated once the area is declared safe for re-entry.</p>
-
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                        <RecoveryButton icon={<Zap size={18} />} title="Donation Centers" color="bg-[#8b5cf6]" />
-                        <RecoveryButton icon={<RefreshCw size={18} />} title="Pharmacy Status" color="bg-[#3b82f6]" />
-                        <RecoveryButton icon={<Users size={18} />} title="View All Events" color="bg-[#1e293b]" />
-                        <RecoveryButton icon={<AlertCircle size={18} />} title="FEMA Assistance" color="bg-[#e11d48]" />
-                        <RecoveryButton icon={<Plus size={18} />} title="Relief Funding" color="bg-[#10b981]" />
-                    </div>
-                </section>
-
-            </main>
-        </div>
-    )
-}
-
-function IncidentTile({ icon, title, sub, color }: { icon: any, title: string, sub: string, color: string }) {
-    return (
-        <div className="p-6 bg-slate-50/50 rounded-2xl text-center space-y-4 hover:shadow-lg hover:bg-white cursor-pointer transition-all border border-slate-100 group">
-            <div className={`w-14 h-14 ${color} rounded-2xl flex items-center justify-center mx-auto shadow-sm group-hover:scale-110 transition-transform`}>
-                {icon}
-            </div>
-            <div>
-                <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">{title}</h4>
-                <p className="text-[11px] font-bold text-slate-400 mt-1">{sub}</p>
-            </div>
-        </div>
-    )
-}
-
-function TacticalButton({ icon, title, sub }: { icon: any, title: string, sub: string }) {
-    return (
-        <div className="p-6 bg-white border border-slate-100 rounded-[28px] flex items-center gap-6 hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-900/5 transition-all group cursor-pointer">
-            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center group-hover:bg-white group-hover:shadow-lg transition-all">
-                {icon}
-            </div>
-            <div>
-                <h4 className="text-[17px] font-black text-slate-900 tracking-tight leading-none group-hover:text-indigo-600 transition-colors uppercase italic">{title}</h4>
-                <p className="text-[11px] font-bold text-slate-400 mt-2 uppercase tracking-wide">{sub}</p>
-            </div>
-        </div>
-    )
-}
-
-function ResourceItem({ icon, label, count }: { icon: any, label: string, count: string }) {
-    return (
-        <div className="flex items-center justify-between p-6 px-10 border-b border-slate-50 last:border-none hover:bg-slate-50 transition-colors cursor-pointer group">
-            <div className="flex items-center gap-6">
-                <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
-                    {React.cloneElement(icon as any, { size: 18 })}
+                    <div className="h-10 w-px bg-white/10" />
+                    <Button className="h-14 px-8 rounded-2xl bg-white border border-slate-200 text-slate-600 font-black uppercase tracking-widest text-[10px] hover:bg-slate-50 transition-all gap-3 shadow-sm">
+                         <RefreshCw size={16} /> Sync Matrix
+                    </Button>
                 </div>
-                <span className="text-[14px] font-black text-slate-700 uppercase tracking-tight italic">{label}</span>
             </div>
-            <span className="text-[12px] font-black text-blue-500 uppercase tracking-widest italic">{count}</span>
-        </div>
-    )
-}
 
-function LogEntry({ label, status, statusColor }: { label: string, status: string, statusColor: string }) {
-    return (
-        <div className="flex items-center justify-between group cursor-pointer">
-            <span className="text-[14px] font-bold text-slate-500 tracking-tight group-hover:text-slate-900 transition-colors uppercase italic">{label}</span>
-            <span className={`text-[10px] font-black ${statusColor} uppercase tracking-widest italic`}>{status}</span>
-        </div>
-    )
-}
+            {/* Major Incident Flashboard */}
+            <section className="relative rounded-[48px] bg-gradient-to-br from-red-600/5 to-slate-50 border border-red-500/10 p-10 lg:p-16 overflow-hidden shadow-xl shadow-red-900/5 group">
+                <div className="absolute top-0 right-0 p-12 text-red-600/5 grayscale group-hover:grayscale-0 transition-all duration-1000 transform group-hover:scale-110">
+                    <ShieldAlert size={280} />
+                </div>
+                
+                <div className="relative z-10 space-y-8">
+                    <div className="flex flex-col md:flex-row md:items-center gap-8">
+                        <div className="w-20 h-20 bg-red-600 rounded-[30px] flex items-center justify-center text-white shadow-2xl shadow-red-600/20">
+                             <CloudLightning size={44} />
+                        </div>
+                        <div className="space-y-2">
+                            <h2 className="text-5xl font-black text-slate-900 tracking-tighter uppercase">Hurricane Erin - Category 3</h2>
+                            <p className="text-xl font-medium text-slate-500 max-w-4xl tracking-tight leading-snug">
+                                Major cyclonic threat approaching Sector 7. Immediate evacuation prioritized for zones Alpha, Bravo, and Zulu. Storm surge peak estimated at 14ft.
+                            </p>
+                        </div>
+                    </div>
 
-function RecoveryButton({ icon, title, color }: { icon: any, title: string, color: string }) {
-    return (
-        <button className={cn(
-            "flex items-center justify-center gap-3 py-4 px-4 rounded-[18px] text-white text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-xl active:scale-95 italic",
-            color
-        )}>
-            {icon}
-            {title}
-        </button>
-    )
-}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-4">
+                        {[
+                            { icon: Navigation2, label: 'Evacuate', sub: 'Zones A, B, Z', color: 'text-red-500', bg: 'bg-red-500/10' },
+                            { icon: Home, label: 'Shelter', sub: 'Sector 3-A', color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                            { icon: ShieldAlert, label: 'No Travel', sub: 'Interstate-95', color: 'text-amber-500', bg: 'bg-amber-500/10' },
+                            { icon: Zap, label: 'Grid Alert', sub: 'Active Load', color: 'text-purple-500', bg: 'bg-purple-500/10' }
+                        ].map((item, i) => (
+                            <div key={i} className="bg-white border border-slate-100 rounded-3xl p-6 flex items-center gap-5 hover:bg-slate-50 transition-all cursor-pointer shadow-sm">
+                                <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0", item.bg, item.color)}>
+                                     <item.icon size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{item.label}</p>
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-0.5">{item.sub}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
 
-function cn(...classes: string[]) {
-    return classes.filter(Boolean).join(' ')
+            {/* Tactical Resource Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                {/* Life-Safety Actions */}
+                <div className="lg:col-span-8 space-y-10">
+                    <div className="px-4">
+                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Tactical Action Commands</h3>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">High-priority civilian safety measures</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {[
+                            { icon: Phone, title: '911 Dispatch', color: 'text-red-500', sub: 'Emergency Signal' },
+                            { icon: Building2, title: 'Medical Hubs', color: 'text-blue-500', sub: 'Trauma & Triage' },
+                            { icon: Navigation, title: 'Evac Routes', color: 'text-emerald-500', sub: 'Path to Safety' },
+                            { icon: Map, title: 'Shelter Grid', color: 'text-purple-500', sub: 'Verified Sites' },
+                            { icon: FileBarChart, title: 'Field Intel', color: 'text-amber-500', sub: 'Submit Report' }
+                        ].map((btn, i) => (
+                            <Card key={i} className="bg-white border border-slate-100 rounded-[32px] p-8 flex items-center gap-8 hover:bg-slate-50 transition-all cursor-pointer group hover:border-blue-500/20 shadow-sm group">
+                                <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-3xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <btn.icon className={cn("w-10 h-10 transition-colors", btn.color)} />
+                                </div>
+                                <div className="space-y-1">
+                                    <h4 className="text-xl font-black text-slate-900 uppercase tracking-tighter">{btn.title}</h4>
+                                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{btn.sub}</p>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+
+                    {/* Activated Resources */}
+                    <div className="space-y-8 pt-8">
+                        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight px-4">Activated Resource Stream</h3>
+                        <Card className="bg-white border border-slate-100 rounded-[48px] overflow-hidden shadow-xl shadow-slate-200/50 p-2">
+                             {[
+                                { icon: UserCheck, label: 'Field Medical Units', count: 'Active', val: '03 Units', color: 'text-blue-500' },
+                                { icon: Briefcase, label: 'NGO Support Clusters', count: 'Deployed', val: '04 Blocks', color: 'text-amber-500' },
+                                { icon: Stethoscope, label: 'FEMA Intelligence Hubs', count: 'Active', val: '02 Sites', color: 'text-emerald-500' },
+                                { icon: Heart, label: 'Red Cross Aid Stations', count: 'Ready', val: '05 Points', color: 'text-red-500' },
+                                { icon: Users, label: 'Family Reunification', count: 'Active', val: '01 Center', color: 'text-purple-500' }
+                             ].map((res, i) => (
+                                <div key={i} className="flex items-center justify-between p-8 px-12 border-b border-slate-100 last:border-none hover:bg-slate-50 transition-colors group cursor-pointer">
+                                    <div className="flex items-center gap-8">
+                                        <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                             <res.icon className={res.color} size={28} />
+                                        </div>
+                                        <div>
+                                            <span className="text-sm font-black text-slate-900 uppercase tracking-tight group-hover:text-blue-600 transition-colors">{res.label}</span>
+                                            <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mt-1">{res.count}</p>
+                                        </div>
+                                    </div>
+                                    <span className={cn("text-xs font-black uppercase tracking-widest italic opacity-40 group-hover:opacity-100 transition-opacity", res.color)}>{res.val}</span>
+                                </div>
+                             ))}
+                        </Card>
+                    </div>
+                </div>
+
+                {/* Sidebar Widget: Weather Intelligence */}
+                <div className="lg:col-span-4">
+                    <Card className="bg-white border border-slate-100 rounded-[64px] p-10 space-y-12 shadow-xl shadow-slate-200/50 relative overflow-hidden h-full flex flex-col group">
+                        <div className="absolute inset-0 z-0 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
+                            <Sparkles size={300} className="absolute -right-20 -top-20 text-blue-400" />
+                        </div>
+
+                        <div className="relative z-10 flex items-center justify-between">
+                             <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">Live Radar Feed</h3>
+                             <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-100 rounded-full">
+                                 <Clock size={10} className="text-slate-400" />
+                                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Real-Time</span>
+                             </div>
+                        </div>
+
+                        <div className="relative z-10 space-y-4">
+                            <h4 className="text-[92px] font-black text-slate-900 leading-none tracking-tighter">72°F</h4>
+                            <div className="flex items-center gap-4">
+                                <CloudLightning className="text-blue-600" size={32} />
+                                <p className="text-xl font-black text-slate-400 uppercase tracking-widest">Severe Inbound</p>
+                            </div>
+                        </div>
+
+                        <div className="relative z-10 flex-1 space-y-8">
+                            <div className="flex items-center justify-between">
+                                <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Signal Disruption</h5>
+                                <Badge className="bg-red-500 text-white font-black text-[9px] uppercase tracking-widest px-4 py-1.5 rounded-full border-none shadow-2xl shadow-red-500/30">LOCKED</Badge>
+                            </div>
+
+                            <Card className="bg-slate-50 border border-slate-100 rounded-[40px] p-8 space-y-6">
+                                {[
+                                    { label: 'Network Stability', val: 'Nominal', color: 'bg-emerald-500' },
+                                    { label: 'Propagation Tech', val: 'Low', color: 'bg-amber-500' },
+                                    { label: 'Latency Node', val: 'Optimal', color: 'bg-emerald-500' }
+                                ].map((alert, i) => (
+                                    <div key={i} className="flex items-center gap-6">
+                                        <div className={cn("w-2 h-2 rounded-full shadow-lg", alert.color)} />
+                                        <div>
+                                            <p className="text-[11px] font-black text-slate-900 uppercase tracking-tight">{alert.label}</p>
+                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-0.5">{alert.val}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </Card>
+                        </div>
+
+                        <div className="relative z-10 grid grid-cols-2 gap-6">
+                            {[
+                                { icon: Eye, label: 'Visibility', val: '0.5 MI', color: 'text-blue-500' },
+                                { icon: Wind, label: 'Wind Arc', val: '115 MPH', color: 'text-slate-400' }
+                            ].map((w, i) => (
+                                <Card key={i} className="bg-slate-50 border border-slate-100 p-6 rounded-[32px] text-center space-y-3 shadow-sm hover:scale-105 transition-transform cursor-pointer">
+                                     <w.icon className={w.color} size={24} />
+                                     <div>
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{w.label}</p>
+                                        <p className="text-lg font-black text-slate-900 italic tracking-tighter">{w.val}</p>
+                                     </div>
+                                </Card>
+                            ))}
+                        </div>
+                    </Card>
+                </div>
+            </div>
+
+            {/* Essential Resource Matrix (Bottom Section) */}
+            <Card className="bg-white border border-slate-100 rounded-[64px] p-12 lg:p-20 shadow-xl shadow-slate-200/50 relative overflow-hidden group">
+                 <div className="absolute top-0 right-0 p-12 text-blue-500/5 rotate-12 group-hover:rotate-0 transition-transform duration-1000">
+                      <Target size={200} />
+                 </div>
+                 
+                 <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-16 px-4">Essential Grid Status</h3>
+
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-20 px-4">
+                    {[
+                        { icon: Hotel, label: 'Lodging Matrix', items: [{ l: 'Hampton Inn HQ', s: 'Nominal' }, { l: 'Holiday Express', s: 'Limited' }] },
+                        { icon: Coffee, label: 'Provision Grid', items: [{ l: 'Central Pantry', s: 'Active' }, { l: 'MegaMart Alpha', s: 'Nominal' }] },
+                        { icon: Fuel, label: 'Energy Points', items: [{ l: 'Shell Terminal', s: 'Fuel+' }, { l: 'BP Node 101', s: 'Offline' }] }
+                    ].map((sec, i) => (
+                        <div key={i} className="space-y-10">
+                            <div className="flex items-center gap-6 border-b border-slate-100 pb-6">
+                                <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400">
+                                    <sec.icon size={24} />
+                                </div>
+                                <h4 className="text-[12px] font-black uppercase tracking-[0.3em] text-slate-900">{sec.label}</h4>
+                            </div>
+                            <div className="space-y-8">
+                                {sec.items.map((it, j) => (
+                                    <div key={j} className="flex justify-between items-center group cursor-pointer">
+                                        <span className="text-[13px] font-black text-slate-500 uppercase tracking-tight group-hover:text-blue-400 transition-colors lowercase first-letter:uppercase">{it.l}</span>
+                                        <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity italic">{it.s}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                 </div>
+            </Card>
+
+            {/* Recovery Module (Disabled) */}
+            <section className="bg-white border border-slate-200 rounded-[48px] p-12 space-y-8 opacity-60 group hover:opacity-100 transition-opacity">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Recovery Module</h3>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1 italic">Activation pending safe-to-return status</p>
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap gap-4">
+                    {[
+                        { icon: Zap, label: 'Donation Sync', color: 'bg-blue-600' },
+                        { icon: RefreshCw, label: 'Medical Status', color: 'bg-emerald-600' },
+                        { icon: Users, label: 'Re-entry Pass', color: 'bg-slate-700' },
+                        { icon: AlertCircle, label: 'FEMA Pipeline', color: 'bg-red-600' }
+                    ].map((rec, i) => (
+                        <Button key={i} className={cn("h-14 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest gap-3 shadow-2xl", rec.color)}>
+                             <rec.icon size={16} /> {rec.label}
+                        </Button>
+                    ))}
+                </div>
+            </section>
+        </main>
+    )
 }

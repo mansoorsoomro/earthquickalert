@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 
         let query: any = { ...baseQuery };
 
-        // 1. If explicit role filter is provided (e.g., from Super Admin pages)
+        // 1. If explicit role filter is provided
         if (roleFilter && roleFilter !== 'all') {
             // Security: Sub-admins can't filter for roles they are not allowed to manage
             if (session.user.role === 'sub-admin' && (roleFilter !== 'user' && !roleFilter.split(',').every(r => r === 'user'))) {
@@ -38,13 +38,14 @@ export async function GET(req: NextRequest) {
             }
 
             if (roleFilter.includes(',')) {
-                query.role = { $in: roleFilter.split(',') };
+                query.role = { $in: roleFilter.split(',').map(r => r.trim()) };
             } else {
                 query.role = roleFilter;
             }
         }
-        // 2. If filtering for license requests
-        else if (requestedLicenseFilter === 'true') {
+        
+        // 2. requestedLicense filter (can be combined with other filters)
+        if (requestedLicenseFilter === 'true') {
             query.requestedLicense = true;
         }
 
@@ -139,16 +140,9 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { name, email, password, role } = await req.json();
-
-        if (!name || !email || !password || !role) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-        }
-
-        const userExists = await User.findOne({ email });
-        if (userExists) {
-            return NextResponse.json({ error: 'User already exists' }, { status: 400 });
-        }
+        const body = await req.json();
+        const isBulk = Array.isArray(body);
+        const usersToCreate = isBulk ? body : [body];
 
         // Fetch current user and check license count
         const creator = await User.findById(session.user.id);
@@ -159,37 +153,67 @@ export async function POST(req: NextRequest) {
         // Only enforce limit for sub-admins
         if (session.user.role === 'sub-admin' && creator.licenseId) {
             const userCount = await User.countDocuments({ licenseId: creator.licenseId });
-            // Total limit (including sub-admin) should be 21 (sub-admin + 20 EOC users)
-            if (userCount >= 21) {
-                return NextResponse.json({ error: 'Organization user limit (20) has been reached.' }, { status: 403 });
+            // Total limit (including sub-admin) should be 501 (sub-admin + 500 EOC users)
+            if (userCount + usersToCreate.length > 501) {
+                return NextResponse.json({ error: 'Creation would exceed organization user limit (500).' }, { status: 403 });
             }
         }
 
         const bcrypt = require('bcryptjs');
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        const results = [];
 
-        const newUser = await User.create({
-            name,
-            email,
-            password: hashedPassword,
-            role,
-            licenseId: creator.licenseId || null,
-            city: creator.city || '',
-            country: creator.country || '',
-            accountStatus: 'approved',
-            createdBy: session.user.id
-        });
+        for (const userData of usersToCreate) {
+            const { name, email, password, role, responderFunction } = userData;
+
+            if (!name || !email || !password || !role) {
+                if (!isBulk) return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+                results.push({ email, error: 'Missing required fields', success: false });
+                continue;
+            }
+
+            const userExists = await User.findOne({ email });
+            if (userExists) {
+                if (!isBulk) return NextResponse.json({ error: 'User already exists' }, { status: 400 });
+                results.push({ email, error: 'User already exists', success: false });
+                continue;
+            }
+
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
+
+            const newUser = await User.create({
+                name,
+                email,
+                password: hashedPassword,
+                role,
+                responderFunction: responderFunction || '',
+                licenseId: creator.licenseId || null,
+                city: creator.city || '',
+                country: creator.country || '',
+                accountStatus: 'approved',
+                createdBy: session.user.id
+            });
+
+            results.push({
+                email: newUser.email,
+                id: newUser._id,
+                success: true
+            });
+        }
+
+        if (isBulk) {
+            const successCount = results.filter(r => r.success).length;
+            return NextResponse.json({
+                success: true,
+                message: `Processed ${usersToCreate.length} users. ${successCount} successfully created.`,
+                results
+            });
+        }
 
         return NextResponse.json({
             success: true,
             message: 'User created successfully',
-            user: {
-                id: newUser._id,
-                name: newUser.name,
-                email: newUser.email,
-                role: newUser.role
-            }
+            user: results[0]
         });
     } catch (error: any) {
         console.error('Create user error:', error);

@@ -90,10 +90,19 @@ export async function GET() {
             highSeverityAlerts,
         });
 
-        const aiInsightsWithTime = aiInsights.map((insight, index) => ({
-            ...insight,
-            time: new Date(Date.now() - index * 5 * 60 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        }));
+        const aiInsightsWithCategories = aiInsights.map((insight, index) => {
+            // Map existing categories or randomly assign for structured UI if not returned by AI
+            let category = insight.category;
+            if (index === 0) category = 'Summary';
+            else if (insight.status === 'Addressed' || index === 1) category = 'What Went Well';
+            else category = 'Areas for Improvement';
+
+            return {
+                ...insight,
+                category,
+                time: new Date(Date.now() - index * 5 * 60 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            };
+        });
 
         // Format duration roughly based on dates
         const startTime = new Date(recentIncident.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -105,9 +114,9 @@ export async function GET() {
             name: `${recentIncident.type} - ${incidentLocation}`,
             type: recentIncident.type,
             duration: `${startTime} - ${endTime}`,
-            insights: aiInsightsWithTime.length,
+            insights: aiInsightsWithCategories.length,
             events: formattedEvents,
-            aiInsights: aiInsightsWithTime,
+            aiInsights: aiInsightsWithCategories,
         };
 
         return NextResponse.json({

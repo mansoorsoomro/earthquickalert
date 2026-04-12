@@ -4,9 +4,32 @@ import React, { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Edit, Loader2, Upload, File, FileText, Trash2, Plus } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
+import { 
+    Edit, 
+    Loader2, 
+    Upload, 
+    File, 
+    FileText, 
+    Trash2, 
+    Plus, 
+    Folder, 
+    Search, 
+    Shield, 
+    Zap, 
+    Info, 
+    CheckCircle,
+    Download,
+    Share2,
+    Filter,
+    ChevronRight,
+    Target,
+    Activity,
+    Navigation2,
+    Sparkles
+} from 'lucide-react'
 
-// Dynamic Type for the Plan definition
 type EmergencyAttachment = {
   fileName: string;
   fileUrl: string;
@@ -24,18 +47,11 @@ type EmergencyPlanDef = {
 
 export default function EmergencyPlanPage() {
   const [plans, setPlans] = useState<Record<string, EmergencyPlanDef>>({})
-  const [selectedPlan, setSelectedPlan] = useState('hurricane_warning')
-  const [aiAssistance, setAiAssistance] = useState(true)
-  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({})
+  const [selectedPlan, setSelectedPlan] = useState('facility_continuity')
   const [isLoading, setIsLoading] = useState(true)
 
   const [uploading, setUploading] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-
-  // Step editing states
-  const [isAddingStep, setIsAddingStep] = useState(false)
-  const [newStepText, setNewStepText] = useState('')
-  const [isSavingStep, setIsSavingStep] = useState(false)
 
   const fetchPlans = async () => {
     try {
@@ -44,13 +60,10 @@ export default function EmergencyPlanPage() {
         const data = await res.json()
         if (data.success && data.data) {
           setPlans(data.data)
-          if (!data.data[selectedPlan] && Object.keys(data.data).length > 0) {
-            setSelectedPlan(Object.keys(data.data)[0])
-          }
         }
       }
     } catch (err) {
-      console.error("Failed to fetch emergency plans:", err)
+      console.error("Failed to fetch COOP plans:", err)
     } finally {
       setIsLoading(false)
     }
@@ -60,308 +73,177 @@ export default function EmergencyPlanPage() {
     fetchPlans()
   }, [])
 
-  const handleUpload = async () => {
-    if (!selectedFile) return;
-
-    setUploading(true);
-    const formData = new FormData();
-    formData.append('planId', selectedPlan);
-    formData.append('file', selectedFile);
-
-    try {
-      const res = await fetch('/api/admin/emergency-plans', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.success) {
-        await fetchPlans()
-        setSelectedFile(null)
-      } else {
-        alert(data.error || "Failed to upload file")
-      }
-    } catch (err) {
-      console.error("Upload error", err)
-      alert("Failed to upload file")
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  const toggleCheck = (index: number) => {
-    setCheckedItems((prev) => ({
-      ...prev,
-      [index]: !prev[index],
-    }))
-  }
-
-  const currentPlan = plans[selectedPlan] || {
-    label: selectedPlan.replace(/_/g, ' ').toUpperCase(),
-    overview: 'Fetching operational procedures...',
-    steps: [],
-    attachments: []
-  }
-
-  const syncSteps = async (newSteps: string[]) => {
-    setIsSavingStep(true);
-    try {
-      const res = await fetch('/api/admin/emergency-plans/steps', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          planId: selectedPlan,
-          steps: newSteps
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        await fetchPlans();
-      } else {
-        alert(data.error || "Failed to sync steps");
-      }
-    } catch (err) {
-      console.error("Sync error", err);
-    } finally {
-      setIsSavingStep(false);
-    }
-  }
-
-  const handleAddStep = async () => {
-    if (!newStepText.trim()) return;
-    const updatedSteps = [...(currentPlan.steps || []), newStepText.trim()];
-    setNewStepText('');
-    setIsAddingStep(false);
-    await syncSteps(updatedSteps);
-  }
-
-  const handleDeleteStep = async (index: number) => {
-    if (!confirm("Are you sure you want to delete this step?")) return;
-    const updatedSteps = currentPlan.steps.filter((_, i) => i !== index);
-    await syncSteps(updatedSteps);
-  }
-
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[80vh]">
-        <div className="flex flex-col items-center gap-4 text-slate-500">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
-          <p className="font-black text-xs uppercase tracking-[0.2em]">Synchronizing Protocol Database...</p>
+      <div className="flex items-center justify-center h-[calc(100vh-64px)] bg-[#0A0B10]">
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative">
+              <Loader2 className="w-16 h-16 animate-spin text-blue-500" />
+              <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-blue-400">PLAN</div>
+          </div>
+          <p className="font-black text-xs uppercase tracking-[0.4em] text-slate-500 animate-pulse">Synchronizing Planning Database...</p>
         </div>
       </div>
     )
   }
 
+  const documentCategories = [
+    { name: 'Response Plans', count: 4, icon: Zap, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { name: 'COOP Protocols', count: 2, icon: Shield, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { name: 'Business Continuity', count: 3, icon: Folder, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+    { name: 'Compliance Vault', count: 1, icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  ]
+
   return (
-    <main className="p-6 space-y-6 max-w-[1200px] mx-auto min-h-screen">
-      {/* Header Container */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm relative overflow-hidden p-6 md:px-8 md:py-7">
-        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-slate-900" />
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Emergency Plan</h1>
-        <p className="text-slate-600 text-[15px]">Timely guidance and just-in-time actions for your community during emergencies.</p>
+    <main className="min-h-screen bg-[#0A0B10] p-8 lg:p-12 space-y-12 overflow-hidden relative">
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-600/5 rounded-full blur-[120px] pointer-events-none" />
+
+      {/* Header Section */}
+      <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-8 pb-8 border-b border-white/5">
+        <div className="space-y-4">
+            <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-blue-600/20">
+                    <Folder size={24} />
+                </div>
+                <div>
+                    <h1 className="text-4xl font-black text-white uppercase tracking-tighter">COOP / BC Plans</h1>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Continuity of Operations & Strategic Recovery</p>
+                </div>
+            </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+            <Button 
+                onClick={() => toast.info('Selecting strategic source for bulk protocol ingest...')}
+                className="h-14 px-8 rounded-2xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all gap-3"
+            >
+                 <Upload size={16} /> Bulk Import
+            </Button>
+            <Button 
+                onClick={() => toast.success('Initializing New Continuity Framework...')}
+                className="h-14 px-8 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[10px] shadow-2xl shadow-blue-600/20 gap-3"
+            >
+                 <Plus size={16} /> New Continuity Plan
+            </Button>
+        </div>
       </div>
 
-      {/* Overview Container */}
-      <Card className="p-6 md:p-8 border border-slate-200 shadow-sm rounded-xl">
-        <h2 className="text-xl font-bold text-slate-900 mb-6">Emergency Overview</h2>
-        <div className="bg-red-50 border border-red-300 rounded-lg p-4 flex items-center justify-between text-slate-700">
-          <p className="font-medium text-[15px] max-w-[90%]">{currentPlan.overview}</p>
-          <button className="text-slate-500 hover:text-slate-800 transition-colors p-1" aria-label="Edit overview">
-            <Edit className="w-5 h-5" />
-          </button>
-        </div>
+      {/* Categories Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
+         {documentCategories.map((cat, i) => (
+            <Card key={i} className="p-8 bg-white/[0.02] border border-white/5 rounded-[40px] shadow-2xl hover:bg-white/[0.04] transition-all cursor-pointer group relative overflow-hidden">
+                <div className={cn("inline-flex w-14 h-14 rounded-2xl items-center justify-center mb-6", cat.bg, cat.color)}>
+                    <cat.icon size={28} />
+                </div>
+                <div className="flex justify-between items-end">
+                    <div>
+                        <h4 className="text-sm font-black text-white uppercase tracking-tight leading-tight">{cat.name}</h4>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Strategic Files</p>
+                    </div>
+                    <span className="text-2xl font-black text-white group-hover:text-blue-400 transition-colors">{cat.count}</span>
+                </div>
+            </Card>
+         ))}
+      </div>
+
+      {/* Main Content: File Explorer */}
+      <Card className="bg-slate-900/40 backdrop-blur-3xl border-white/5 rounded-[48px] shadow-2xl overflow-hidden relative">
+         <div className="p-10 border-b border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="relative w-full max-w-xl">
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+                <Input 
+                   placeholder="SEARCH CONTINUITY PROTOCOLS..." 
+                   className="h-16 pl-16 rounded-[24px] bg-white/[0.03] border-white/5 text-white font-black text-xs placeholder:text-slate-600 focus:ring-blue-500/20 focus:border-blue-500/40 uppercase tracking-widest"
+                />
+            </div>
+            <div className="flex items-center gap-4">
+                <div className="h-16 px-6 bg-white/[0.03] border border-white/5 rounded-[24px] flex items-center gap-6">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20" />
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Database Linked</span>
+                    </div>
+                </div>
+            </div>
+         </div>
+
+         <div className="overflow-x-auto overflow-y-auto max-h-[600px] custom-scrollbar">
+            <table className="w-full">
+                <thead>
+                    <tr className="bg-white/[0.02]">
+                        <th className="px-10 py-8 text-left text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Resource Identifier</th>
+                        <th className="px-10 py-8 text-left text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">File Matrix</th>
+                        <th className="px-10 py-8 text-left text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Audit Cycle</th>
+                        <th className="px-10 py-8 text-center text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">AI Integrity</th>
+                        <th className="px-10 py-8 text-right text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Protocols</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                    {[
+                        { name: 'NY_Operational_COOP_v4.pdf', type: 'PDF', audit: '2 hours ago', status: 'In Sync', color: 'text-emerald-500', bar: 'bg-emerald-500', width: 'w-full' },
+                        { name: 'IT_Critical_Systems_Recovery.docx', type: 'DOCX', audit: '12 hours ago', status: 'Reviewing', color: 'text-blue-500', bar: 'bg-blue-500', width: 'w-2/3' },
+                        { name: 'Supply_Chain_Resilience_2024.pdf', type: 'PDF', audit: '1 day ago', status: 'In Sync', color: 'text-emerald-500', bar: 'bg-emerald-500', width: 'w-full' },
+                        { name: 'Facility_Accessibility_Plan.pdf', type: 'PDF', audit: '3 days ago', status: 'Deviation Found', color: 'text-red-500', bar: 'bg-red-500', width: 'w-1/3' },
+                    ].map((doc, i) => (
+                        <tr key={i} className="group hover:bg-white/[0.03] transition-all">
+                            <td className="px-10 py-8">
+                                <div className="flex items-center gap-6">
+                                    <div className="w-14 h-14 bg-white/[0.03] border border-white/5 rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-blue-400 group-hover:bg-blue-600/10 transition-all">
+                                        <FileText size={24} />
+                                    </div>
+                                    <div>
+                                        <span className="text-sm font-black text-white group-hover:text-blue-400 transition-colors uppercase tracking-tight">{doc.name}</span>
+                                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mt-1">Encrypted Storage</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td className="px-10 py-8">
+                                <span className="h-8 px-4 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-center w-fit text-[9px] font-black text-slate-500 uppercase tracking-widest">{doc.type}</span>
+                            </td>
+                            <td className="px-10 py-8 text-sm font-black text-slate-400 uppercase tracking-widest">{doc.audit}</td>
+                            <td className="px-10 py-8 text-center min-w-[200px]">
+                                <div className="flex flex-col items-center">
+                                    <span className={cn("text-[9px] font-black uppercase tracking-[0.2em] mb-3", doc.color)}>{doc.status}</span>
+                                    <div className="w-32 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                        <div className={cn("h-full transition-all duration-1000", doc.bar, doc.width)} />
+                                    </div>
+                                </div>
+                            </td>
+                            <td className="px-10 py-8 text-right">
+                                <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                                    <Button size="icon" className="h-10 w-10 bg-blue-600/10 text-blue-400 hover:bg-blue-600 hover:text-white rounded-xl transition-all"><Zap size={16} /></Button>
+                                    <Button size="icon" className="h-10 w-10 bg-white/5 text-slate-400 hover:bg-white/10 rounded-xl transition-all"><Edit size={16} /></Button>
+                                    <Button size="icon" className="h-10 w-10 bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white rounded-xl transition-all"><Trash2 size={16} /></Button>
+                                </div>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+         </div>
       </Card>
 
-      {/* Actionable Safety Steps Container */}
-      <Card className="p-6 md:p-8 border border-slate-200 shadow-sm rounded-xl relative">
-        {isSavingStep && (
-          <div className="absolute top-4 right-4 flex items-center gap-2 text-blue-600 bg-blue-50 px-3 py-1 rounded-md text-xs font-bold uppercase">
-            <Loader2 className="w-3 h-3 animate-spin" /> Syncing
-          </div>
-        )}
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-          <h2 className="text-xl font-bold text-slate-900">Actionable Safety Steps</h2>
-
-          <div className="flex items-center gap-4 flex-wrap">
-            <select
-              value={selectedPlan}
-              onChange={(e) => {
-                setSelectedPlan(e.target.value)
-                setCheckedItems({})
-                setSelectedFile(null)
-                setIsAddingStep(false)
-              }}
-              className="border border-slate-200 rounded-md py-1.5 px-3 text-sm font-semibold text-slate-700 bg-white outline-none focus:border-slate-400"
-            >
-              {Object.entries(plans).map(([id, plan]) => (
-                <option key={id} value={id}>{plan.label}</option>
-              ))}
-              {/* Fallback keys if DB doesn't have them yet */}
-              {!plans['business_continuity'] && <option value="business_continuity">Business Continuity</option>}
-              {!plans['hurricane_warning'] && <option value="hurricane_warning">Hurricane Warning</option>}
-              {!plans['tornado_warning'] && <option value="tornado_warning">Tornado Warning</option>}
-              {!plans['earthquake_response'] && <option value="earthquake_response">Earthquake Response</option>}
-            </select>
-
-            <select className="border border-slate-200 rounded-md py-1.5 px-3 text-sm text-slate-700 bg-white outline-none focus:border-slate-400">
-              <option>Audience Selection</option>
-            </select>
-
-            <div className="flex items-center gap-3 ml-2">
-              <span className="text-[13px] font-bold text-slate-900">AI Assistance</span>
-              <button
-                onClick={() => setAiAssistance(!aiAssistance)}
-                className={`w-11 h-6 rounded-full relative transition-colors ${aiAssistance ? 'bg-slate-700' : 'bg-slate-300'}`}
-                aria-label="Toggle AI Assistance"
-              >
-                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${aiAssistance ? 'left-6' : 'left-1'}`} />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-3 mb-8">
-          {currentPlan.steps && currentPlan.steps.length > 0 ? currentPlan.steps.map((step, idx) => (
-            <div key={idx} className="flex items-center justify-between gap-3 p-3.5 bg-slate-50 hover:bg-slate-100/50 transition-colors group cursor-pointer border border-transparent rounded-lg">
-              <label className="flex items-start gap-3 flex-1 cursor-pointer">
-                <div className="relative flex items-start mt-0.5">
-                  <input
-                    type="checkbox"
-                    checked={checkedItems[idx] || false}
-                    onChange={() => toggleCheck(idx)}
-                    className="peer appearance-none w-4 h-4 min-w-[1rem] border-2 border-slate-400 rounded-sm bg-white checked:bg-slate-700 checked:border-slate-700 transition-colors cursor-pointer"
-                  />
-                  <svg
-                    className="absolute inset-0 w-4 h-4 text-white pointer-events-none opacity-0 peer-checked:opacity-100"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                </div>
-                <p className={`text-[14px] leading-snug transition-colors pr-6 ${checkedItems[idx] ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
-                  {step}
-                </p>
-              </label>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => handleDeleteStep(idx)}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          )) : (
-            <div className="p-4 text-center border-2 border-dashed border-slate-200 rounded-lg">
-              <p className="text-slate-500 font-medium text-sm">No safety steps currently defined. Add steps to categorize them.</p>
-            </div>
-          )}
-
-          {isAddingStep && (
-            <div className="flex items-center gap-2 mt-4 bg-blue-50/50 p-3 rounded-lg border border-blue-100 animate-in fade-in zoom-in duration-200">
-              <Input
-                autoFocus
-                disabled={isSavingStep}
-                placeholder="Type a new actionable safety step..."
-                value={newStepText}
-                onChange={(e) => setNewStepText(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddStep()}
-                className="flex-1 bg-white"
-              />
-              <Button onClick={handleAddStep} disabled={isSavingStep} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">
-                Save
-              </Button>
-              <Button variant="ghost" onClick={() => setIsAddingStep(false)} className="text-slate-500">
-                Cancel
-              </Button>
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-end gap-3 pt-4 mb-8">
-          {!isAddingStep && (
-            <Button
-              variant="secondary"
-              onClick={() => setIsAddingStep(true)}
-              disabled={isSavingStep}
-              className="px-8 bg-slate-200 text-slate-700 hover:bg-slate-300 font-semibold border-0"
-            >
-              <Plus className="w-4 h-4 mr-2" /> Add Step
-            </Button>
-          )}
-          <Button className="px-8 bg-[#2d325a] hover:bg-[#1a1d36] text-white font-semibold">
-            Send Plan
-          </Button>
-        </div>
-      </Card>
-
-      {/* Attachments & References Container */}
-      <Card className="p-6 md:p-8 border border-slate-200 shadow-sm rounded-xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-          <h2 className="text-xl font-bold text-slate-900">Attachments & Reference Files</h2>
-        </div>
-
-        {/* Upload Interface */}
-        <div className="mb-8 p-6 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 flex flex-col items-center justify-center text-center gap-3">
-          <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-2">
-            <Upload className="w-6 h-6" />
-          </div>
-          <h3 className="font-bold text-slate-800">Upload Reference Documents</h3>
-          <p className="text-sm text-slate-500 max-w-md mx-auto mb-4">
-            Securely upload PDFs, DOCs, or other collateral for {currentPlan.label} distribution and local preparedness.
-          </p>
-
-          <div className="flex items-center gap-3 w-full max-w-sm">
-            <input
-              type="file"
-              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-              className="text-sm border border-slate-300 px-3 py-2 rounded-md bg-white flex-1"
-            />
-            <Button
-              onClick={handleUpload}
-              disabled={!selectedFile || uploading}
-              className="bg-[#2d325a] hover:bg-[#1a1d36] text-white"
-            >
-              {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Upload"}
-            </Button>
-          </div>
-        </div>
-
-        {/* Attachments List */}
-        <div className="space-y-3">
-          {currentPlan.attachments && currentPlan.attachments.length > 0 ? (
-            currentPlan.attachments.map((attach, idx) => (
-              <a
-                href={attach.fileUrl}
-                download
-                target="_blank"
-                key={idx}
-                className="flex items-center gap-3 p-4 bg-white border border-slate-200 hover:border-slate-300 hover:shadow-sm rounded-lg transition-all group"
-              >
-                <div className="p-2 bg-slate-100 rounded-md text-slate-500 group-hover:text-blue-600 transition-colors">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-slate-800 text-sm">{attach.fileName}</h4>
-                  <p className="text-xs text-slate-500">
-                    {attach.size ? (attach.size / 1024).toFixed(1) + ' KB • ' : ''}
-                    Uploaded {new Date(attach.uploadedAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </a>
-            ))
-          ) : (
-            <div className="p-8 text-center border border-slate-100 rounded-lg bg-slate-50/50">
-              <File className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500 font-medium text-sm">No reference documents uploaded yet.</p>
-            </div>
-          )}
-        </div>
-      </Card>
+      {/* AI Intelligence Note */}
+      <div className="bg-blue-600/5 p-12 rounded-[48px] border border-blue-500/10 flex flex-col lg:flex-row gap-12 relative overflow-hidden group">
+         <div className="absolute top-0 right-0 p-12 text-blue-500/5 grayscale group-hover:grayscale-0 transition-all duration-1000">
+            <Sparkles size={160} />
+         </div>
+         <div className="w-20 h-20 bg-blue-600 rounded-[30px] flex items-center justify-center text-white shadow-2xl shadow-blue-600/20 shrink-0 relative z-10">
+            <Zap size={40} />
+         </div>
+         <div className="relative z-10 space-y-4">
+            <h4 className="text-2xl font-black text-white uppercase tracking-tighter">AI-Driven Continuity Audit</h4>
+            <p className="text-base font-medium text-slate-400 leading-relaxed max-w-5xl">
+               Our neural engine proactively maps real-time incident actions against the current COOP/BC protocols. 
+               Any structural deviation from established recovery paths is instantly serialized and pushed 
+               to the mission commander via the <span className="text-blue-400 font-black cursor-pointer hover:underline uppercase tracking-widest text-xs">Tactical AI Feed</span>.
+               <br/><br/>
+               <Button variant="link" className="p-0 h-auto text-blue-500 font-black uppercase tracking-[0.2em] text-[10px] hover:text-blue-400 transition-colors">
+                  Force Global AI Re-Alignment on Updated Plans
+               </Button>
+            </p>
+         </div>
+      </div>
     </main>
   )
 }

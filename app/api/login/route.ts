@@ -21,15 +21,27 @@ export async function POST(req: NextRequest) {
 
         const { email, password } = body;
 
+        if (!email || !password) {
+            return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+        }
+
         // Find user and include password field
         const user = await User.findOne({ email }).select('+password');
 
         if (!user) {
+            console.log('User not found:', email);
             return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
         }
 
         // Verify password
-        const isMatch = await bcrypt.compare(password, user.password);
+        let isMatch = false;
+        try {
+            isMatch = await bcrypt.compare(password, user.password);
+        } catch (bcryptError) {
+            console.error('Bcrypt comparison error:', bcryptError);
+            throw new Error('Authentication processing failed');
+        }
+
         if (!isMatch) {
             return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
         }
@@ -47,10 +59,10 @@ export async function POST(req: NextRequest) {
         // Create session
         const expires = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
         const session = await encrypt({
-            user: { 
-                id: user._id.toString(), 
-                email: user.email, 
-                name: user.name, 
+            user: {
+                id: user._id.toString(),
+                email: user.email,
+                name: user.name,
                 role: user.role,
                 accountStatus: user.accountStatus,
                 licenseId: user.licenseId?.toString() || null,
