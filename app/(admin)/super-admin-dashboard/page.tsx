@@ -1,126 +1,268 @@
 'use client'
 
-import React from 'react'
-import { DashboardStats } from '@/components/dashboard-stats'
+import React, { useEffect, useState } from 'react'
 import { GISMap } from '@/components/gis-map'
 import { LicenseRequestList } from '@/components/license-request-list'
-import { ActiveLicenseList } from '@/components/active-license-list'
-import { Shield, Activity, Radio, Command, Terminal, Cpu, Target, Key, ShieldCheck } from 'lucide-react'
+import {
+  Shield,
+  Wifi,
+  Users,
+  Settings,
+  AlertTriangle,
+  Radio,
+  Target,
+  Terminal,
+  Activity,
+  ArrowUpRight,
+  Search,
+  Bell,
+  MapPin,
+  ChevronDown,
+  User as UserIcon
+} from 'lucide-react'
+import Link from 'next/link'
+import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { GenericEmergencyMetric } from '@/lib/types/emergency'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 
 export default function SuperAdminDashboard() {
+  const [activeEmergencies, setActiveEmergencies] = useState<GenericEmergencyMetric[]>([])
+  const [alertsSent, setAlertsSent] = useState<GenericEmergencyMetric[]>([])
+  const [impactedUsers, setImpactedUsers] = useState<GenericEmergencyMetric[]>([])
+  const [eocStatus, setEocStatus] = useState<GenericEmergencyMetric[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedLocation, setSelectedLocation] = useState('All')
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      
+      const fetchMetric = async (url: string, setter: (data: any) => void) => {
+        try {
+          const res = await fetch(url)
+          if (res.ok) {
+            const data = await res.json()
+            if (Array.isArray(data)) setter(data)
+          }
+        } catch (e) {
+          console.error(`Failed to fetch from ${url}:`, e)
+        }
+      }
+
+      await Promise.all([
+        fetchMetric('/api/active-emergencies', setActiveEmergencies),
+        fetchMetric('/api/alerts-sent-emergencies', setAlertsSent),
+        fetchMetric('/api/ready2go-users-impacted', setImpactedUsers),
+        fetchMetric('/api/virtual-eoc-status', setEocStatus)
+      ])
+      
+      setLoading(false)
+    }
+
+    fetchData()
+  }, [])
+
+  const allLocations = Array.from(new Set([
+    ...activeEmergencies.map(e => e.location),
+    ...alertsSent.map(e => e.location),
+    ...impactedUsers.map(e => e.location),
+    ...eocStatus.map(e => e.location)
+  ].filter(Boolean))).sort()
+
+  const filteredActive = selectedLocation === 'All' 
+    ? activeEmergencies 
+    : activeEmergencies.filter(e => e.location === selectedLocation)
+
+  const filteredAlerts = selectedLocation === 'All' 
+    ? alertsSent 
+    : alertsSent.filter(e => e.location === selectedLocation)
+
+  const filteredImpacted = selectedLocation === 'All' 
+    ? impactedUsers 
+    : impactedUsers.filter(e => e.location === selectedLocation)
+
+  const filteredEOC = selectedLocation === 'All' 
+    ? eocStatus 
+    : eocStatus.filter(e => e.location === selectedLocation)
+
   return (
-    <div className="flex-1 overflow-auto bg-slate-50 selection:bg-blue-600/10">
-      <main className="p-10 space-y-12 max-w-[1800px] mx-auto relative pb-32">
-        {/* Decorative elements */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
-        
-        {/* Super Admin Dashboard Header */}
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 pb-10 border-b border-slate-200">
-          <div className="space-y-4">
-            <div className="flex items-center gap-6">
-              <div className="w-16 h-16 bg-blue-600 rounded-[28px] flex items-center justify-center shadow-2xl shadow-blue-600/20 group hover:scale-110 transition-transform cursor-pointer">
-                <Shield size={32} className="text-white group-hover:rotate-12 transition-transform duration-500" />
-              </div>
-              <div className="space-y-1">
-                <h1 className="text-4xl font-black tracking-tighter text-slate-900 uppercase leading-none">Super Admin Hub</h1>
-                <div className="flex items-center gap-4">
-                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Master Security Infrastructure</p>
-                  <div className="h-1 w-1 rounded-full bg-slate-700" />
-                  <div className="text-blue-500 text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
-                     <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                     Root Access Verified
-                  </div>
+    <div className="flex-1 overflow-auto bg-[#F8FAFC] selection:bg-blue-600/10 min-h-screen">
+      {/* Top Header */}
+
+
+      <main className="p-8 space-y-10 max-w-[1800px] mx-auto">
+        {/* Title Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/5 rounded-full -mr-32 -mt-32 blur-3xl" />
+          <div className="flex items-center gap-6 relative z-10">
+            <div className="w-16 h-16 bg-[#DC2626] rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-red-200 border-2 border-white group transition-transform hover:scale-105">
+              <Shield size={32} className="group-hover:rotate-12 transition-transform" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase leading-none mb-2">Emergency Dashboard</h1>
+              <div className="flex items-center gap-3">
+                <p className="text-slate-500 font-bold text-xs tracking-tight">Live Status</p>
+                <div className="w-1 h-1 rounded-full bg-slate-300" />
+                <div className="flex items-center gap-1.5 text-emerald-500 text-[10px] font-black uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                  <Activity size={10} /> Live
                 </div>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-6">
-             <div className="text-right space-y-1">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">System Integrity</p>
-                <p className="text-blue-600 text-xs font-black uppercase tracking-widest italic">99.9% SECURE</p>
-             </div>
-             <div className="w-px h-8 bg-slate-200" />
-             <div className="w-10 h-10 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 hover:text-blue-600 shadow-sm">
-                <Key size={18} />
-             </div>
+
+          <div className="relative z-10 w-full md:w-72">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-2 italic">Filter by Location</p>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                <MapPin size={16} className="text-[#DC2626] group-focus-within:animate-pulse" />
+              </div>
+              <select
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+                className="w-full h-14 pl-12 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 font-black text-xs uppercase tracking-widest appearance-none focus:outline-none focus:ring-4 focus:ring-red-500/5 focus:border-[#DC2626] transition-all cursor-pointer hover:bg-white"
+              >
+                <option value="All">All Locations</option>
+                {allLocations.map(loc => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-[#DC2626] transition-colors" size={18} />
+            </div>
           </div>
         </div>
 
-        {/* Global Tactical Grid */}
-        <section className="space-y-8 relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-1 bg-blue-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.5)]" />
-            <h2 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.4em]">Global Node Metrics</h2>
-          </div>
-          <DashboardStats />
+        {/* Status Cards */}
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Active Emergencies */}
+          <Card className="p-6 border border-slate-200 border-l-4 border-l-[#33375D] rounded-lg shadow-sm bg-white relative overflow-hidden group">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-slate-900 font-bold text-lg leading-tight">Active Emergencies</h3>
+              <AlertTriangle className="text-[#DC2626]" size={18} />
+            </div>
+            <div className="flex items-baseline gap-3 mb-4">
+              <span className="text-5xl font-black text-[#DC2626] tracking-tighter">
+                {loading ? '00' : filteredActive.length.toString().padStart(2, '0')}
+              </span>
+              <span className="text-slate-500 font-bold text-xs uppercase tracking-widest">Active Now</span>
+            </div>
+            <div className="space-y-3 pt-4 border-t border-slate-50">
+              {filteredActive.map((event: GenericEmergencyMetric, index) => (
+                <div key={index} className="flex items-center gap-2 text-[10px] font-black text-slate-600 uppercase tracking-tight">
+                  <div className="w-2 h-2 rounded-full bg-[#DC2626] shadow-[0_0_8px_rgba(220,38,38,0.5)]" /> {event.name} – {event.location}
+                </div>
+              ))}
+              {!loading && filteredActive.length === 0 && (
+                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest italic opacity-60">Nothing here</p>
+              )}
+            </div>
+          </Card>
+
+          {/* Emergencies Sent */}
+          <Card className="p-6 border border-slate-200 border-l-4 border-l-[#33375D] rounded-lg shadow-sm bg-white relative overflow-hidden group">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-slate-900 font-bold text-lg leading-tight">Emergencies</h3>
+              <Radio className="text-[#3B82F6]" size={18} />
+            </div>
+            <div className="flex items-baseline gap-3 mb-4">
+              <span className="text-5xl font-black text-[#3B82F6] tracking-tighter">
+                {loading ? '00' : filteredAlerts.length.toString().padStart(2, '0')}
+              </span>
+              <span className="text-slate-500 font-bold text-xs uppercase tracking-widest">Alerts Sent</span>
+            </div>
+            <div className="pt-4 border-t border-slate-50">
+              <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest leading-relaxed">
+                {filteredAlerts.length > 0 ? filteredAlerts[0].name : 'System Ready'}
+              </p>
+            </div>
+          </Card>
+
+          {/* Impacted Users */}
+          <Card className="p-6 border border-slate-200 border-l-4 border-l-[#33375D] rounded-lg shadow-sm bg-white relative overflow-hidden group">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-slate-900 font-bold text-lg leading-tight">Ready2Go Users Impacted</h3>
+              <Users className="text-[#F59E0B]" size={18} />
+            </div>
+            <div className="mb-4">
+              <span className="text-5xl font-black text-[#F59E0B] tracking-tighter block mb-1">
+                {loading ? '00' : filteredImpacted.length.toString().padStart(2, '0')}
+              </span>
+              <span className="text-slate-500 font-bold text-xs uppercase tracking-widest">People Affected</span>
+            </div>
+            <div className="pt-4 border-t border-slate-50">
+              <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest leading-relaxed">
+                {selectedLocation === 'All' ? 'All areas' : `Affected in ${selectedLocation}`}
+              </p>
+            </div>
+          </Card>
+
+          {/* EOC Status */}
+          <Card className="p-6 border border-slate-200 border-l-4 border-l-[#33375D] rounded-lg shadow-sm bg-white relative overflow-hidden group">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-slate-900 font-bold text-lg leading-tight">Virtual EOC Status</h3>
+              <Settings className="text-[#10B981]" size={18} />
+            </div>
+            <div className="flex flex-col gap-3 mb-4">
+              <div className="flex items-baseline gap-3">
+                <span className="text-5xl font-black text-[#10B981] tracking-tighter">
+                  {loading ? '00' : filteredEOC.length.toString().padStart(2, '0')}
+                </span>
+                <span className="text-slate-500 font-bold text-xs uppercase tracking-widest">Centers Open</span>
+              </div>
+              <Badge className={cn(
+                "border-none font-bold px-3 py-1 rounded-full flex items-center gap-2 w-fit text-[9px] uppercase tracking-widest",
+                (filteredEOC.length > 0 && filteredEOC[0]?.status === 'active') 
+                  ? 'bg-emerald-50 text-emerald-600' 
+                  : 'bg-slate-100 text-slate-500'
+              )}>
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full",
+                  (filteredEOC.length > 0 && filteredEOC[0]?.status === 'active') ? 'bg-emerald-600 animate-pulse' : 'bg-slate-400'
+                )} />
+                {loading ? '...' : (filteredEOC.length > 0 ? filteredEOC[0]?.status : 'Inactive')}
+              </Badge>
+            </div>
+            <div className="pt-4 border-t border-slate-50">
+              <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest leading-relaxed">
+                 System tracking.
+              </p>
+            </div>
+          </Card>
         </section>
 
-        {/* Pending Authentications Section */}
-        <section className="space-y-8 relative z-10">
-          <div className="flex items-center justify-between px-2">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-1 bg-rose-600 rounded-full shadow-[0_0_10px_rgba(225,29,72,0.5)]" />
-              <h2 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.4em] flex items-center gap-3">
-                 <Target size={14} className="text-rose-500" /> Pending License Authentications
-              </h2>
-            </div>
+        {/* Main Content Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-20">
+          <div className="lg:col-span-2 space-y-8">
+            <GISMap />
           </div>
-          
-          <div className="bg-white border border-slate-100 rounded-[40px] p-8 relative overflow-hidden group shadow-xl shadow-slate-200/50">
-            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity pointer-events-none">
-              <Radio size={120} className="animate-pulse" />
-            </div>
-            <div className="relative z-10">
-              <p className="text-blue-600 font-bold text-lg tracking-tight leading-relaxed max-w-4xl mb-8 uppercase bg-blue-50 p-6 rounded-3xl border border-blue-100 shadow-sm transition-all group-hover:bg-white group-hover:shadow-blue-600/5">
-                Sarah/Patrick will provide preparedness information and set Alerts and Communication messages with messaging for Super Admin
-              </p>
+
+          <div className="space-y-8">
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+              <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <Target size={18} className="text-rose-500" />
+                  <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight">New License Requests</h2>
+                </div>
+                <Link 
+                  href="/admin/licenses" 
+                  className="flex items-center gap-1.5 text-[9px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-colors group bg-blue-50/50 px-3 py-1.5 rounded-lg border border-blue-100"
+                >
+                  View All
+                  <ArrowUpRight size={12} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </Link>
+              </div>
               <LicenseRequestList />
             </div>
           </div>
-        </section>
-
-        {/* Active Authorized Licenses Section */}
-        <section className="space-y-8 relative z-10">
-          <div className="flex items-center justify-between px-2">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-1 bg-emerald-600 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-              <h2 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.4em] flex items-center gap-3">
-                 <ShieldCheck size={14} className="text-emerald-500" /> Authorized License Nodes
-              </h2>
-            </div>
-          </div>
-          <ActiveLicenseList />
-        </section>
-
-        {/* GIS Strategic Matrix */}
-        <section className="space-y-8 relative z-10">
-          <div className="flex items-center justify-between px-2">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-1 bg-blue-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.5)]" />
-              <h2 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.4em] flex items-center gap-3">
-                 <Activity size={14} className="text-blue-500" /> Global GIS Impact Matrix
-              </h2>
-            </div>
-            <span className="text-[8px] font-black text-slate-700 uppercase tracking-widest italic">REAL-TIME DATA STREAM: SECURE</span>
-          </div>
-          <div className="bg-white border border-slate-100 rounded-[40px] overflow-hidden shadow-xl shadow-slate-200/50">
-            <GISMap />
-          </div>
-        </section>
+        </div>
 
         {/* Footer Info */}
-        <div className="pt-20 flex flex-col items-center justify-center gap-6 opacity-30 group">
-           <Terminal size={32} className="text-slate-500 group-hover:text-blue-500 transition-colors" />
-           <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] text-center max-w-[800px] leading-relaxed">
-              Super Admin Control Node • Cryptographic Signature Required for All License Minting Operations • System Resilience Level 5
-           </p>
-           <div className="flex items-center gap-4 text-[8px] font-black text-slate-700 uppercase tracking-[0.2em]">
-              <span>Latency: 14ms</span>
-              <div className="w-1 h-1 rounded-full bg-slate-800" />
-              <span>Enc: AES-256-GCM</span>
-              <div className="w-1 h-1 rounded-full bg-slate-800" />
-              <span>Session: XH-992-KIP</span>
-           </div>
+        <div className="pt-10 flex flex-col items-center justify-center gap-4 opacity-40">
+          <Terminal size={24} className="text-slate-400" />
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] text-center leading-relaxed">
+            Ready2Go Access Center • High Security • Stable Connection
+          </p>
         </div>
       </main>
     </div>

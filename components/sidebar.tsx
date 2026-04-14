@@ -91,23 +91,20 @@ export function Sidebar() {
         ]
 
   return (
-    <div className="hidden md:flex w-72 bg-sidebar text-sidebar-foreground flex-col h-full border-r border-border">
+    <div className="hidden md:flex w-72 bg-[#33375D] text-white flex-col h-full border-r border-slate-700/50">
       {/* Logo Section */}
-      <Link href="/" className="p-6 border-b border-border/50 flex flex-col items-center hover:bg-sidebar-accent transition-colors">
+      <Link href="/" className="p-8 flex flex-col items-center hover:bg-white/5 transition-colors">
         <Image
           src={logo}
           alt="Ready2Go Logo"
-          width={120}
-          height={60}
-          className="mb-4"
+          width={140}
+          height={70}
+          className="mb-2"
         />
-        {/* <h1 className="text-2xl font-black text-white">
-          Ready<span className="text-yellow-400">2</span>Go<span className="text-xs">™</span>
-        </h1> */}
       </Link>
 
       {/* Main Navigation */}
-      <nav className="flex-1 overflow-y-auto p-4 space-y-2">
+      <nav className="flex-1 overflow-y-auto p-4 space-y-1">
         {adminMenuItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href
@@ -117,84 +114,80 @@ export function Sidebar() {
               key={item.label}
               href={item.href}
               className={cn(
-                'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors',
+                'w-full flex items-center gap-3 px-5 py-3 rounded-xl text-left transition-all duration-200 group',
                 isActive
-                  ? 'bg-yellow-400 text-sidebar font-semibold'
-                  : 'text-sidebar-foreground hover:bg-sidebar-accent'
+                  ? 'bg-[#FFD75E] text-[#33375D] shadow-lg shadow-yellow-500/20'
+                  : 'text-slate-200 hover:bg-white/10 hover:text-white'
               )}
             >
-              <Icon className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm">{item.label}</span>
+              <Icon className={cn("w-5 h-5 flex-shrink-0 transition-colors", isActive ? "text-[#33375D]" : "text-slate-400 group-hover:text-white")} />
+              <span className="text-[15px] font-bold tracking-tight">{item.label}</span>
             </Link>
           )
         })}
       </nav>
 
       {/* Bottom Navigation */}
-      <div className="border-t border-border/50 p-4 space-y-2">
-        {bottomItems.map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href
+      <div className="p-4 mb-4">
+        <div className="bg-[#44496B] rounded-2xl p-4 space-y-1 shadow-inner">
+          {bottomItems.map((item) => {
+            const Icon = item.icon
+            const isActive = pathname === item.href
 
-          // Handle Help button specially
-          if (item.label === 'Help') {
+            // Handle Help button specially
+            if (item.label === 'Help') {
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => setShowHelpModal(true)}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors text-slate-300 hover:bg-white/10 hover:text-white"
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0 text-slate-400" />
+                  <span className="text-sm font-bold">{item.label}</span>
+                </button>
+              )
+            }
+
+            if (item.label === 'Log out') {
+              return (
+                <button
+                  key={item.label}
+                  onClick={async () => {
+                    try {
+                      await fetch('/api/logout', { method: 'POST' })
+                    } catch (error) {
+                      console.error('Logout failed:', error)
+                    }
+                    localStorage.removeItem('userRole')
+                    localStorage.removeItem('userEmail')
+                    localStorage.removeItem('userName')
+                    router.push('/login')
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors text-slate-300 hover:bg-white/10 hover:text-white"
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0 text-slate-400" />
+                  <span className="text-sm font-bold">{item.label}</span>
+                </button>
+              )
+            }
+
             return (
-              <button
+              <Link
                 key={item.label}
-                onClick={() => setShowHelpModal(true)}
+                href={item.href}
                 className={cn(
-                  'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors',
-                  'text-sidebar-foreground hover:bg-sidebar-accent'
+                  'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors',
+                  isActive
+                    ? 'bg-[#FFD75E] text-[#33375D]'
+                    : 'text-slate-300 hover:bg-white/10 hover:text-white'
                 )}
               >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                <span className="text-sm">{item.label}</span>
-              </button>
+                <Icon className={cn("w-5 h-5 flex-shrink-0", isActive ? "text-[#33375D]" : "text-slate-400")} />
+                <span className="text-sm font-bold">{item.label}</span>
+              </Link>
             )
-          }
-
-          if (item.label === 'Log out') {
-            return (
-              <button
-                key={item.label}
-                onClick={async () => {
-                  try {
-                    await fetch('/api/logout', { method: 'POST' })
-                  } catch (error) {
-                    console.error('Logout failed:', error)
-                  }
-                  localStorage.removeItem('userRole')
-                  localStorage.removeItem('userEmail')
-                  localStorage.removeItem('userName')
-                  router.push('/login')
-                }}
-                className={cn(
-                  'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors',
-                  'text-sidebar-foreground hover:bg-sidebar-accent'
-                )}
-              >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                <span className="text-sm">{item.label}</span>
-              </button>
-            )
-          }
-
-          return (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={cn(
-                'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors',
-                isActive
-                  ? 'bg-yellow-400 text-sidebar font-semibold'
-                  : 'text-sidebar-foreground hover:bg-sidebar-accent'
-              )}
-            >
-              <Icon className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm">{item.label}</span>
-            </Link>
-          )
-        })}
+          })}
+        </div>
       </div>
 
       {/* Help Modal */}

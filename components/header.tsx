@@ -60,7 +60,7 @@ export function Header({ userName = 'Admin User', onLogout }: HeaderProps) {
         <div className="flex items-center gap-4 border-r border-slate-100 pr-6 mr-1">
           <div className="relative p-2 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer group">
             <Bell size={22} className="text-slate-900 group-hover:text-indigo-600 transition-colors" />
-            <span className="absolute top-1.5 right-1.5 h-4 w-4 bg-rose-600 text-[9px] font-black text-white flex items-center justify-center rounded-full border-2 border-white">2</span>
+            <span className="absolute top-1.5 right-1.5 h-4 w-4 bg-rose-600 text-[9px] font-black text-white flex items-center justify-center rounded-full border-2 border-white">3</span>
           </div>
         </div>
 
@@ -70,12 +70,12 @@ export function Header({ userName = 'Admin User', onLogout }: HeaderProps) {
             className="flex items-center gap-3 hover:bg-slate-50 py-1.5 px-3 rounded-xl transition-all group"
           >
             <Avatar className="w-9 h-9 border border-slate-200 transition-all group-hover:border-indigo-100">
-               <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100&auto=format&fit=crop" className="rounded-full overflow-hidden object-cover" />
-               <AvatarFallback className="rounded-full flex items-center justify-center bg-slate-100 text-[10px] font-bold">{displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100&auto=format&fit=crop" className="rounded-full overflow-hidden object-cover" />
+              <AvatarFallback className="rounded-full flex items-center justify-center bg-slate-100 text-[10px] font-bold">{displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="text-left hidden sm:block">
               <p className="text-[13px] font-black text-slate-900 leading-none">{displayName}</p>
-              <p className="text-[11px] font-bold text-slate-400 mt-1">{userEmail || 'email@gmail.com'}</p>
+              <p className="text-[11px] font-bold text-slate-400 mt-1">{userRole === 'admin' || userRole === 'super-admin' ? 'Emergency Coordinator' : (userEmail || 'email@gmail.com')}</p>
             </div>
           </button>
 

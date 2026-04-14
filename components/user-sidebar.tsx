@@ -38,9 +38,9 @@ export function UserSidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="hidden md:flex w-72 bg-sidebar text-sidebar-foreground flex-col h-full border-r border-border">
+    <div className="hidden md:flex w-72 bg-[#33375D] text-white flex-col h-full border-r border-white/5">
       {/* Logo Section */}
-      <div className="p-6 border-b border-border/50 flex flex-col items-center">
+      <div className="p-6 border-b border-white/5 flex flex-col items-center">
         <Image
           src={logo}
           alt="Ready2Go Logo"
@@ -48,9 +48,6 @@ export function UserSidebar() {
           height={60}
           className="mb-2"
         />
-        {/* <h1 className="text-2xl font-black text-white">
-          Ready<span className="text-yellow-400">2</span>Go<span className="text-xs">™</span>
-        </h1> */}
       </div>
 
       {/* Main Navigation */}
@@ -64,20 +61,20 @@ export function UserSidebar() {
               key={item.label}
               href={item.href}
               className={cn(
-                'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors',
+                'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 group',
                 isActive
-                  ? 'bg-yellow-400 text-sidebar font-semibold'
-                  : 'text-sidebar-foreground hover:bg-sidebar-accent'
+                  ? 'bg-yellow-400 text-[#33375D] shadow-lg shadow-yellow-500/20'
+                  : 'text-slate-300 hover:bg-white/10 hover:text-white'
               )}
             >
-              <Icon className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm">{item.label}</span>
+              <Icon className={cn("w-5 h-5 flex-shrink-0", isActive ? "text-[#33375D]" : "text-slate-400 group-hover:text-white")} />
+              <span className="text-sm font-bold tracking-tight">{item.label}</span>
             </Link>
           )
         })}
       </nav>
 
-      <div className="border-t border-border/50 p-4 mt-auto">
+      <div className="border-t border-white/5 p-4 mt-auto">
         <button
           onClick={async () => {
             try {
@@ -91,10 +88,10 @@ export function UserSidebar() {
             document.cookie = "userRole=; path=/; max-age=0"
             router.push('/login')
           }}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sidebar-foreground hover:bg-sidebar-accent transition-colors text-sm"
+          className="w-full flex items-center gap-3 px-5 py-3 rounded-xl text-left text-slate-300 hover:bg-white/10 hover:text-white transition-all duration-200 group"
         >
-          <LogOut className="w-5 h-5 flex-shrink-0" />
-          <span>Sign Out</span>
+          <LogOut className="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-white" />
+          <span className="text-sm font-bold tracking-tight">Sign Out</span>
         </button>
       </div>
     </div>

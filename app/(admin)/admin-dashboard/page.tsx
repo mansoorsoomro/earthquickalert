@@ -52,8 +52,8 @@ export default function Dashboard() {
     return (
       <div className="flex-1 flex items-center justify-center bg-slate-50 min-h-screen">
         <div className="flex flex-col items-center gap-4">
-           <Cpu className="w-12 h-12 text-blue-600 animate-spin" />
-           <div className="text-blue-600 font-black text-xs uppercase tracking-[0.5em] animate-pulse">Initializing Command Terminal...</div>
+          <Cpu className="w-12 h-12 text-blue-600 animate-spin" />
+          <div className="text-blue-600 font-black text-xs uppercase tracking-[0.5em] animate-pulse">Initializing Command Terminal...</div>
         </div>
       </div>
     )
@@ -76,7 +76,7 @@ export default function Dashboard() {
       <main className="p-10 space-y-12 max-w-[1800px] mx-auto relative">
         {/* Decorative elements */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
-        
+
         {/* Dashboard Header */}
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 pb-10 border-b border-slate-200">
           <div className="space-y-4">
@@ -90,18 +90,18 @@ export default function Dashboard() {
                   <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Operational Node Alpha-9</p>
                   <div className="h-1 w-1 rounded-full bg-slate-700" />
                   <div className="text-blue-500 text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
-                     <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                     Live System Link
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                    Live System Link
                   </div>
                 </div>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
-             <div className="px-6 py-3 bg-white border border-slate-200 rounded-2xl flex items-center gap-4 group hover:bg-slate-50 transition-colors cursor-pointer shadow-sm">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]" />
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-900 transition-colors">Global Connectivity Active</span>
-             </div>
+            <div className="px-6 py-3 bg-white border border-slate-200 rounded-2xl flex items-center gap-4 group hover:bg-slate-50 transition-colors cursor-pointer shadow-sm">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]" />
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-900 transition-colors">Global Connectivity Active</span>
+            </div>
           </div>
         </div>
 
@@ -121,7 +121,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-4">
                 <div className="w-10 h-1 bg-blue-500 rounded-full" />
                 <h2 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] flex items-center gap-3">
-                   <Radio size={14} className="text-blue-500" /> GIS Strategic Map
+                  <Radio size={14} className="text-blue-500" /> GIS Strategic Map
                 </h2>
               </div>
               <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest italic">Live Multi-Vector Overlay</span>
@@ -134,7 +134,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-4 px-2">
               <div className="w-10 h-1 bg-amber-500 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
               <h2 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] flex items-center gap-3">
-                 <Shield size={14} className="text-amber-500" /> Signal Monitoring
+                <Shield size={14} className="text-amber-500" /> Signal Monitoring
               </h2>
             </div>
             <ThreatMonitoring />
@@ -166,10 +166,10 @@ export default function Dashboard() {
 
         {/* Footer Info */}
         <div className="pt-20 pb-10 flex flex-col items-center justify-center gap-4 opacity-30 group">
-           <Terminal size={24} className="text-slate-500 group-hover:text-blue-500 transition-colors" />
-           <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.5em] text-center max-w-[600px] leading-relaxed">
-              Official Operational Monitoring Platform • Security Level 4 • All Session Activities Are Logged Under Readiness Resilience Protocol v4.0.01
-           </p>
+          <Terminal size={24} className="text-slate-500 group-hover:text-blue-500 transition-colors" />
+          <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.5em] text-center max-w-[600px] leading-relaxed">
+            Official Operational Monitoring Platform • Security Level 4 • All Session Activities Are Logged Under Readiness Resilience Protocol v4.0.01
+          </p>
         </div>
       </main>
 

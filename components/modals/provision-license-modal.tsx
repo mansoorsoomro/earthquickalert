@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -17,30 +17,17 @@ import {
   Shield, 
   Loader2, 
   MapPin, 
-  Mail, 
-  Phone, 
-  User, 
-  Globe, 
-  Navigation,
   Search,
   Check,
-  UserPlus
+  ChevronDown,
+  User
 } from "lucide-react"
 import { toast } from "sonner"
 import { GoogleMap, useJsApiLoader, Autocomplete, Circle, Marker } from '@react-google-maps/api'
 import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_LIBRARIES, GOOGLE_MAPS_LOADER_ID } from '@/lib/constants/google-maps-config'
 import { cn } from '@/lib/utils'
 
-interface GrantLicenseModalProps {
-  user: {
-    _id: string;
-    name: string;
-    email: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    zipcode?: string;
-  } | null;
+interface ProvisionLicenseModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -57,25 +44,24 @@ const defaultCenter = {
   lng: -74.0060
 }
 
-export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLicenseModalProps) {
+export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionLicenseModalProps) {
   const [loading, setLoading] = useState(false)
   const [availableUsers, setAvailableUsers] = useState<any[]>([])
-  const [userSearch, setUserSearch] = useState('')
-  const [isNewUser, setIsNewUser] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState('')
   
   // Form State
   const [formData, setFormData] = useState({
     organizationName: '',
-    billingContact: user?.name || '',
+    billingContact: '',
     billingAddress: '',
-    billingEmail: user?.email || '',
+    billingEmail: '',
     phoneNumber: '',
-    country: user?.country || '',
-    state: user?.state || '',
-    city: user?.city || '',
-    zipcode: user?.zipcode || '',
+    country: '',
+    state: '',
+    city: '',
+    zipcode: '',
     radiusMile: 5,
-    userId: user?._id || '',
+    userId: '',
   })
 
   const [mapCenter, setMapCenter] = useState(defaultCenter)
@@ -89,35 +75,42 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
 
   // Fetch users for the dropdown
   useEffect(() => {
-    if (isOpen && user) {
-      const fullAddress = [user.city, user.state, user.country].filter(Boolean).join(', ')
+    if (isOpen) {
+      const fetchUsers = async () => {
+        try {
+          const res = await fetch('/api/admin/users')
+          if (res.ok) {
+            const data = await res.json()
+            // Only show approved sub-admins
+            setAvailableUsers(data.users.filter((u: any) => u.role === 'sub-admin' && u.accountStatus === 'approved'))
+          }
+        } catch (error) {
+          console.error('Error fetching users:', error)
+        }
+      }
+      fetchUsers()
+    }
+  }, [isOpen])
+
+  // Update form when user is selected
+  const handleUserSelect = (userId: string) => {
+    const user = availableUsers.find(u => u._id === userId)
+    if (user) {
+      setSelectedUserId(userId)
       setFormData(prev => ({
         ...prev,
+        userId: user._id,
         billingContact: user.name,
         billingEmail: user.email,
-        userId: user._id,
+        phoneNumber: user.phoneNumber || '',
         city: user.city || '',
         state: user.state || '',
         country: user.country || '',
         zipcode: user.zipcode || '',
-        billingAddress: fullAddress || prev.billingAddress
+        billingAddress: [user.city, user.state, user.country].filter(Boolean).join(', ')
       }))
-      
-      if (fullAddress) {
-        // Attempt to update map center if address exists
-        const geocode = async () => {
-          try {
-            const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(fullAddress)}&key=${GOOGLE_MAPS_API_KEY}`)
-            const data = await res.json()
-            if (data.results?.[0]?.geometry?.location) {
-              setMapCenter(data.results[0].geometry.location)
-            }
-          } catch (e) {}
-        }
-        geocode()
-      }
     }
-  }, [isOpen, user])
+  }
 
   const onPlaceChanged = () => {
     if (autocomplete !== null) {
@@ -149,12 +142,16 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
 
   const handleGrant = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!selectedUserId) {
+        toast.error("Please select a sub-admin")
+        return
+    }
     setLoading(true)
     try {
       const res = await fetch('/api/admin/licenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({ ...formData, isNewUser: false })
       })
 
       const data = await res.json()
@@ -179,13 +176,13 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
         <form onSubmit={handleGrant}>
           <DialogHeader className="p-8 border-b border-slate-100 bg-white">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
+              <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-slate-500/20">
                 <Shield size={24} />
               </div>
               <div>
-                <DialogTitle className="text-xl font-semibold text-slate-900">Provision Client License</DialogTitle>
+                <DialogTitle className="text-xl font-semibold text-slate-900 uppercase tracking-tight">Provision Client License</DialogTitle>
                 <DialogDescription className="text-slate-500 text-sm mt-1">
-                  Enter the organization details and define their service coverage area.
+                  Assign a new operational license to an existing sub-admin.
                 </DialogDescription>
               </div>
             </div>
@@ -205,25 +202,41 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                     value={formData.organizationName}
                     onChange={(e) => setFormData({ ...formData, organizationName: e.target.value })}
                     placeholder="Enter organization name"
-                    className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    className="h-12 bg-white border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 transition-all font-medium"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-slate-700 ml-1">Contact Name</Label>
-                  <Input
-                    readOnly
-                    value={formData.billingContact}
-                    className="h-11 bg-slate-50 border-slate-100 rounded-lg text-slate-500 cursor-not-allowed"
-                  />
+                
+                <div className="col-span-2 space-y-2">
+                  <Label className="text-sm font-medium text-slate-700 ml-1">Assigned Sub-Admin</Label>
+                  <div className="relative">
+                    <select
+                      required
+                      value={selectedUserId}
+                      onChange={(e) => handleUserSelect(e.target.value)}
+                      className="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all font-medium pr-10"
+                    >
+                      <option value="">Select an administrator</option>
+                      {availableUsers.map(user => (
+                        <option key={user._id} value={user._id}>
+                          {user.name} ({user.email})
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-slate-700 ml-1">Contact Email</Label>
-                  <Input
-                    readOnly
-                    value={formData.billingEmail}
-                    className="h-11 bg-slate-50 border-slate-100 rounded-lg text-slate-500 cursor-not-allowed"
-                  />
-                </div>
+
+                {selectedUserId && (
+                    <div className="col-span-2 bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm">
+                            <User size={20} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-blue-900 uppercase tracking-widest leading-none mb-1">Authenticated Email</p>
+                            <p className="text-sm font-medium text-blue-700">{formData.billingEmail}</p>
+                        </div>
+                    </div>
+                )}
               </div>
             </div>
 
@@ -242,11 +255,11 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                         value={formData.billingAddress}
                         onChange={(e) => setFormData({ ...formData, billingAddress: e.target.value })}
                         placeholder="Search for an address"
-                        className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        className="h-12 bg-white border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 transition-all"
                       />
                     </Autocomplete>
                   ) : (
-                    <Input disabled className="h-11 bg-slate-50 border-slate-200 rounded-lg" placeholder="Initializing maps..." />
+                    <Input disabled className="h-12 bg-slate-50 border-slate-200 rounded-xl" placeholder="Initializing maps..." />
                   )}
                 </div>
                 
@@ -265,15 +278,15 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                       onChange={(e) => setFormData({ ...formData, radiusMile: parseInt(e.target.value) })}
                       className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-blue-600"
                     />
-                    <div className="flex justify-between text-[10px] text-slate-400 font-medium">
-                      <span>5 Miles</span>
-                      <span>50 Miles</span>
-                      <span>100 Miles</span>
+                    <div className="flex justify-between text-[10px] text-slate-400 font-medium uppercase tracking-widest">
+                      <span>5 Mi</span>
+                      <span>50 Mi</span>
+                      <span>100 Mi</span>
                     </div>
                   </div>
                   
                   {isLoaded && (
-                    <div className="h-32 rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+                    <div className="h-40 rounded-3xl overflow-hidden border border-slate-200 shadow-sm shadow-blue-500/5">
                       <GoogleMap
                         mapContainerStyle={{ width: '100%', height: '100%' }}
                         center={mapCenter}
@@ -311,14 +324,14 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                 type="button" 
                 variant="ghost" 
                 onClick={onClose} 
-                className="h-11 px-6 font-medium text-slate-500 hover:text-slate-900 transition-colors"
+                className="h-12 px-6 font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase text-xs tracking-widest"
             >
               Cancel
             </Button>
             <Button 
                 type="submit" 
                 disabled={loading} 
-                className="h-11 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all shadow-lg shadow-blue-500/25 active:scale-[0.98]"
+                className="h-12 px-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black transition-all shadow-lg active:scale-[0.98] uppercase text-xs tracking-widest"
             >
               {loading ? (
                 <>
@@ -326,7 +339,7 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                   Processing...
                 </>
               ) : (
-                "Create License"
+                "Finalize License"
               )}
             </Button>
           </DialogFooter>
@@ -335,4 +348,3 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
     </Dialog>
   )
 }
-

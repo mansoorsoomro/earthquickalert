@@ -3,13 +3,12 @@
 import React, { useState } from "react"
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Eye, EyeOff, User, Mail, Lock } from 'lucide-react'
+import { Eye, EyeOff, User, Mail, Lock, MapPin, Navigation, Map, Shield } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import logo from '../../public/logo.png'
 import { useJsApiLoader, Autocomplete, GoogleMap, MarkerF } from '@react-google-maps/api'
 import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_LIBRARIES, GOOGLE_MAPS_LOADER_ID } from '@/lib/constants/google-maps-config'
-import { MapPin, Navigation } from 'lucide-react'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -177,80 +176,78 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-white">
+    <div className="min-h-screen flex bg-[#F8FAFC]">
       {/* Left Side: Branding (Visible on Desktop) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-blue-600 flex-col items-center justify-center p-12 text-white relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-[#33375D] flex-col items-center justify-center p-12 text-white relative overflow-hidden">
         {/* Decorative background elements */}
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl animate-pulse delay-700" />
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[700px] h-[700px] bg-white/5 rounded-full blur-[140px] animate-pulse" />
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[700px] h-[700px] bg-slate-900/30 rounded-full blur-[140px] animate-pulse delay-700" />
 
         <div className="relative z-10 text-center max-w-md">
-          <div className="flex flex-col items-center mb-8">
+          <div className="flex flex-col items-center mb-12">
             <Image
               src={logo}
               alt="Ready2Go Logo"
-              width={180}
-              height={100}
-              className="animate-in fade-in zoom-in duration-1000 mb-6"
+              width={220}
+              height={120}
+              className="animate-in fade-in zoom-in duration-1000 mb-8"
             />
-            {/* <h1 className="text-5xl font-black tracking-tight text-white mb-2">
-                            Ready<span className="text-amber-400">2</span>Go
-                        </h1> */}
           </div>
-          {/* <h1 className="text-6xl font-black mb-6 tracking-tight">
-                        Join Ready<span className="text-amber-400">2</span>Go
-                    </h1> */}
+          
+          <h1 className="text-4xl font-black mb-6 tracking-tighter uppercase whitespace-nowrap">
+            Operational <span className="text-[#FFD75E]">Onboarding</span>
+          </h1>
+
           <p className="text-xl text-slate-300 font-medium leading-relaxed mb-8">
-            Secure your community. Empower your team. Be prepared for whatever comes next with the ultimate emergency dashboard.
+            Secure your community. Empower your team. Join the global network of modernized emergency coordination.
           </p>
 
-          {/* <div className="space-y-4 text-left">
-                        <div className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/10">
-                            <div className="w-10 h-10 rounded-full bg-amber-400/20 flex items-center justify-center text-amber-400">
-                                ✓
-                            </div>
-                            <p className="text-sm font-semibold">Real-time collaboration & tracking</p>
-                        </div>
-                        <div className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/10">
-                            <div className="w-10 h-10 rounded-full bg-amber-400/20 flex items-center justify-center text-amber-400">
-                                ✓
-                            </div>
-                            <p className="text-sm font-semibold">Instant emergency alerts & protocols</p>
-                        </div>
-                    </div> */}
+          <div className="grid grid-cols-2 gap-6 text-left w-full">
+            <div className="p-6 bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-sm group hover:bg-white/10 transition-all cursor-default">
+               <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform">
+                  <Shield size={22} />
+               </div>
+               <p className="text-white font-black text-lg mb-1 uppercase tracking-tight">Verified</p>
+               <p className="text-[9px] text-slate-400 uppercase tracking-widest font-black opacity-60">Identity Shield</p>
+            </div>
+            <div className="p-6 bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-sm group hover:bg-white/10 transition-all cursor-default">
+               <div className="w-12 h-12 rounded-2xl bg-[#FFD75E]/20 flex items-center justify-center text-[#FFD75E] mb-4 group-hover:scale-110 transition-transform">
+                  <Map size={22} />
+               </div>
+               <p className="text-white font-black text-lg mb-1 uppercase tracking-tight">Geo-Linked</p>
+               <p className="text-[9px] text-[#FFD75E] uppercase tracking-widest font-black opacity-60">Location Identity</p>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Right Side: Signup Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 lg:p-12 bg-slate-50/50">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 lg:p-12 relative">
         <div className="w-full max-w-md">
           {/* Mobile Logo (Visible on Mobile) */}
           <div className="lg:hidden text-center mb-10 flex flex-col items-center">
             <Image
               src={logo}
               alt="Ready2Go Logo"
-              width={100}
-              height={60}
+              width={120}
+              height={70}
               className="mb-4"
             />
-            {/* <h1 className="text-3xl font-black text-[#34385E] tracking-tight">
-                            Ready<span className="text-amber-400">2</span>Go
-                        </h1> */}
           </div>
 
-          <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 p-6 sm:p-8 lg:p-10 border border-slate-100 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <div className="bg-white rounded-[48px] shadow-2xl shadow-slate-200/60 p-8 sm:p-10 lg:p-12 border border-slate-100 animate-in fade-in slide-in-from-bottom-8 duration-700">
             <div className="mb-10 text-center lg:text-left">
-              <h2 className="text-3xl font-bold text-slate-900 mb-3">Create Account</h2>
-              <p className="text-slate-500 font-medium">Start your safety journey today</p>
+              <h2 className="text-3xl font-black text-[#33375D] mb-3 tracking-tighter uppercase">Create Account</h2>
+              <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em]">Deployment Access Request</p>
             </div>
 
-            <form onSubmit={handleSignup} className="space-y-5 overflow-y-auto max-h-[70vh] px-1">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1">
+            <form onSubmit={handleSignup} className="space-y-6 overflow-y-auto max-h-[70vh] px-1 pr-3 scrollbar-hide">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
                   Full Name
                 </label>
-                <div className="relative">
-                  <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">
+                <div className="relative group">
+                  <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#33375D] transition-colors">
                     <User size={18} />
                   </div>
                   <input
@@ -258,18 +255,18 @@ export default function SignupPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="John Doe"
-                    className="w-full pl-14 pr-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all font-medium"
+                    className="w-full pl-16 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#33375D]/5 focus:border-[#33375D] transition-all font-bold text-[#33375D]"
                     required
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
                   Email Address
                 </label>
-                <div className="relative">
-                  <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">
+                <div className="relative group">
+                  <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#33375D] transition-colors">
                     <Mail size={18} />
                   </div>
                   <input
@@ -277,72 +274,66 @@ export default function SignupPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@company.com"
-                    className="w-full pl-14 pr-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-all font-medium"
+                    className="w-full pl-16 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#33375D]/5 focus:border-[#33375D] transition-all font-bold text-[#33375D]"
                     required
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1">
-                  Account Type
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                  Deployment Profile
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <button
                     type="button"
                     onClick={() => setRole('user')}
-                    className={`py-3 px-4 rounded-2xl border text-sm font-bold transition-all ${role === 'user'
-                      ? 'bg-blue-50 border-blue-600 text-blue-700 shadow-sm'
-                      : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
+                    className={`py-4 px-6 rounded-2xl border text-[11px] font-black uppercase tracking-widest transition-all ${role === 'user'
+                      ? 'bg-[#33375D] border-[#33375D] text-white shadow-lg'
+                      : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-[#33375D]/30'
                       }`}
                   >
-                    Community Member
+                    Responder
                   </button>
                   <button
                     type="button"
                     onClick={() => setRole('sub-admin')}
-                    className={`py-3 px-4 rounded-2xl border text-sm font-bold transition-all ${role === 'sub-admin'
-                      ? 'bg-blue-600 border-blue-600 text-white shadow-md'
-                      : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
+                    className={`py-4 px-6 rounded-2xl border text-[11px] font-black uppercase tracking-widest transition-all ${role === 'sub-admin'
+                      ? 'bg-[#33375D] border-[#33375D] text-white shadow-lg'
+                      : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-[#33375D]/30'
                       }`}
                   >
-                    Sub Admin
+                    Agency Admin
                   </button>
                 </div>
-                <p className="text-[10px] text-slate-400 font-medium ml-1">
-                  {role === 'user'
-                    ? "Register as a regular user to report incidents and receive safety alerts."
-                    : "Register as an organization admin to manage resources and response teams."
-                  }
-                </p>
               </div>
 
-              {/* Location Fields for all users */}
-              <div className="space-y-4 p-5 bg-slate-50 border border-slate-200 rounded-3xl animate-in fade-in slide-in-from-top-2 duration-500 shadow-sm">
+              {/* Location Fields */}
+              <div className="space-y-5 p-6 bg-[#33375D]/5 border border-[#33375D]/10 rounded-3xl animate-in fade-in slide-in-from-top-2 duration-500 shadow-inner">
                 {isLoaded && (
-                  <div className="space-y-3 mb-2 pb-5 border-b border-slate-200">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
-                        <MapPin size={12} className="text-blue-600" /> Geolocation Search
+                  <div className="space-y-4 mb-2 pb-6 border-b border-[#33375D]/10">
+                    <div className="flex items-center justify-between px-1">
+                      <label className="text-[10px] font-black text-[#33375D] uppercase tracking-[0.2em] flex items-center gap-2">
+                        <MapPin size={12} /> Geolocation Terminal
                       </label>
                       <button
                         type="button"
                         onClick={handleLocateMe}
-                        className="text-[10px] font-bold text-blue-600 flex items-center gap-1 hover:text-blue-700 transition-colors bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm"
+                        className="text-[10px] font-black text-white flex items-center gap-2 bg-[#33375D] hover:bg-[#44496B] px-4 py-2 rounded-xl transition-all shadow-lg active:scale-95"
                       >
-                        <Navigation size={10} /> Detect My Location
+                        <Navigation size={10} /> Auto Detect
                       </button>
                     </div>
                     <Autocomplete onLoad={onPlaceLoaded} onPlaceChanged={onPlaceChanged}>
                       <input
                         type="text"
                         placeholder="Search for your city or zip code..."
-                        className="w-full px-5 py-4 bg-white border border-slate-200 shadow-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 transition-all font-bold text-slate-700 placeholder:text-slate-300"
+                        className="w-full px-5 py-4 bg-white border border-slate-200 shadow-sm rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#33375D]/5 focus:border-[#33375D] transition-all font-bold text-[#33375D] placeholder:text-slate-300"
                       />
                     </Autocomplete>
 
                     {/* Interactive Map */}
-                    <div className="w-full h-40 rounded-2xl overflow-hidden border border-slate-200 shadow-inner mt-4 relative group">
+                    <div className="w-full h-44 rounded-2xl overflow-hidden border border-slate-200 shadow-inner mt-4 relative group">
                       <GoogleMap
                         mapContainerStyle={{ width: '100%', height: '100%' }}
                         center={mapCenter}
@@ -355,12 +346,12 @@ export default function SignupPage() {
                             {
                               "featureType": "all",
                               "elementType": "labels.text.fill",
-                              "stylers": [{ "color": "#2563eb" }]
+                              "stylers": [{ "color": "#33375D" }]
                             },
                             {
                               "featureType": "water",
                               "elementType": "geometry",
-                              "stylers": [{ "color": "#e9e9e9" }, { "lightness": 17 }]
+                              "stylers": [{ "color": "#E2E8F0" }]
                             }
                           ]
                         }}
@@ -369,145 +360,115 @@ export default function SignupPage() {
                           <MarkerF position={markerPosition} />
                         )}
                       </GoogleMap>
-                      <div className="absolute top-3 right-3 bg-white/80 backdrop-blur-md px-2 py-1 rounded-lg text-[9px] font-bold text-[#34385E] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-white/50 shadow-sm">
-                        Arkansas Region
-                      </div>
                     </div>
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                      Select Country
-                    </label>
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Country</label>
                     <input
                       type="text"
                       value={country}
                       onChange={(e) => setCountry(e.target.value)}
                       placeholder="USA"
-                      className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#34385E]/20 focus:border-[#34385E] transition-all font-bold text-slate-900 text-lg shadow-sm"
+                      className="w-full px-5 py-3 bg-white border border-slate-100 rounded-xl focus:outline-none focus:border-[#33375D] transition-all font-bold text-[#33375D] shadow-sm"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                      Select State
-                    </label>
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">State</label>
                     <input
                       type="text"
                       value={state}
                       onChange={(e) => setState(e.target.value)}
                       placeholder="Arkansas"
-                      className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#34385E]/20 focus:border-[#34385E] transition-all font-bold text-slate-900 text-lg shadow-sm"
+                      className="w-full px-5 py-3 bg-white border border-slate-100 rounded-xl focus:outline-none focus:border-[#33375D] transition-all font-bold text-[#33375D] shadow-sm"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                      Select City
-                    </label>
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">City</label>
                     <input
                       type="text"
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
                       placeholder="Little Rock"
-                      className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#34385E]/20 focus:border-[#34385E] transition-all font-bold text-slate-900 text-lg shadow-sm"
+                      className="w-full px-5 py-3 bg-white border border-slate-100 rounded-xl focus:outline-none focus:border-[#33375D] transition-all font-bold text-[#33375D] shadow-sm"
                       required
                     />
-                    {role === 'sub-admin' && (
-                      <p className="text-[9px] text-blue-600 font-bold ml-1 italic">
-                        Note: Only one Sub-Admin is allowed per city.
-                      </p>
-                    )}
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                      Select Zipcode
-                    </label>
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Zipcode</label>
                     <input
                       type="text"
                       value={zipcode}
                       onChange={(e) => setZipcode(e.target.value)}
                       placeholder="72201"
-                      className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#34385E]/20 focus:border-[#34385E] transition-all font-bold text-slate-900 text-lg shadow-sm"
+                      className="w-full px-5 py-3 bg-white border border-slate-100 rounded-xl focus:outline-none focus:border-[#33375D] transition-all font-bold text-[#33375D] shadow-sm"
                       required
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1">
-                  Password
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                  Access Password
                 </label>
-                <div className="relative">
-                  <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">
+                <div className="relative group">
+                  <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#33375D] transition-colors">
                     <Lock size={18} />
                   </div>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="At least 6 characters"
-                    className="w-full pl-14 pr-14 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all font-medium"
+                    placeholder="Min. 6 characters"
+                    className="w-full pl-16 pr-16 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#33375D]/5 focus:border-[#33375D] transition-all font-bold text-[#33375D]"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
+                    className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#33375D] transition-colors"
                   >
                     {showPassword ? <EyeOff size={22} /> : <Eye size={22} />}
                   </button>
                 </div>
               </div>
 
-              {/* Safety Status Toggle */}
-              {/* <div className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                                <input
-                                    type="checkbox"
-                                    id="isSafe"
-                                    checked={isSafe}
-                                    onChange={(e) => setIsSafe(e.target.checked)}
-                                    className="w-5 h-5 rounded border-slate-300 text-[#34385E] focus:ring-[#34385E]"
-                                />
-                                <label htmlFor="isSafe" className="text-sm font-semibold text-slate-700 cursor-pointer">
-                                    I am currently safe and in a secure location
-                                </label>
-                            </div> */}
-
               {error && (
-                <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-xl text-red-700 text-sm font-semibold">
-                  {error}
+                <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-600 text-[10px] font-black uppercase tracking-widest animate-in fade-in slide-in-from-top-2">
+                   {error}
                 </div>
               )}
 
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-7 rounded-2xl shadow-xl shadow-blue-900/10 transition-all active:scale-[0.98] text-lg mt-2 font-black uppercase tracking-widest"
+                className="w-full bg-[#33375D] hover:bg-[#44496B] text-white font-black py-8 rounded-3xl shadow-2xl shadow-[#33375D]/20 transition-all active:scale-[0.98] text-sm uppercase tracking-[0.2em] mt-2"
               >
                 {loading ? (
                   <div className="flex items-center gap-3">
-                    <div className="h-5 w-5 border-3 border-white/20 border-t-white rounded-full animate-spin" />
-                    <span>Creating Account...</span>
+                    <div className="h-5 w-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    <span>Processing...</span>
                   </div>
                 ) : (
-                  'Create Free Account'
+                  'Request Access'
                 )}
               </Button>
             </form>
 
-            <div className="mt-8 text-center">
-              <p className="text-slate-500 font-medium">
-                Already have an account?{' '}
+            <div className="mt-10 text-center">
+              <p className="text-slate-500 font-bold text-[11px] uppercase tracking-widest">
+                Already registered?{' '}
                 <button
                   onClick={() => router.push('/login')}
-                  className="text-blue-600 font-bold hover:underline underline-offset-4"
+                  className="text-[#33375D] font-black hover:underline underline-offset-4 decoration-2"
                 >
                   Sign In
                 </button>
@@ -515,8 +476,8 @@ export default function SignupPage() {
             </div>
           </div>
 
-          <p className="mt-8 text-center text-slate-400 text-xs font-semibold uppercase tracking-widest">
-            © 2026 Ready2Go Operations
+          <p className="mt-10 text-center text-slate-400 text-[9px] font-black uppercase tracking-[0.4em]">
+            © 2026 Ready2Go Operations • Node Terminal
           </p>
         </div>
       </div>

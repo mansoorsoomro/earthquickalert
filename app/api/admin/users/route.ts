@@ -87,7 +87,7 @@ export async function PATCH(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { userId, accountStatus, role } = await req.json();
+        const { userId, accountStatus, role, requestedLicense } = await req.json();
 
         if (!userId) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -106,6 +106,7 @@ export async function PATCH(req: NextRequest) {
 
         const updateData: any = {};
         if (accountStatus) updateData.accountStatus = accountStatus;
+        if (typeof requestedLicense === 'boolean') updateData.requestedLicense = requestedLicense;
         if (role) {
             // Sub-admins cannot promote users to sub-admin or super-admin
             if (session.user.role === 'sub-admin' && (role === 'sub-admin' || role === 'super-admin' || role === 'admin')) {

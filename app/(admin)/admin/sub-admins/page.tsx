@@ -20,10 +20,11 @@ import {
     ArrowLeft,
     Terminal,
     Activity,
-    Lock,
-    Unlock,
-    Command,
-    Radio,
+    Briefcase,
+    ShieldCheck,
+    Globe,
+    Plus,
+    Loader2,
     ShieldAlert
 } from "lucide-react"
 import { toast } from "sonner"
@@ -71,7 +72,7 @@ export default function SubAdminManagementPage() {
             return
         }
         fetchSubAdmins()
-    }, [])
+    }, [router])
 
     const handleStatusUpdate = async (userId: string, status: string) => {
         try {
@@ -100,222 +101,179 @@ export default function SubAdminManagementPage() {
         return matchesFilter && matchesSearch
     })
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'approved':
-                return (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-500 shadow-lg shadow-emerald-500/5">
-                        <CheckCircle size={10} />
-                        <span className="text-[9px] font-black uppercase tracking-widest">AUTHORIZED</span>
-                    </div>
-                )
-            case 'pending':
-                return (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-500 shadow-lg shadow-amber-500/5">
-                        <Clock size={10} className="animate-pulse" />
-                        <span className="text-[9px] font-black uppercase tracking-widest">VERIFICATION</span>
-                    </div>
-                )
-            case 'rejected':
-                return (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 shadow-lg shadow-rose-500/5">
-                        <XCircle size={10} />
-                        <span className="text-[9px] font-black uppercase tracking-widest">DENIED</span>
-                    </div>
-                )
-            default:
-                return <Badge variant="outline" className="text-[8px] font-black opacity-40 uppercase">{status}</Badge>
-        }
+    const stats = {
+        total: users.length,
+        approved: users.filter(u => u.accountStatus === 'approved').length,
+        pending: users.filter(u => u.accountStatus === 'pending').length
+    }
+
+    if (loading && users.length === 0) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+                    <p className="text-slate-500 font-bold animate-pulse">Loading admins...</p>
+                </div>
+            </div>
+        )
     }
 
     return (
-        <div className="flex-1 overflow-auto bg-slate-50 selection:bg-indigo-600/10">
-            <main className="p-10 space-y-12 max-w-[1800px] mx-auto relative pb-32">
-                {/* Decorative elements */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none" />
-
-                <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 pb-10 border-b border-slate-200">
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-6">
+        <main className="min-h-screen bg-slate-50/50 pb-20">
+            <div className="px-6 lg:px-12 pt-8 space-y-8 max-w-[1600px] mx-auto">
+                
+                {/* Main Header Card */}
+                <Card className="p-8 border-slate-200 rounded-2xl shadow-sm relative overflow-hidden bg-white group transition-all hover:shadow-md">
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-slate-900 group-hover:bg-blue-600 transition-colors" />
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                        <div>
+                            <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2 uppercase">Manage Sub-Admins</h1>
+                            <p className="text-slate-500 font-medium">Verify and manage permissions for all local administrators.</p>
+                        </div>
+                        <div className="flex items-center gap-4">
                             <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                onClick={() => router.push('/admin-dashboard')}
-                                className="w-12 h-12 rounded-2xl bg-white border border-slate-200 text-slate-400 hover:text-slate-900 shadow-sm"
+                                onClick={() => setIsAddModalOpen(true)}
+                                className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-lg px-6 h-12 font-bold text-xs uppercase tracking-wider transition-all active:scale-95 flex gap-2"
                             >
-                                <ArrowLeft size={20} />
+                                <Plus size={18} />
+                                Add Admin
                             </Button>
-                            <div className="w-16 h-16 bg-indigo-600 rounded-[28px] flex items-center justify-center shadow-2xl shadow-indigo-600/20 group hover:scale-110 transition-transform cursor-pointer">
-                                <Shield size={32} className="text-white group-hover:rotate-12 transition-transform duration-500" />
-                            </div>
-                            <div className="space-y-1">
-                                <h1 className="text-4xl font-black tracking-tighter text-slate-900 uppercase leading-none">Sub-Admin Registry</h1>
-                                <div className="flex items-center gap-4">
-                                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Operational Delegation Matrix</p>
-                                    <div className="h-1 w-1 rounded-full bg-slate-700" />
-                                    <div className="text-indigo-400 text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                                        Sub-Node Authentication
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
+                </Card>
 
-                    <div className="flex items-center gap-4">
-                        <div className="text-right space-y-1 mr-4">
-                            <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em]">Registry Status</p>
-                            <p className="text-emerald-500 text-xs font-black uppercase tracking-widest italic">SYNCHRONIZED</p>
+                {/* Banner Gradient */}
+                <div className="bg-gradient-to-r from-blue-700 to-indigo-600 rounded-3xl p-10 text-white relative overflow-hidden shadow-2xl shadow-blue-900/20 group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl transition-all group-hover:bg-white/20" />
+                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+                        <div>
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/30 border border-blue-400/30 text-[10px] font-black uppercase tracking-widest mb-4">
+                                <ShieldCheck size={12} /> Admin Control
+                            </div>
+                            <h2 className="text-3xl font-black tracking-tight mb-3">Admin Registry</h2>
+                            <p className="text-blue-50/90 font-medium max-w-2xl leading-relaxed">View and update the status of sub-administrators across all locations.</p>
                         </div>
-                        <Button 
-                            onClick={fetchSubAdmins} 
-                            disabled={loading}
-                            variant="ghost" 
-                            size="icon"
-                            className="w-14 h-14 bg-white rounded-2xl border border-slate-200 text-slate-400 hover:text-slate-900 transition-all shadow-sm active:scale-95"
-                        >
-                            <RefreshCw size={24} className={cn(loading ? 'animate-spin' : '')} />
-                        </Button>
-                        <Button 
-                            onClick={() => setIsAddModalOpen(true)}
-                            className="h-14 px-8 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest text-[10px] shadow-2xl shadow-indigo-600/20 gap-3"
-                        >
-                            <Users size={16} /> Onboard Sub-Admin
-                        </Button>
+                        <div className="grid grid-cols-3 gap-6 shrink-0">
+                            {[
+                                { label: 'TOTAL', value: stats.total, icon: Globe },
+                                { label: 'ACTIVE', value: stats.approved, icon: ShieldCheck },
+                                { label: 'PENDING', value: stats.pending, icon: Activity }
+                            ].map((stat, i) => (
+                                <div key={i} className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10 flex flex-col items-center">
+                                    <stat.icon className="w-5 h-5 mb-2 opacity-60" />
+                                    <p className="text-3xl font-black">{stat.value}</p>
+                                    <p className="text-[9px] font-bold opacity-60 tracking-widest">{stat.label}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
-                
-                {/* Stats Matrix */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative z-10">
-                    {[
-                        { label: 'Pending Verification', value: users.filter(u => u.accountStatus === 'pending').length, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50', border: 'border-amber-100' },
-                        { label: 'Authorized Sub-Admins', value: users.filter(u => u.accountStatus === 'approved').length, icon: Shield, color: 'text-indigo-500', bg: 'bg-indigo-50', border: 'border-indigo-100' },
-                        { label: 'Access Denied', value: users.filter(u => u.accountStatus === 'rejected').length, icon: XCircle, color: 'text-rose-500', bg: 'bg-rose-50', border: 'border-rose-100' }
-                    ].map((stat, i) => (
-                        <Card key={i} className="bg-white border border-slate-100 rounded-[40px] p-8 shadow-xl shadow-slate-200/50 group hover:bg-slate-50 transition-all">
-                            <div className="flex justify-between items-start">
-                                <div className="space-y-4">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">{stat.label}</p>
-                                    <h3 className="text-5xl font-black text-slate-900 tracking-tighter">{stat.value}</h3>
-                                </div>
-                                <div className={cn("w-16 h-16 rounded-3xl flex items-center justify-center shadow-xl border group-hover:scale-110 transition-transform", stat.bg, stat.color, stat.border)}>
-                                    <stat.icon size={28} />
-                                </div>
+
+                {/* Search & Filters */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-slate-200">
+                        {['all', 'pending', 'approved', 'rejected'].map((f) => (
+                            <button 
+                                key={f}
+                                onClick={() => setFilter(f)}
+                                className={cn(
+                                    "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                    filter === f 
+                                        ? 'bg-slate-900 text-white shadow-lg' 
+                                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                                )}
+                            >
+                                {f}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="relative group w-full md:w-96">
+                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                            <Search className="h-4 w-4 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
+                        </div>
+                        <Input
+                            placeholder="Search by name or email..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="pl-12 bg-white border-slate-200 text-slate-900 placeholder-slate-400 rounded-2xl h-14 text-sm font-medium focus:ring-2 focus:ring-blue-500/10 transition-all shadow-sm"
+                        />
+                    </div>
+                </div>
+
+                {/* Registry Table */}
+                <div className="grid grid-cols-1 gap-4">
+                    {filteredUsers.length === 0 ? (
+                        <Card className="p-20 border-dashed border-2 border-slate-200 rounded-[40px] flex flex-col items-center justify-center text-center space-y-6">
+                            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center border border-slate-100 italic font-black text-slate-200 text-4xl">?</div>
+                            <div className="space-y-2">
+                                <h3 className="text-xl font-black text-slate-900 uppercase">No Admins Found</h3>
+                                <p className="text-sm text-slate-500 max-w-xs mx-auto">No administrators match your current filter or search criteria.</p>
                             </div>
                         </Card>
-                    ))}
-                </div>
-
-                <div className="space-y-8 relative z-10">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-1 bg-indigo-600 rounded-full shadow-[0_0_10px_rgba(79,70,229,0.5)]" />
-                            <h2 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.4em]">Administrative Security Matrix</h2>
-                        </div>
-                         <div className="flex flex-col md:flex-row items-center gap-6">
-                            <div className="flex items-center gap-3 bg-white border border-slate-200 p-2 rounded-[20px] shadow-sm">
-                                {['all', 'pending', 'approved', 'rejected'].map((f) => (
-                                    <button 
-                                        key={f}
-                                        onClick={() => setFilter(f)}
-                                        className={cn(
-                                            "px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
-                                            filter === f 
-                                                ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' 
-                                                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                                        )}
-                                    >
-                                        {f}
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="relative group w-full md:w-80">
-                                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                                    <Search className="h-4 w-4 text-slate-500 group-focus-within:text-indigo-500 transition-colors" />
-                                </div>
-                                <Input
-                                    placeholder="SEARCH DELEGATES..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-12 bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-2xl h-12 text-[10px] font-black uppercase tracking-widest focus-visible:ring-indigo-500/50 transition-all font-mono shadow-sm"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <Card className="bg-white border border-slate-100 rounded-[40px] overflow-hidden shadow-xl shadow-slate-200/50">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead>
-                                    <tr className="border-b border-slate-100 bg-slate-50/50">
-                                        <th className="px-10 py-8 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Administrative Identity</th>
-                                        <th className="px-10 py-8 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Deployment Status</th>
-                                        <th className="px-10 py-8 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Auth Verification</th>
-                                        <th className="px-10 py-8 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] text-right">Moderation Protocols</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {loading ? (
-                                        Array.from({ length: 4 }).map((_, idx) => (
-                                            <tr key={idx} className="animate-pulse">
-                                                <td colSpan={4} className="px-10 py-12"><div className="h-10 bg-white/5 rounded-2xl w-full" /></td>
-                                            </tr>
-                                        ))
-                                    ) : filteredUsers.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={4} className="px-10 py-32 text-center space-y-6">
-                                                <div className="flex flex-col items-center">
-                                                    <ShieldAlert size={60} className="text-slate-800 mb-6" />
-                                                    <p className="text-lg font-black text-white uppercase tracking-tighter">No Access Nodes Found</p>
-                                                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mt-2 italic max-w-xs mx-auto">Master registry scan returned zero matches for your filter criteria.</p>
-                                                </div>
-                                            </td>
+                    ) : (
+                        <div className="bg-white rounded-[32px] border border-slate-100 overflow-hidden shadow-xl shadow-slate-200/40">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="bg-slate-50/50 border-b border-slate-100">
+                                            <th className="px-8 py-6 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Admin Details</th>
+                                            <th className="px-8 py-6 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Date Joined</th>
+                                            <th className="px-8 py-6 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</th>
+                                            <th className="px-8 py-6 text-right text-[10px] font-black text-slate-500 uppercase tracking-widest">Actions</th>
                                         </tr>
-                                    ) : (
-                                        filteredUsers.map((user) => (
-                                            <tr key={user._id} className="hover:bg-slate-50 transition-all group/row">
-                                                <td className="px-10 py-8">
-                                                    <div className="flex items-center gap-6">
-                                                        <div className="w-16 h-16 bg-white rounded-[24px] flex items-center justify-center text-slate-400 border border-slate-200 group-hover/row:scale-105 group-hover/row:text-indigo-600 group-hover/row:border-indigo-200 transition-all shadow-sm">
-                                                            <User size={28} />
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {filteredUsers.map((user) => (
+                                            <tr key={user._id} className="group hover:bg-blue-50/30 transition-colors">
+                                                <td className="px-8 py-6">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-white group-hover:text-blue-600 group-hover:shadow-md transition-all border border-slate-100">
+                                                            <User size={24} />
                                                         </div>
-                                                        <div className="space-y-4">
-                                                            <h4 className="text-xl font-black text-slate-900 uppercase tracking-tighter leading-none">{user.name}</h4>
-                                                            <div className="flex items-center gap-4 text-[10px] font-black text-slate-500 uppercase tracking-widest italic leading-none">
-                                                                <Mail size={12} className="text-indigo-500" />
-                                                                {user.email}
-                                                            </div>
+                                                        <div>
+                                                            <p className="font-black text-slate-900 uppercase tracking-tight">{user.name}</p>
+                                                            <p className="text-[10px] font-bold text-slate-400 tracking-widest">{user.email}</p>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-10 py-8">
-                                                    <div className="space-y-4">
-                                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none flex items-center gap-2">
-                                                            <Calendar size={12} className="text-indigo-600" />
-                                                            {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                                                        </p>
-                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] block">Registry ID: {user._id.slice(-8).toUpperCase()}</span>
+                                                <td className="px-8 py-6">
+                                                    <div className="flex flex-col text-slate-400 gap-1">
+                                                        <span className="text-xs font-bold italic">{new Date(user.createdAt).toLocaleDateString()}</span>
+                                                        <span className="text-[8px] font-black uppercase tracking-widest">ID: {user._id.slice(-8)}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-10 py-8">
-                                                     {getStatusBadge(user.accountStatus)}
+                                                <td className="px-8 py-6">
+                                                    <div className={cn(
+                                                        "inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm",
+                                                        user.accountStatus === 'approved' 
+                                                            ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
+                                                            : user.accountStatus === 'pending'
+                                                            ? "bg-amber-50 text-amber-600 border-amber-100"
+                                                            : "bg-rose-50 text-rose-600 border-rose-100"
+                                                    )}>
+                                                        <div className={cn(
+                                                            "w-1.5 h-1.5 rounded-full",
+                                                            user.accountStatus === 'approved' ? "bg-emerald-500 animate-pulse" : user.accountStatus === 'pending' ? "bg-amber-500 animate-pulse" : "bg-rose-500"
+                                                        )} />
+                                                        {user.accountStatus === 'approved' ? 'Active' : user.accountStatus}
+                                                    </div>
                                                 </td>
-                                                <td className="px-10 py-8">
-                                                    <div className="flex justify-end gap-3">
+                                                <td className="px-8 py-6 text-right">
+                                                    <div className="flex justify-end gap-2">
                                                         {user.accountStatus === 'pending' && (
                                                             <>
                                                                 <Button 
                                                                     onClick={() => handleStatusUpdate(user._id, 'approved')}
-                                                                    className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-[18px] shadow-2xl shadow-indigo-600/20 font-black text-[10px] uppercase tracking-widest h-12 px-8 border border-indigo-400/20 active:scale-95 transition-all"
+                                                                    className="h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[9px] uppercase tracking-widest transition-all"
                                                                 >
-                                                                    Authorize Node
+                                                                    Approve
                                                                 </Button>
                                                                 <Button 
                                                                     variant="ghost"
                                                                     onClick={() => handleStatusUpdate(user._id, 'rejected')}
-                                                                    className="bg-rose-600/5 hover:bg-rose-600 text-rose-500 hover:text-white rounded-[18px] border border-rose-500/10 font-black text-[10px] uppercase tracking-widest h-12 px-8 transition-all"
+                                                                    className="h-9 px-4 rounded-xl text-rose-600 hover:bg-rose-600 hover:text-white font-black text-[9px] uppercase tracking-widest transition-all"
                                                                 >
-                                                                    Deny Access
+                                                                    Deny
                                                                 </Button>
                                                             </>
                                                         )}
@@ -323,54 +281,36 @@ export default function SubAdminManagementPage() {
                                                             <Button 
                                                                 variant="ghost"
                                                                 onClick={() => handleStatusUpdate(user._id, 'rejected')}
-                                                                className="text-rose-500 hover:text-white hover:bg-rose-600 rounded-xl font-black text-[9px] uppercase tracking-widest px-6 h-10 transition-all border border-rose-500/10"
+                                                                className="h-9 px-4 rounded-xl text-rose-600 hover:bg-rose-600 hover:text-white font-black text-[9px] uppercase tracking-widest transition-all"
                                                             >
-                                                                Revoke Controls
+                                                                Deactivate
                                                             </Button>
                                                         )}
                                                         {user.accountStatus === 'rejected' && (
-                                                             <Button 
+                                                            <Button 
                                                                 onClick={() => handleStatusUpdate(user._id, 'approved')}
-                                                                className="bg-white/5 hover:bg-indigo-600 text-slate-400 hover:text-white rounded-xl border border-white/10 font-black text-[9px] uppercase tracking-widest px-8 h-10 transition-all shadow-xl"
+                                                                className="h-9 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-[9px] uppercase tracking-widest transition-all"
                                                             >
-                                                                Restore Delegate
+                                                                Activate
                                                             </Button>
                                                         )}
                                                     </div>
                                                 </td>
                                             </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div className="bg-indigo-600 p-8 flex flex-col items-center justify-center space-y-2 relative z-10">
-                            <div className="flex items-center gap-3 text-white">
-                                <Activity size={14} className="animate-pulse" />
-                                <p className="text-[10px] font-black uppercase tracking-[0.4em]">Sub-Node Deployment Matrix v4.0.01</p>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
-                            <p className="text-[7px] text-indigo-200 font-black uppercase tracking-[0.6em] opacity-40 italic">Delegation of authority grants immutable administrative overrides within local clusters.</p>
                         </div>
-                    </Card>
+                    )}
                 </div>
-                
-                {/* Footer Info */}
-                <div className="pt-20 flex flex-col items-center justify-center gap-6 opacity-30 group">
-                   <Terminal size={32} className="text-slate-500 group-hover:text-indigo-500 transition-colors" />
-                   <div className="flex flex-col items-center gap-2">
-                       <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] text-center max-w-[800px] leading-relaxed">
-                          Master Control Hub • Administrative Security Level 4 • All Delegate Mutations Are Logged
-                       </p>
-                       <p className="text-[8px] font-bold text-slate-800 uppercase tracking-[0.2em]">Authorized Personnel Only</p>
-                   </div>
-                </div>
-            </main>
+            </div>
 
             <AddUserModal 
                 isOpen={isAddModalOpen} 
                 onClose={() => setIsAddModalOpen(false)} 
                 onSuccess={fetchSubAdmins} 
             />
-        </div>
+        </main>
     )
 }

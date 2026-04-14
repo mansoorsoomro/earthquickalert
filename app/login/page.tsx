@@ -63,72 +63,72 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-white selection:bg-blue-600/10">
+    <div className="min-h-screen flex bg-[#F8FAFC] selection:bg-[#33375D]/10">
       {/* Left Side: Branding (Visible on Desktop) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-blue-600 flex-col items-center justify-center p-12 text-white relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-[#33375D] flex-col items-center justify-center p-12 text-white relative overflow-hidden">
         {/* Decorative background elements */}
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl animate-pulse delay-700" />
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[600px] h-[600px] bg-white/5 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[600px] h-[600px] bg-slate-900/20 rounded-full blur-[120px] animate-pulse delay-700" />
 
         <div className="relative z-10 text-center max-w-md">
           <div className="flex flex-col items-center mb-12">
             <Image
               src={logo}
               alt="Ready2Go Logo"
-              width={200}
-              height={120}
+              width={220}
+              height={130}
               className="animate-in fade-in zoom-in duration-1000 mb-8 drop-shadow-2xl"
             />
           </div>
           
           <h1 className="text-4xl font-black mb-6 tracking-tighter uppercase whitespace-nowrap">
-            Command <span className="text-amber-400">Hub</span> Access
+            Command <span className="text-[#FFD75E]">Hub</span> Access
           </h1>
           
-          <p className="text-xl text-blue-100/80 font-medium leading-relaxed mb-12">
+          <p className="text-xl text-slate-300/80 font-medium leading-relaxed mb-12">
             Secure your community. Empower your team. Access your real-time emergency intelligence terminal.
           </p>
           
           <div className="grid grid-cols-2 gap-6 text-left w-full">
-            <div className="p-6 bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-sm group hover:bg-white/10 transition-all">
-               <div className="w-10 h-10 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-300 mb-4 group-hover:scale-110 transition-transform">
-                  <Shield size={20} />
+            <div className="p-6 bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-sm group hover:bg-white/10 transition-all cursor-default">
+               <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform">
+                  <Shield size={22} />
                </div>
                <p className="text-white font-black text-lg mb-1 uppercase tracking-tight">Secure</p>
-               <p className="text-[9px] text-blue-300 uppercase tracking-widest font-black opacity-60">Verified Credentials</p>
+               <p className="text-[9px] text-slate-400 uppercase tracking-widest font-black opacity-60">Verified Credentials</p>
             </div>
-            <div className="p-6 bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-sm group hover:bg-white/10 transition-all">
-               <div className="w-10 h-10 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-300 mb-4 group-hover:scale-110 transition-transform">
-                  <Key size={20} />
+            <div className="p-6 bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-sm group hover:bg-white/10 transition-all cursor-default">
+               <div className="w-12 h-12 rounded-2xl bg-[#FFD75E]/20 flex items-center justify-center text-[#FFD75E] mb-4 group-hover:scale-110 transition-transform">
+                  <Key size={22} />
                </div>
                <p className="text-white font-black text-lg mb-1 uppercase tracking-tight">Direct</p>
-               <p className="text-[9px] text-amber-300 uppercase tracking-widest font-black opacity-60">Root Level Entry</p>
+               <p className="text-[9px] text-[#FFD75E] uppercase tracking-widest font-black opacity-60">Root Level Entry</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Right Side: Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 lg:p-12 bg-slate-50/50">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 lg:p-12 relative">
         <div className="w-full max-w-md">
           {/* Mobile Logo (Visible on Mobile) */}
           <div className="lg:hidden text-center mb-10 flex flex-col items-center">
             <Image
               src={logo}
               alt="Ready2Go Logo"
-              width={120}
-              height={70}
+              width={140}
+              height={80}
               className="mb-4"
             />
           </div>
 
-          <div className="bg-white rounded-[48px] shadow-2xl shadow-slate-200/60 p-8 sm:p-10 lg:p-12 border border-slate-100 animate-in fade-in slide-in-from-bottom-8 duration-700 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none">
-                <Shield size={120} />
+          <div className="bg-white rounded-[48px] shadow-2xl shadow-slate-200/60 p-8 sm:p-10 lg:p-14 border border-slate-100 animate-in fade-in slide-in-from-bottom-8 duration-700 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
+                <Shield size={160} className="text-[#33375D]" />
             </div>
 
-            <div className="mb-12 text-center lg:text-left relative z-10">
-              <h2 className="text-4xl font-black text-slate-900 mb-3 tracking-tighter uppercase">Sign In</h2>
+            <div className="mb-14 text-center lg:text-left relative z-10">
+              <h2 className="text-4xl font-black text-[#33375D] mb-3 tracking-tighter uppercase">Sign In</h2>
               <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em]">Deployment Identity Verification</p>
             </div>
 
@@ -138,7 +138,7 @@ export default function LoginPage() {
                   Tactical Email Address
                 </label>
                 <div className="relative group">
-                  <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                  <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#33375D] transition-colors">
                     <Mail size={18} />
                   </div>
                   <input
@@ -146,7 +146,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@agency.gov"
-                    className="w-full pl-14 pr-5 py-5 bg-slate-50 border border-slate-200 rounded-3xl focus:outline-none focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all font-bold text-slate-900 placeholder:text-slate-300"
+                    className="w-full pl-16 pr-6 py-5 bg-slate-50 border border-slate-200 rounded-3xl focus:outline-none focus:ring-4 focus:ring-[#33375D]/5 focus:border-[#33375D] transition-all font-bold text-[#33375D] placeholder:text-slate-300"
                     required
                   />
                 </div>
@@ -157,10 +157,10 @@ export default function LoginPage() {
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
                     Security Passkey
                   </label>
-                  <button type="button" className="text-[10px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-widest">Reset Key</button>
+                  <button type="button" className="text-[10px] font-black text-[#33375D] hover:underline uppercase tracking-widest underline-offset-4">Forgot Key?</button>
                 </div>
                 <div className="relative group">
-                  <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                  <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#33375D] transition-colors">
                     <Lock size={18} />
                   </div>
                   <input
@@ -168,13 +168,13 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full pl-14 pr-14 py-5 bg-slate-50 border border-slate-200 rounded-3xl focus:outline-none focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all font-bold text-slate-900 placeholder:text-slate-300"
+                    className="w-full pl-16 pr-16 py-5 bg-slate-50 border border-slate-200 rounded-3xl focus:outline-none focus:ring-4 focus:ring-[#33375D]/5 focus:border-[#33375D] transition-all font-bold text-[#33375D] placeholder:text-slate-300"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
+                    className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#33375D] transition-colors"
                   >
                     {showPassword ? <EyeOff size={22} /> : <Eye size={22} />}
                   </button>
@@ -182,9 +182,9 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-600 text-[10px] font-black uppercase tracking-widest animate-in fade-in slide-in-from-top-2">
+                <div className="p-5 bg-rose-50 border border-rose-100 rounded-2xl text-rose-600 text-[10px] font-black uppercase tracking-widest animate-in fade-in slide-in-from-top-2">
                   <div className="flex items-center gap-2">
-                     <Shield size={12} className="shrink-0" />
+                     <Shield size={14} className="shrink-0" />
                      {error}
                   </div>
                 </div>
@@ -193,12 +193,12 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-8 rounded-3xl shadow-2xl shadow-blue-600/20 transition-all active:scale-[0.98] text-sm uppercase tracking-[0.2em] mt-4"
+                className="w-full bg-[#33375D] hover:bg-[#44496B] text-white font-black py-8 rounded-3xl shadow-2xl shadow-[#33375D]/20 transition-all active:scale-[0.98] text-sm uppercase tracking-[0.2em] mt-4"
               >
                 {loading ? (
                   <div className="flex items-center gap-3">
                     <div className="h-5 w-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    <span>Authorizing...</span>
+                    <span>Authorizing Hub...</span>
                   </div>
                 ) : (
                   'Authorize Entry'
@@ -206,12 +206,12 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-12 text-center pt-8 border-t border-slate-50 relative z-10">
+            <div className="mt-14 text-center pt-10 border-t border-slate-50 relative z-10">
               <p className="text-slate-400 font-bold text-[11px] uppercase tracking-widest">
                 New command personnel?{' '}
                 <button
                   onClick={() => router.push('/signup')}
-                  className="text-blue-600 font-black hover:underline underline-offset-4 decoration-2"
+                  className="text-[#33375D] font-black hover:underline underline-offset-4 decoration-2"
                 >
                   Request Access
                 </button>
@@ -219,8 +219,8 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <p className="mt-12 text-center text-slate-400 text-[9px] font-black uppercase tracking-[0.4em]">
-            © 2026 Ready2Go Operations • Secure Node
+          <p className="mt-14 text-center text-slate-400 text-[9px] font-black uppercase tracking-[0.4em]">
+            © 2026 Ready2Go Operations • Secure Node Terminal
           </p>
         </div>
       </div>

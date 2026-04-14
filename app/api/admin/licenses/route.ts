@@ -35,14 +35,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized. Only Super Admin can create licenses.' }, { status: 401 });
         }
 
-        const { 
-            organizationName, 
-            planType, 
-            endDate, 
-            userId, 
-            country, 
-            state, 
-            city, 
+        const {
+            organizationName,
+            planType,
+            endDate,
+            userId,
+            country,
+            state,
+            city,
             zipcode,
             billingContact,
             billingAddress,
@@ -127,5 +127,47 @@ export async function POST(req: NextRequest) {
     } catch (error: any) {
         console.error('Create license error:', error);
         return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: NextRequest) {
+    try {
+        await connectDB();
+        const session = await getSession();
+
+        if (!session || session.user.role !== 'super-admin') {
+            return NextResponse.json({ error: 'Unauthorized. Only Super Admin can remove licenses.' }, { status: 401 });
+        }
+
+        const { searchParams } = new URL(req.url);
+        const licenseId = searchParams.get('licenseId');
+
+        if (!licenseId) {
+            return NextResponse.json({ error: 'License ID is required' }, { status: 400 });
+        }
+
+        // 1. Find the license to get the assigned user before deletion
+        const license = await License.findById(licenseId);
+        if (!license) {
+            return NextResponse.json({ error: 'License not found' }, { status: 404 });
+        }
+
+        // 2. Clear the licenseId from the assigned user if it exists
+        if (license.assignedSubAdminId) {
+            await User.findByIdAndUpdate(license.assignedSubAdminId, {
+                $unset: { licenseId: 1 }
+            });
+        }
+
+        // 3. Delete associated EOC Settings
+        await EOCSettings.deleteMany({ licenseId: license._id });
+
+        // 4. Delete the license itself
+        await License.findByIdAndDelete(licenseId);
+
+        return NextResponse.json({ success: true, message: 'License removed successfully' });
+    } catch (error: any) {
+        console.error('Delete license error:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

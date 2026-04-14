@@ -135,3 +135,14 @@ export interface WeatherAlert {
     start: Date
     end: Date
 }
+
+export interface GenericEmergencyMetric {
+    _id?: string
+    name: string
+    location: string
+    city: string
+    time: string
+    status: string
+    createdAt?: string
+    updatedAt?: string
+}

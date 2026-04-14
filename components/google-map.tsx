@@ -88,13 +88,13 @@ export function GoogleMap({ address, markers = [], center, zoom = 10 }: GoogleMa
                 onLoad={onLoad}
                 onUnmount={onUnmount}
                 options={{
-                    disableDefaultUI: true,
+                    disableDefaultUI: false,
                     zoomControl: true,
-                    styles: [
-                        { featureType: 'all', elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
-                        { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
-                        { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c9c9c9' }] }
-                    ]
+                    mapTypeControl: true,
+                    scaleControl: true,
+                    streetViewControl: false,
+                    rotateControl: true,
+                    fullscreenControl: true
                 }}
             >
                 {validMarkers.map((marker) => (
@@ -212,9 +212,6 @@ export function GoogleMap({ address, markers = [], center, zoom = 10 }: GoogleMa
                     </InfoWindow>
                 )}
             </GoogleMapComponent>
-            <div className="absolute bottom-2 left-2 bg-slate-900/80 backdrop-blur-md p-2 text-[10px] text-white/60 rounded-lg border border-white/10 italic">
-                Strategic Intelligence Feed • Live GPS Markers
-            </div>
         </div>
     )
 }
