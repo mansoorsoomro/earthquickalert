@@ -81,15 +81,15 @@ export function DashboardStats() {
   ]
 
   if (loading) {
-      return (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map((i) => (
-                  <Card key={i} className="bg-white border-slate-100 rounded-[32px] p-8 shadow-xl shadow-slate-200/50 flex flex-col items-center justify-center h-48">
-                      <Loader2 className="w-8 h-8 animate-spin text-slate-200" />
-                  </Card>
-              ))}
-          </div>
-      )
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="bg-white border-slate-100 rounded-[32px] p-8 shadow-xl shadow-slate-200/50 flex flex-col items-center justify-center h-48">
+            <Loader2 className="w-8 h-8 animate-spin text-slate-200" />
+          </Card>
+        ))}
+      </div>
+    )
   }
 
   return (
@@ -99,7 +99,7 @@ export function DashboardStats() {
           <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
             <stat.icon size={80} />
           </div>
-          
+
           <div className="flex justify-between items-start mb-6">
             <div className="space-y-1">
               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{stat.title}</h3>

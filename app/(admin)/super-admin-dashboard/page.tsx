@@ -18,7 +18,8 @@ import {
   Bell,
   MapPin,
   ChevronDown,
-  User as UserIcon
+  User as UserIcon,
+  HardHat
 } from 'lucide-react'
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
@@ -26,19 +27,21 @@ import { Badge } from '@/components/ui/badge'
 import { GenericEmergencyMetric } from '@/lib/types/emergency'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import { ResponderTable } from '@/components/responder-table'
 
 export default function SuperAdminDashboard() {
   const [activeEmergencies, setActiveEmergencies] = useState<GenericEmergencyMetric[]>([])
   const [alertsSent, setAlertsSent] = useState<GenericEmergencyMetric[]>([])
   const [impactedUsers, setImpactedUsers] = useState<GenericEmergencyMetric[]>([])
   const [eocStatus, setEocStatus] = useState<GenericEmergencyMetric[]>([])
+  const [responders, setResponders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedLocation, setSelectedLocation] = useState('All')
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
-      
+
       const fetchMetric = async (url: string, setter: (data: any) => void) => {
         try {
           const res = await fetch(url)
@@ -55,9 +58,10 @@ export default function SuperAdminDashboard() {
         fetchMetric('/api/active-emergencies', setActiveEmergencies),
         fetchMetric('/api/alerts-sent-emergencies', setAlertsSent),
         fetchMetric('/api/ready2go-users-impacted', setImpactedUsers),
-        fetchMetric('/api/virtual-eoc-status', setEocStatus)
+        fetchMetric('/api/virtual-eoc-status', setEocStatus),
+        fetchMetric('/api/responders', setResponders)
       ])
-      
+
       setLoading(false)
     }
 
@@ -71,20 +75,20 @@ export default function SuperAdminDashboard() {
     ...eocStatus.map(e => e.location)
   ].filter(Boolean))).sort()
 
-  const filteredActive = selectedLocation === 'All' 
-    ? activeEmergencies 
+  const filteredActive = selectedLocation === 'All'
+    ? activeEmergencies
     : activeEmergencies.filter(e => e.location === selectedLocation)
 
-  const filteredAlerts = selectedLocation === 'All' 
-    ? alertsSent 
+  const filteredAlerts = selectedLocation === 'All'
+    ? alertsSent
     : alertsSent.filter(e => e.location === selectedLocation)
 
-  const filteredImpacted = selectedLocation === 'All' 
-    ? impactedUsers 
+  const filteredImpacted = selectedLocation === 'All'
+    ? impactedUsers
     : impactedUsers.filter(e => e.location === selectedLocation)
 
-  const filteredEOC = selectedLocation === 'All' 
-    ? eocStatus 
+  const filteredEOC = selectedLocation === 'All'
+    ? eocStatus
     : eocStatus.filter(e => e.location === selectedLocation)
 
   return (
@@ -212,8 +216,8 @@ export default function SuperAdminDashboard() {
               </div>
               <Badge className={cn(
                 "border-none font-bold px-3 py-1 rounded-full flex items-center gap-2 w-fit text-[9px] uppercase tracking-widest",
-                (filteredEOC.length > 0 && filteredEOC[0]?.status === 'active') 
-                  ? 'bg-emerald-50 text-emerald-600' 
+                (filteredEOC.length > 0 && filteredEOC[0]?.status === 'active')
+                  ? 'bg-emerald-50 text-emerald-600'
                   : 'bg-slate-100 text-slate-500'
               )}>
                 <div className={cn(
@@ -225,14 +229,14 @@ export default function SuperAdminDashboard() {
             </div>
             <div className="pt-4 border-t border-slate-50">
               <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest leading-relaxed">
-                 System tracking.
+                System tracking.
               </p>
             </div>
           </Card>
         </section>
 
         {/* Main Content Area */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
           <div className="lg:col-span-2 space-y-8">
             <GISMap />
           </div>
@@ -244,8 +248,8 @@ export default function SuperAdminDashboard() {
                   <Target size={18} className="text-rose-500" />
                   <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight">New License Requests</h2>
                 </div>
-                <Link 
-                  href="/admin/licenses" 
+                <Link
+                  href="/admin/licenses"
                   className="flex items-center gap-1.5 text-[9px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-colors group bg-blue-50/50 px-3 py-1.5 rounded-lg border border-blue-100"
                 >
                   View All
@@ -257,13 +261,24 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
 
+        {/* Responders Table Section */}
+        {/* <div id="responders-section" className="space-y-6 pb-20">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
+              <HardHat size={20} />
+            </div>
+            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Field Force Command</h2>
+          </div>
+          <ResponderTable responders={responders} loading={loading} />
+        </div> */}
+
         {/* Footer Info */}
-        <div className="pt-10 flex flex-col items-center justify-center gap-4 opacity-40">
+        {/* <div className="pt-10 flex flex-col items-center justify-center gap-4 opacity-40">
           <Terminal size={24} className="text-slate-400" />
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] text-center leading-relaxed">
             Ready2Go Access Center • High Security • Stable Connection
           </p>
-        </div>
+        </div> */}
       </main>
     </div>
   )

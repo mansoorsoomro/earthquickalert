@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const roleFilter = searchParams.get('role');
         const requestedLicenseFilter = searchParams.get('requestedLicense');
+        const licenseIdFilter = searchParams.get('licenseId');
 
         if (!session || (session.user.role !== 'super-admin' && session.user.role !== 'sub-admin' && session.user.role !== 'admin')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -43,10 +44,15 @@ export async function GET(req: NextRequest) {
                 query.role = roleFilter;
             }
         }
-        
+
         // 2. requestedLicense filter (can be combined with other filters)
         if (requestedLicenseFilter === 'true') {
             query.requestedLicense = true;
+        }
+
+        // 3. licenseId filter (for Super-Admins viewing specific organizations)
+        if (licenseIdFilter) {
+            query.licenseId = licenseIdFilter;
         }
 
         const users = await User.find(query).sort({ createdAt: -1 });

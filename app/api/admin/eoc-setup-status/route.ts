@@ -14,18 +14,18 @@ export async function GET(req: NextRequest) {
         }
 
         const user = await User.findById(session.user.id).populate('licenseId');
-        
+
         if (!user || user.role !== 'sub-admin') {
             return NextResponse.json({ requiresSetup: false, userRole: user?.role });
         }
 
         if (!user.licenseId) {
-             // Sub-Admin without a license assigned yet (orphan)
-             return NextResponse.json({
-                 requiresSetup: true,
-                 orphan: true,
-                 message: 'No license assigned yet. Waiting for Super Admin.'
-             });
+            // Sub-Admin without a license assigned yet (orphan)
+            return NextResponse.json({
+                requiresSetup: true,
+                orphan: true,
+                message: 'No license assigned yet. Waiting for Super Admin.'
+            });
         }
 
         const license = user.licenseId as any;
@@ -36,14 +36,14 @@ export async function GET(req: NextRequest) {
 
         if (!hasBoundaries) {
             return NextResponse.json({
-                 requiresSetup: true,
-                 licenseId: license._id,
-                 organizationName: license.organizationName,
+                requiresSetup: true,
+                licenseId: license._id,
+                organizationName: license.organizationName,
             });
         }
 
         return NextResponse.json({ requiresSetup: false, licenseId: license._id });
-        
+
     } catch (error) {
         console.error('Fetch setup status error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

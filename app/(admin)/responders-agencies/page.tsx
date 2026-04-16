@@ -6,16 +6,16 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
-import { 
-    Eye, 
-    UserPlus, 
-    Info, 
-    MapPin, 
-    Shield, 
-    Activity, 
-    Settings, 
-    Search, 
-    Plus, 
+import {
+    Eye,
+    UserPlus,
+    Info,
+    MapPin,
+    Shield,
+    Activity,
+    Settings,
+    Search,
+    Plus,
     ExternalLink,
     Clock,
     CheckCircle2,
@@ -55,7 +55,7 @@ export default function RespondersAgenciesPage() {
     return (
         <div className="flex-1 overflow-auto bg-[#F8FAFC]">
             <main className="p-6 md:p-10 space-y-8 max-w-[1600px] mx-auto">
-                
+
                 {/* Info Card Header */}
                 <div className="bg-white border-l-4 border-l-[#33375D] rounded-xl p-8 shadow-sm border border-slate-200">
                     <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Responders & Agencies</h1>
@@ -92,9 +92,9 @@ export default function RespondersAgenciesPage() {
                                             <span className="text-slate-600 text-sm">{user.org}</span>
                                         </td>
                                         <td className="px-6 py-5">
-                                            <Switch 
-                                                checked={user.access} 
-                                                onCheckedChange={() => {}}
+                                            <Switch
+                                                checked={user.access}
+                                                onCheckedChange={() => { }}
                                                 className="data-[state=checked]:bg-[#33375D]"
                                             />
                                         </td>

@@ -12,15 +12,15 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { 
-  Building2, 
-  Shield, 
-  Loader2, 
-  MapPin, 
-  Mail, 
-  Phone, 
-  User, 
-  Globe, 
+import {
+  Building2,
+  Shield,
+  Loader2,
+  MapPin,
+  Mail,
+  Phone,
+  User,
+  Globe,
   Navigation,
   Search,
   Check,
@@ -62,7 +62,7 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
   const [availableUsers, setAvailableUsers] = useState<any[]>([])
   const [userSearch, setUserSearch] = useState('')
   const [isNewUser, setIsNewUser] = useState(false)
-  
+
   // Form State
   const [formData, setFormData] = useState({
     organizationName: '',
@@ -102,7 +102,7 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
         zipcode: user.zipcode || '',
         billingAddress: fullAddress || prev.billingAddress
       }))
-      
+
       if (fullAddress) {
         // Attempt to update map center if address exists
         const geocode = async () => {
@@ -112,7 +112,7 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
             if (data.results?.[0]?.geometry?.location) {
               setMapCenter(data.results[0].geometry.location)
             }
-          } catch (e) {}
+          } catch (e) { }
         }
         geocode()
       }
@@ -197,32 +197,64 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
               <h3 className="text-xs font-semibold text-blue-600 uppercase tracking-wider flex items-center gap-2">
                 <Building2 size={14} /> Organization Details
               </h3>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="col-span-2 space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2 space-y-2">
                   <Label className="text-sm font-medium text-slate-700 ml-1">Organization Name</Label>
                   <Input
                     required
                     value={formData.organizationName}
                     onChange={(e) => setFormData({ ...formData, organizationName: e.target.value })}
-                    placeholder="Enter organization name"
-                    className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    placeholder="e.g. California State, Miami City, or SoFi Stadium"
+                    className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-slate-700 ml-1">Contact Name</Label>
+                  <Label className="text-sm font-medium text-slate-700 ml-1">Point of Contact</Label>
                   <Input
-                    readOnly
+                    required
                     value={formData.billingContact}
-                    className="h-11 bg-slate-50 border-slate-100 rounded-lg text-slate-500 cursor-not-allowed"
+                    onChange={(e) => setFormData({ ...formData, billingContact: e.target.value })}
+                    placeholder="Full name of representative"
+                    className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-slate-700 ml-1">Contact Email</Label>
+                  <Label className="text-sm font-medium text-slate-700 ml-1">Operational Email</Label>
                   <Input
-                    readOnly
+                    required
+                    type="email"
                     value={formData.billingEmail}
-                    className="h-11 bg-slate-50 border-slate-100 rounded-lg text-slate-500 cursor-not-allowed"
+                    onChange={(e) => setFormData({ ...formData, billingEmail: e.target.value })}
+                    placeholder="email@organization.com"
+                    className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-slate-700 ml-1">Phone Number</Label>
+                  <Input
+                    required
+                    type="tel"
+                    value={formData.phoneNumber}
+                    onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                    placeholder="+1 (555) 000-0000"
+                    className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-slate-700 ml-1">Radius (Miles)</Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      value={formData.radiusMile}
+                      onChange={(e) => setFormData({ ...formData, radiusMile: parseInt(e.target.value) || 0 })}
+                      className="h-11 bg-white border-slate-200 rounded-lg pr-10 font-medium"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold uppercase">Mi</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -249,7 +281,7 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                     <Input disabled className="h-11 bg-slate-50 border-slate-200 rounded-lg" placeholder="Initializing maps..." />
                   )}
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                   <div className="space-y-6">
                     <div className="flex justify-between items-center">
@@ -271,15 +303,15 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                       <span>100 Miles</span>
                     </div>
                   </div>
-                  
+
                   {isLoaded && (
                     <div className="h-32 rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
                       <GoogleMap
                         mapContainerStyle={{ width: '100%', height: '100%' }}
                         center={mapCenter}
                         zoom={10}
-                        options={{ 
-                          disableDefaultUI: true, 
+                        options={{
+                          disableDefaultUI: true,
                           zoomControl: false,
                           styles: [
                             { featureType: 'all', elementType: 'labels', stylers: [{ visibility: 'on' }] }
@@ -290,10 +322,10 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                         <Circle
                           center={mapCenter}
                           radius={formData.radiusMile * 1609.34}
-                          options={{ 
-                            fillOpacity: 0.1, 
-                            strokeOpacity: 0.4, 
-                            fillColor: '#3b82f6', 
+                          options={{
+                            fillOpacity: 0.1,
+                            strokeOpacity: 0.4,
+                            fillColor: '#3b82f6',
                             strokeColor: '#3b82f6',
                             strokeWeight: 1
                           }}
@@ -307,18 +339,18 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
           </div>
 
           <DialogFooter className="p-8 bg-slate-50/50 border-t border-slate-100 gap-3">
-            <Button 
-                type="button" 
-                variant="ghost" 
-                onClick={onClose} 
-                className="h-11 px-6 font-medium text-slate-500 hover:text-slate-900 transition-colors"
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              className="h-11 px-6 font-medium text-slate-500 hover:text-slate-900 transition-colors"
             >
               Cancel
             </Button>
-            <Button 
-                type="submit" 
-                disabled={loading} 
-                className="h-11 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all shadow-lg shadow-blue-500/25 active:scale-[0.98]"
+            <Button
+              type="submit"
+              disabled={loading}
+              className="h-11 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all shadow-lg shadow-blue-500/25 active:scale-[0.98]"
             >
               {loading ? (
                 <>

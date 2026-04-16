@@ -413,6 +413,48 @@ export class OpenAIService {
         });
     }
 
+    async generateCountryStatus(country: string, weatherData: any, earthquakeData: any[]): Promise<string> {
+        const fallback = `Stability report for ${country}: Monitoring active hazards. Weather alerts are currently present in some sectors. No major seismic activity impacting operations.`;
+
+        try {
+            const result = await this.callOpenAI<{ summary: string }>([
+                {
+                    role: 'system',
+                    content: 'You are a global emergency intelligence officer. Provide a concise, professional 1-2 sentence status summary for the entire country. Focus on immediate threats or stability. Return JSON with key "summary".',
+                },
+                {
+                    role: 'user',
+                    content: `Country: ${country}\nWeather Data: ${JSON.stringify(weatherData)}\nEarthquake Data: ${JSON.stringify(earthquakeData)}\nSummarize current status.`,
+                },
+            ], { summary: fallback });
+
+            return result.summary || fallback;
+        } catch (error) {
+            return fallback;
+        }
+    }
+
+    async generateAlertLanguage(alertType: string, context?: string): Promise<string> {
+        const fallback = `EMERGENCY ALERT: A ${alertType} has been issued. Seek shelter and monitor local communications for updates.`;
+
+        try {
+            const result = await this.callOpenAI<{ message: string }>([
+                {
+                    role: 'system',
+                    content: 'You are an official Emergency Response Communications Officer. Generate a professional, authoritative, and concise emergency alert message (max 160 characters for SMS compatibility). Return JSON with key "message".',
+                },
+                {
+                    role: 'user',
+                    content: `Alert Type: ${alertType}\n${context ? `Additional Context: ${context}` : ''}\nGenerate the alert message.`,
+                },
+            ], { message: fallback });
+
+            return result.message || fallback;
+        } catch (error) {
+            return fallback;
+        }
+    }
+
     splitAlertsBySource(alerts: Alert[]): { weather: Alert[]; earthquakes: Alert[]; social: Alert[]; resources: Alert[] } {
         return {
             weather: alerts.filter(alert => alert.source === AlertSource.WEATHER_API),

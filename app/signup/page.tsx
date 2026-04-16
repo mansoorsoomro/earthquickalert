@@ -193,7 +193,7 @@ export default function SignupPage() {
               className="animate-in fade-in zoom-in duration-1000 mb-8"
             />
           </div>
-          
+
           <h1 className="text-4xl font-black mb-6 tracking-tighter uppercase whitespace-nowrap">
             Operational <span className="text-[#FFD75E]">Onboarding</span>
           </h1>
@@ -202,22 +202,7 @@ export default function SignupPage() {
             Secure your community. Empower your team. Join the global network of modernized emergency coordination.
           </p>
 
-          <div className="grid grid-cols-2 gap-6 text-left w-full">
-            <div className="p-6 bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-sm group hover:bg-white/10 transition-all cursor-default">
-               <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform">
-                  <Shield size={22} />
-               </div>
-               <p className="text-white font-black text-lg mb-1 uppercase tracking-tight">Verified</p>
-               <p className="text-[9px] text-slate-400 uppercase tracking-widest font-black opacity-60">Identity Shield</p>
-            </div>
-            <div className="p-6 bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-sm group hover:bg-white/10 transition-all cursor-default">
-               <div className="w-12 h-12 rounded-2xl bg-[#FFD75E]/20 flex items-center justify-center text-[#FFD75E] mb-4 group-hover:scale-110 transition-transform">
-                  <Map size={22} />
-               </div>
-               <p className="text-white font-black text-lg mb-1 uppercase tracking-tight">Geo-Linked</p>
-               <p className="text-[9px] text-[#FFD75E] uppercase tracking-widest font-black opacity-60">Location Identity</p>
-            </div>
-          </div>
+
         </div>
       </div>
 
@@ -443,7 +428,7 @@ export default function SignupPage() {
 
               {error && (
                 <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-600 text-[10px] font-black uppercase tracking-widest animate-in fade-in slide-in-from-top-2">
-                   {error}
+                  {error}
                 </div>
               )}
 

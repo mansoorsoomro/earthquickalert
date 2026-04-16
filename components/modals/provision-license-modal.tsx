@@ -12,11 +12,11 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { 
-  Building2, 
-  Shield, 
-  Loader2, 
-  MapPin, 
+import {
+  Building2,
+  Shield,
+  Loader2,
+  MapPin,
   Search,
   Check,
   ChevronDown,
@@ -48,7 +48,7 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
   const [loading, setLoading] = useState(false)
   const [availableUsers, setAvailableUsers] = useState<any[]>([])
   const [selectedUserId, setSelectedUserId] = useState('')
-  
+
   // Form State
   const [formData, setFormData] = useState({
     organizationName: '',
@@ -143,8 +143,8 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
   const handleGrant = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedUserId) {
-        toast.error("Please select a sub-admin")
-        return
+      toast.error("Please select a sub-admin")
+      return
     }
     setLoading(true)
     try {
@@ -205,7 +205,7 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
                     className="h-12 bg-white border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 transition-all font-medium"
                   />
                 </div>
-                
+
                 <div className="col-span-2 space-y-2">
                   <Label className="text-sm font-medium text-slate-700 ml-1">Assigned Sub-Admin</Label>
                   <div className="relative">
@@ -227,15 +227,15 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
                 </div>
 
                 {selectedUserId && (
-                    <div className="col-span-2 bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm">
-                            <User size={20} />
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-blue-900 uppercase tracking-widest leading-none mb-1">Authenticated Email</p>
-                            <p className="text-sm font-medium text-blue-700">{formData.billingEmail}</p>
-                        </div>
+                  <div className="col-span-2 bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm">
+                      <User size={20} />
                     </div>
+                    <div>
+                      <p className="text-xs font-bold text-blue-900 uppercase tracking-widest leading-none mb-1">Authenticated Email</p>
+                      <p className="text-sm font-medium text-blue-700">{formData.billingEmail}</p>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -262,7 +262,7 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
                     <Input disabled className="h-12 bg-slate-50 border-slate-200 rounded-xl" placeholder="Initializing maps..." />
                   )}
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                   <div className="space-y-6">
                     <div className="flex justify-between items-center">
@@ -284,15 +284,15 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
                       <span>100 Mi</span>
                     </div>
                   </div>
-                  
+
                   {isLoaded && (
                     <div className="h-40 rounded-3xl overflow-hidden border border-slate-200 shadow-sm shadow-blue-500/5">
                       <GoogleMap
                         mapContainerStyle={{ width: '100%', height: '100%' }}
                         center={mapCenter}
                         zoom={10}
-                        options={{ 
-                          disableDefaultUI: true, 
+                        options={{
+                          disableDefaultUI: true,
                           zoomControl: false,
                           styles: [
                             { featureType: 'all', elementType: 'labels', stylers: [{ visibility: 'on' }] }
@@ -303,10 +303,10 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
                         <Circle
                           center={mapCenter}
                           radius={formData.radiusMile * 1609.34}
-                          options={{ 
-                            fillOpacity: 0.1, 
-                            strokeOpacity: 0.4, 
-                            fillColor: '#3b82f6', 
+                          options={{
+                            fillOpacity: 0.1,
+                            strokeOpacity: 0.4,
+                            fillColor: '#3b82f6',
                             strokeColor: '#3b82f6',
                             strokeWeight: 1
                           }}
@@ -320,18 +320,18 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
           </div>
 
           <DialogFooter className="p-8 bg-slate-50/50 border-t border-slate-100 gap-3">
-            <Button 
-                type="button" 
-                variant="ghost" 
-                onClick={onClose} 
-                className="h-12 px-6 font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase text-xs tracking-widest"
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              className="h-12 px-6 font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase text-xs tracking-widest"
             >
               Cancel
             </Button>
-            <Button 
-                type="submit" 
-                disabled={loading} 
-                className="h-12 px-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black transition-all shadow-lg active:scale-[0.98] uppercase text-xs tracking-widest"
+            <Button
+              type="submit"
+              disabled={loading}
+              className="h-12 px-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black transition-all shadow-lg active:scale-[0.98] uppercase text-xs tracking-widest"
             >
               {loading ? (
                 <>
