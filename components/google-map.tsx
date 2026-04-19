@@ -8,7 +8,7 @@ interface MapMarker {
     id: string
     position: { lat: number; lng: number }
     title: string
-    type: 'user' | 'hazard' | 'earthquake' | 'weather' | 'admin' | 'incident' | 'condition'
+    type: 'user' | 'hazard' | 'earthquake' | 'weather' | 'admin' | 'incident' | 'condition' | 'infrastructure'
     isSafe?: boolean
     mag?: number
     description?: string
@@ -17,6 +17,7 @@ interface MapMarker {
     radius?: number // For highlighting hazard zones
     timestamp?: string
     color?: string
+    icon?: string
 }
 
 interface GoogleMapProps {
@@ -121,11 +122,16 @@ export function GoogleMap({ address, markers = [], center, zoom = 10 }: GoogleMa
                                 } : marker.type === 'admin' ? {
                                     url: 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png',
                                     scaledSize: new google.maps.Size(42, 42)
-                                } : marker.type === 'incident' ? {
-                                    url: (marker as any).icon === 'fire' ? 'https://maps.google.com/mapfiles/ms/icons/firedept.png' :
-                                         (marker as any).icon === 'police' ? 'https://maps.google.com/mapfiles/ms/icons/police.png' :
-                                         (marker as any).icon === 'medical' ? 'https://maps.google.com/mapfiles/ms/icons/hospital.png' :
-                                         'https://maps.google.com/mapfiles/ms/icons/caution.png',
+                                } : (marker.type === 'incident' || marker.type === 'infrastructure') ? {
+                                    url: marker.color === '#10B981' ? 'https://maps.google.com/mapfiles/ms/icons/green-dot.png' :
+                                        marker.color === '#3B82F6' ? 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png' :
+                                            marker.color === '#F59E0B' ? 'https://maps.google.com/mapfiles/ms/icons/orange-dot.png' :
+                                                marker.color === '#06B6D4' ? 'https://maps.google.com/mapfiles/ms/icons/ltblue-dot.png' :
+                                                    marker.color === '#6366F1' ? 'https://maps.google.com/mapfiles/ms/icons/purple-dot.png' :
+                                                        marker.color === '#EC4899' ? 'https://maps.google.com/mapfiles/ms/icons/pink-dot.png' :
+                                                            marker.icon === 'fire' ? 'https://maps.google.com/mapfiles/ms/icons/firedept.png' :
+                                                                marker.icon === 'police' ? 'https://maps.google.com/mapfiles/ms/icons/police.png' :
+                                                                    'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
                                     scaledSize: new google.maps.Size(32, 32)
                                 } : marker.type === 'condition' ? {
                                     path: google.maps.SymbolPath.CIRCLE,

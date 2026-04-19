@@ -133,7 +133,7 @@ export function LicenseRequestList() {
                             >
                                 Approve
                             </Button>
-                            <button 
+                            <button
                                 onClick={() => handleReject(user._id)}
                                 className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
                                 title="Reject Request"

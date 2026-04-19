@@ -413,22 +413,38 @@ export class OpenAIService {
         });
     }
 
-    async generateCountryStatus(country: string, weatherData: any, earthquakeData: any[]): Promise<string> {
-        const fallback = `Stability report for ${country}: Monitoring active hazards. Weather alerts are currently present in some sectors. No major seismic activity impacting operations.`;
+    async generateCountryStatus(country: string, weatherData: any, earthquakeData: any[]): Promise<{
+        summary: string;
+        suggestedType?: string;
+        suggestedMessage?: string;
+    }> {
+        const fallback = {
+            summary: `Stability report for ${country}: Monitoring active hazards. Weather alerts are currently present in some sectors. No major seismic activity impacting operations.`,
+            suggestedType: 'Severe Thunderstorm Warning',
+            suggestedMessage: `Official NWS Alert for ${country}: Severe weather detected in region. Please monitor local conditions and follows safety protocols.`
+        };
 
         try {
-            const result = await this.callOpenAI<{ summary: string }>([
+            const result = await this.callOpenAI<{ 
+                summary: string; 
+                suggestedType: string; 
+                suggestedMessage: string;
+            }>([
                 {
                     role: 'system',
-                    content: 'You are a global emergency intelligence officer. Provide a concise, professional 1-2 sentence status summary for the entire country. Focus on immediate threats or stability. Return JSON with key "summary".',
+                    content: 'You are a global emergency intelligence officer. Analyze the provided weather and earthquake data for the country and provide: 1) A concise professional summary. 2) A suggested NWS Alert Type from standard categories. 3) A drafted alert message (max 160 chars). Return valid JSON with keys: summary, suggestedType, suggestedMessage.',
                 },
                 {
                     role: 'user',
-                    content: `Country: ${country}\nWeather Data: ${JSON.stringify(weatherData)}\nEarthquake Data: ${JSON.stringify(earthquakeData)}\nSummarize current status.`,
+                    content: `Country: ${country}\nWeather Data: ${JSON.stringify(weatherData)}\nEarthquake Data: ${JSON.stringify(earthquakeData)}\nProvide intelligence report.`,
                 },
-            ], { summary: fallback });
+            ], fallback);
 
-            return result.summary || fallback;
+            return {
+                summary: result.summary || fallback.summary,
+                suggestedType: result.suggestedType || fallback.suggestedType,
+                suggestedMessage: result.suggestedMessage || fallback.suggestedMessage
+            };
         } catch (error) {
             return fallback;
         }

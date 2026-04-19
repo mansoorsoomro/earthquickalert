@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Zap, Bell, Eye, CheckCircle, AlertCircle, Shield, Terminal, Radio, Activity, Target } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { SendCommunityAlertModal } from './modals/send-community-alert-modal'
+import { EnhancedAlertModal } from './modals/enhanced-alert-modal'
 import { ActiveEmergencyEventsModal } from './modals/active-emergency-events-modal'
 import { GISEOCActivatedModal } from './modals/gis-eoc-activated-modal'
 import { SituationReportModal } from './modals/situation-report-modal'
 import { RecoveryToolsModal } from './modals/recovery-tools-modal'
+import { ManageRespondersModal } from './modals/manage-responders-modal'
 
 interface QuickActionButtonsProps {
   onSendAlert?: () => void
@@ -31,11 +32,12 @@ export function QuickActionButtons({
   const [isEOCModalOpen, setIsEOCModalOpen] = useState(false)
   const [isSitRepModalOpen, setIsSitRepModalOpen] = useState(false)
   const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false)
+  const [isRespondersModalOpen, setIsRespondersModalOpen] = useState(false)
 
   const actions = [
     { label: 'Activate Virtual EOC', color: 'bg-red-600 hover:bg-red-500 shadow-red-600/20', icon: Zap, onClick: () => setIsEOCModalOpen(true), badge: 'Command' },
-    { label: 'Broadcast Alert', color: 'bg-blue-600 hover:bg-blue-500 shadow-blue-600/20', icon: Bell, onClick: () => setIsAlertModalOpen(true), badge: 'Signal' },
-    { label: 'Event Monitoring', color: 'bg-blue-700 hover:bg-blue-800 shadow-blue-700/20', icon: Radio, onClick: () => setIsEventsModalOpen(true), badge: 'Live' },
+    { label: 'Enhanced Alert Matrix', color: 'bg-blue-600 hover:bg-blue-500 shadow-blue-600/20', icon: Bell, onClick: () => setIsAlertModalOpen(true), badge: 'Matrix' },
+    { label: 'Personnel & Access', color: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20', icon: Shield, onClick: () => setIsRespondersModalOpen(true), badge: 'Identity' },
     { label: 'SitRep Matrix', color: 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20', icon: Activity, onClick: () => setIsSitRepModalOpen(true), badge: 'Core' },
     { label: 'Recovery Suite', color: 'bg-amber-600 hover:bg-amber-500 shadow-amber-600/20', icon: Shield, onClick: () => setIsRecoveryModalOpen(true), badge: 'Vault' }
   ]
@@ -91,9 +93,13 @@ export function QuickActionButtons({
         </div>
       </div>
 
-      <SendCommunityAlertModal
+      <EnhancedAlertModal
         isOpen={isAlertModalOpen}
         onClose={() => setIsAlertModalOpen(false)}
+      />
+      <ManageRespondersModal
+        isOpen={isRespondersModalOpen}
+        onClose={() => setIsRespondersModalOpen(false)}
       />
       <ActiveEmergencyEventsModal
         isOpen={isEventsModalOpen}

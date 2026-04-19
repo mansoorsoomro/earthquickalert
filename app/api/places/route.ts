@@ -1,14 +1,5 @@
 import { NextResponse } from 'next/server';
-
-// Map our type strings to OpenStreetMap amenity/shop tags
-const typeToOsmTag: Record<string, { key: string; value: string }> = {
-    hospital: { key: 'amenity', value: 'hospital' },
-    pharmacy: { key: 'amenity', value: 'pharmacy' },
-    gas_station: { key: 'amenity', value: 'fuel' },
-    lodging: { key: 'tourism', value: 'hotel' },
-    local_government_office: { key: 'amenity', value: 'social_facility' },
-    shelter: { key: 'amenity', value: 'shelter' },
-};
+import { GOOGLE_MAPS_API_KEY } from '@/lib/constants/google-maps-config';
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -16,7 +7,7 @@ export async function GET(req: Request) {
     const lat = searchParams.get('lat');
     const lng = searchParams.get('lng');
     const type = searchParams.get('type') || 'hospital';
-    const radius = searchParams.get('radius') || '5000';
+    const radius = searchParams.get('radius') || '2000';
 
     // Support legacy text-search mode (used by address autocomplete)
     const query = searchParams.get('q') || searchParams.get('address');
@@ -25,57 +16,40 @@ export async function GET(req: Request) {
     }
 
     if (!lat || !lng) {
-        return NextResponse.json({ error: 'Query is required' }, { status: 400 });
+        return NextResponse.json({ error: 'Coordinates are required' }, { status: 400 });
     }
 
     try {
-        const osmTag = typeToOsmTag[type] || { key: 'amenity', value: type };
+        // Construct Google Maps Nearby Search URL
+        const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=${type}&key=${GOOGLE_MAPS_API_KEY}`;
 
-        // Overpass API — free, no key required
-        const overpassQuery = `
-            [out:json][timeout:10];
-            (
-              node["${osmTag.key}"="${osmTag.value}"](around:${radius},${lat},${lng});
-              way["${osmTag.key}"="${osmTag.value}"](around:${radius},${lat},${lng});
-            );
-            out center 20;
-        `;
+        console.log(`Fetching from Google Places: ${type} at ${lat},${lng} (radius: ${radius})`);
 
-        const url = 'https://overpass-api.de/api/interpreter';
-        const response = await fetch(url, {
-            method: 'POST',
-            body: overpassQuery,
-            headers: {
-                'Content-Type': 'text/plain',
-                'User-Agent': 'EarthquickEmergencyDashboard/1.0',
-            },
-        });
-
-        // Treat rate-limit (429) and timeout (504) as graceful empty results
+        const response = await fetch(url);
+        
         if (!response.ok) {
-            console.warn(`Overpass API returned ${response.status}, returning empty results`);
+            console.error(`Google Places API returned status ${response.status}`);
             return NextResponse.json({ results: [] });
         }
 
         const data = await response.json();
-        const elements: any[] = data.elements || [];
 
-        const results = elements.map((el: any) => {
-            const elLat = el.lat ?? el.center?.lat;
-            const elLng = el.lon ?? el.center?.lon;
-            const tags = el.tags || {};
-            const name = tags.name || tags['name:en'] || type;
+        if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+            console.warn(`Google Places API status: ${data.status}`, data.error_message);
+            return NextResponse.json({ results: [] });
+        }
 
+        const results = (data.results || []).map((place: any) => {
             return {
-                place_id: `${el.type}_${el.id}`,
-                name,
+                place_id: place.place_id,
+                name: place.name,
+                type: type, 
                 geometry: {
-                    location: { lat: elLat, lng: elLng },
+                    location: place.geometry.location,
                 },
-                vicinity: [tags['addr:street'], tags['addr:housenumber'], tags['addr:city']]
-                    .filter(Boolean)
-                    .join(' ') || 'Address not available',
-                formatted_phone_number: tags.phone || tags['contact:phone'] || undefined,
+                vicinity: place.vicinity || 'Address not available',
+                rating: place.rating,
+                user_ratings_total: place.user_ratings_total,
             };
         });
 

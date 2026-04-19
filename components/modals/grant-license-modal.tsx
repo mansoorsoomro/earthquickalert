@@ -245,27 +245,6 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-slate-700 ml-1">Radius (Miles)</Label>
-                  <div className="relative">
-                    <Input
-                      type="number"
-                      value={formData.radiusMile}
-                      onChange={(e) => setFormData({ ...formData, radiusMile: parseInt(e.target.value) || 0 })}
-                      className="h-11 bg-white border-slate-200 rounded-lg pr-10 font-medium"
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold uppercase">Mi</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Location & Radius */}
-            <div className="space-y-4 pt-8 border-t border-slate-100">
-              <h3 className="text-xs font-semibold text-blue-600 uppercase tracking-wider flex items-center gap-2">
-                <MapPin size={14} /> Service Area
-              </h3>
-              <div className="space-y-6">
-                <div className="space-y-2">
                   <Label className="text-sm font-medium text-slate-700 ml-1">Primary Address</Label>
                   {isLoaded ? (
                     <Autocomplete onLoad={setAutocomplete} onPlaceChanged={onPlaceChanged}>
@@ -281,6 +260,14 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                     <Input disabled className="h-11 bg-slate-50 border-slate-200 rounded-lg" placeholder="Initializing maps..." />
                   )}
                 </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-8 border-t border-slate-100">
+              <h3 className="text-xs font-semibold text-blue-600 uppercase tracking-wider flex items-center gap-2">
+                <MapPin size={14} /> Service Area
+              </h3>
+              <div className="space-y-6">
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                   <div className="space-y-6">

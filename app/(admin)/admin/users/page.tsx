@@ -30,7 +30,8 @@ import {
     Settings,
     MapPin,
     Briefcase,
-    Bell
+    Bell,
+    ArrowLeft
 } from "lucide-react"
 import { toast } from "sonner"
 import { GrantLicenseModal } from "@/components/modals/grant-license-modal"
@@ -65,6 +66,8 @@ export default function AdminUsersPage() {
     const [search, setSearch] = useState('')
     const [userRole, setUserRole] = useState<string | null>(null)
     const [selectedUser, setSelectedUser] = useState<IUser | null>(null)
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+    const [viewMode, setViewMode] = useState<'overview' | 'detail'>('overview')
     const [isGrantModalOpen, setIsGrantModalOpen] = useState(false)
     const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false)
 
@@ -116,14 +119,31 @@ export default function AdminUsersPage() {
     }, [fetchUsers])
 
     const handleOrgSelect = (orgId: string, orgName: string) => {
-        if (selectedOrgId === orgId) {
+        if (selectedOrgId === orgId && viewMode === 'detail') {
+            setViewMode('overview')
             setSelectedOrgId(null)
             setSelectedOrgName('')
+            setSelectedUserId(null)
             fetchUsers(null)
         } else {
             setSelectedOrgId(orgId)
             setSelectedOrgName(orgName)
+            setSelectedUserId(null)
             fetchUsers(orgId)
+            setViewMode('detail')
+        }
+    }
+
+    const handleUserSelect = (user: IUser) => {
+        setSelectedUserId(user._id)
+        if (user.licenseId) {
+            const org = organizations.find(o => o._id === user.licenseId)
+            setSelectedOrgId(user.licenseId)
+            setSelectedOrgName(org?.organizationName || 'Linked Node')
+            fetchUsers(user.licenseId)
+            setViewMode('detail')
+        } else {
+            toast.info("This user is not yet associated with an organization node.")
         }
     }
 
@@ -188,231 +208,327 @@ export default function AdminUsersPage() {
                     <p className="text-slate-500 font-medium tracking-tight">System configuration for operational personnel, decision makers, and agency partners.</p>
                 </div>
 
-                {/* Licensee Portal (Super Admin Only) */}
-                {userRole === 'super-admin' && (
-                    <div className="space-y-6">
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-1 bg-[#33375D] rounded-full" />
-                            <h2 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.4em]">Active Licensees Portal</h2>
-                        </div>
+                {viewMode === 'overview' ? (
+                    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        {/* Licensee Portal (Super Admin Only) */}
+                        {userRole === 'super-admin' && (
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-1 bg-[#33375D] rounded-full" />
+                                    <h2 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.4em]">Active Licensees Portal</h2>
+                                </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            {organizations.map((org) => (
-                                <Card
-                                    key={org._id}
-                                    onClick={() => handleOrgSelect(org._id, org.organizationName)}
-                                    className={cn(
-                                        "cursor-pointer transition-all duration-500 border-none overflow-hidden rounded-[32px] relative group",
-                                        selectedOrgId === org._id
-                                            ? "bg-[#33375D] text-white scale-[1.02] shadow-[0_20px_50px_rgba(51,55,93,0.3)]"
-                                            : "bg-white hover:bg-slate-50 border border-slate-100 shadow-sm hover:shadow-xl"
-                                    )}
-                                >
-                                    <div className="p-8">
-                                        <div className="flex items-start justify-between mb-6">
-                                            <div className={cn(
-                                                "w-12 h-12 rounded-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-110",
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                    {organizations.map((org) => (
+                                        <Card
+                                            key={org._id}
+                                            onClick={() => handleOrgSelect(org._id, org.organizationName)}
+                                            className={cn(
+                                                "cursor-pointer transition-all duration-500 border-none overflow-hidden rounded-[32px] relative group",
                                                 selectedOrgId === org._id
-                                                    ? "bg-white/10 border border-white/10"
-                                                    : "bg-slate-100 group-hover:bg-[#33375D]/5 text-slate-400 group-hover:text-[#33375D]"
-                                            )}>
-                                                <Building2 size={24} />
-                                            </div>
-                                            {selectedOrgId === org._id && (
-                                                <Badge className="bg-emerald-500 text-white border-none text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full">
-                                                    Active
-                                                </Badge>
+                                                    ? "bg-[#33375D] text-white scale-[1.02] shadow-[0_20px_50px_rgba(51,55,93,0.3)]"
+                                                    : "bg-white hover:bg-slate-50 border border-slate-100 shadow-sm hover:shadow-xl"
                                             )}
-                                        </div>
-
-                                        <h3 className={cn(
-                                            "text-lg font-black uppercase tracking-tight mb-1",
-                                            selectedOrgId === org._id ? "text-white" : "text-slate-900"
-                                        )}>
-                                            {org.organizationName}
-                                        </h3>
-
-                                        <div className={cn(
-                                            "text-[10px] font-bold uppercase tracking-[0.2em]",
-                                            selectedOrgId === org._id ? "text-slate-300" : "text-slate-400"
-                                        )}>
-                                            Tier: {org.subscriptionDetails?.planType || 'Enterprise'}
-                                        </div>
-
-                                        {selectedOrgId === org._id && (
-                                            <div className="mt-8 pt-6 border-t border-white/10 flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                                <div className="flex flex-col gap-0.5">
-                                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-400">Dashboard</span>
-                                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-400">Bridge</span>
+                                        >
+                                            <div className="p-8">
+                                                <div className="flex items-start justify-between mb-6">
+                                                    <div className={cn(
+                                                        "w-12 h-12 rounded-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-110",
+                                                        selectedOrgId === org._id
+                                                            ? "bg-white/10 border border-white/10"
+                                                            : "bg-slate-100 group-hover:bg-[#33375D]/5 text-slate-400 group-hover:text-[#33375D]"
+                                                    )}>
+                                                        <Building2 size={24} />
+                                                    </div>
+                                                    {selectedOrgId === org._id && (
+                                                        <Badge className="bg-emerald-500 text-white border-none text-[8px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full">
+                                                            Selected
+                                                        </Badge>
+                                                    )}
                                                 </div>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        router.push(`/admin-dashboard?licenseId=${org._id}`);
-                                                    }}
-                                                    className="w-full h-12 bg-white/10 hover:bg-white/20 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border border-white/10 shadow-xl backdrop-blur-md group/btn transition-all active:scale-95 flex items-center justify-center gap-3"
-                                                >
-                                                    Launch Dashboard <ArrowUpRight size={18} className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </Card>
-                            ))}
-                        </div>
-                    </div>
-                )}
 
-                {/* Unified Personnel Search */}
-                <div className="relative max-w-md group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#33375D] transition-colors w-4 h-4" />
-                    <input
-                        type="search"
-                        placeholder="Search Identity Registry..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-2xl pl-11 pr-4 py-4 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-[#33375D]/5 focus:border-[#33375D] transition-all shadow-sm"
-                    />
-                </div>
+                                                <h3 className={cn(
+                                                    "text-lg font-black uppercase tracking-tight mb-1",
+                                                    selectedOrgId === org._id ? "text-white" : "text-slate-900"
+                                                )}>
+                                                    {org.organizationName}
+                                                </h3>
 
-                {/* Admin Table */}
-                <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-                    <CardHeader className="p-6 border-b border-slate-100 bg-white flex flex-row items-center justify-between">
-                        <CardTitle className="text-lg font-black text-slate-900 uppercase tracking-tight">Decision Makers & Dispatchers</CardTitle>
-                        <Badge className="bg-[#33375D] text-white px-3 py-1 rounded-full text-[10px] font-bold border-none">{adminNodes.length} Verified Accounts</Badge>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead className="bg-slate-50 border-b border-slate-100">
-                                    <tr>
-                                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Name</th>
-                                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Role</th>
-                                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Access</th>
-                                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Oversight</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-50">
-                                    {adminNodes.length === 0 ? (
-                                        <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-400 italic">Zero administrative nodes detected</td></tr>
-                                    ) : (
-                                        adminNodes.map((user) => (
-                                            <tr key={user._id} className="hover:bg-slate-50 transition-colors">
-                                                <td className="px-6 py-5 text-sm font-bold text-slate-900 leading-none">{user.name}</td>
-                                                <td className="px-6 py-5">
-                                                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">{user.role?.replace('-', ' ')}</span>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <Switch
-                                                        checked={user.accountStatus === 'approved'}
-                                                        onCheckedChange={(checked) => handleStatusUpdate(user._id, checked ? 'approved' : 'rejected')}
-                                                        className="data-[state=checked]:bg-[#33375D]"
-                                                    />
-                                                </td>
-                                                <td className="px-6 py-5 text-right">
+                                                <div className={cn(
+                                                    "text-[10px] font-bold uppercase tracking-[0.2em]",
+                                                    selectedOrgId === org._id ? "text-slate-300" : "text-slate-400"
+                                                )}>
+                                                    Tier: {org.subscriptionDetails?.planType || 'Enterprise'}
+                                                </div>
+
+                                                <div className="mt-8 pt-6 border-t border-white/10 flex flex-col gap-5">
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => { setSelectedUser(user); setIsGrantModalOpen(true); }}
-                                                        className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleOrgSelect(org._id, org.organizationName);
+                                                        }}
+                                                        className={cn(
+                                                            "w-full h-12 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border border-white/10 shadow-xl backdrop-blur-md group/btn transition-all active:scale-95 flex items-center justify-center gap-3",
+                                                            selectedOrgId === org._id ? "bg-white/10 hover:bg-white/20 text-white" : "bg-slate-900 text-white hover:bg-slate-800"
+                                                        )}
                                                     >
-                                                        <Shield size={16} />
+                                                        Verify Dispatch <ArrowUpRight size={18} className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
                                                     </Button>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Responders Table */}
-                <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-                    <CardHeader className="p-6 border-b border-slate-100 bg-white container-between">
-                        <CardTitle className="text-lg font-black text-slate-900 uppercase tracking-tight">Active Duty Responders</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead className="bg-slate-50 border-b border-slate-100">
-                                    <tr>
-                                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Name</th>
-                                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Function</th>
-                                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                                        <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Profile</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-50">
-                                    {fieldResponders.length === 0 ? (
-                                        <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-400 italic">No operators activated in this sector</td></tr>
-                                    ) : (
-                                        fieldResponders.map((user) => (
-                                            <tr key={user._id} className="hover:bg-slate-50 transition-colors">
-                                                <td className="px-6 py-5 text-sm font-bold text-slate-900 leading-none">{user.name}</td>
-                                                <td className="px-6 py-5">
-                                                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">{user.responderFunction || 'General Support'}</span>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <Badge className={cn("text-[8px] font-black uppercase px-2 py-0.5 rounded-full border-none", user.accountStatus === 'approved' ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>
-                                                        {user.accountStatus === 'approved' ? 'Active' : 'Standby'}
-                                                    </Badge>
-                                                </td>
-                                                <td className="px-6 py-5 text-right">
-                                                    <Button variant="outline" size="sm" className="h-7 text-[9px] font-black uppercase bg-slate-100 border-none rounded-lg hover:bg-slate-200 text-slate-600">View Detail</Button>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Partner Tables Logic */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-                        <CardHeader className="p-6 border-b border-slate-100 bg-white">
-                            <CardTitle className="text-md font-black text-slate-900 uppercase tracking-tight">Non-Profit Partners</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <table className="w-full text-left text-xs font-bold uppercase text-slate-500">
-                                <tbody className="divide-y divide-slate-50">
-                                    {nonprofits.map(org => (
-                                        <tr key={org.id} className="hover:bg-slate-50">
-                                            <td className="px-6 py-4 text-slate-900">{org.name}</td>
-                                            <td className="px-6 py-4">{org.function}</td>
-                                            <td className="px-6 py-4 text-emerald-600">{org.status}</td>
-                                        </tr>
+                                                </div>
+                                            </div>
+                                        </Card>
                                     ))}
-                                </tbody>
-                            </table>
-                        </CardContent>
-                    </Card>
+                                </div>
+                            </div>
+                        )}
 
-                    <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-                        <CardHeader className="p-6 border-b border-slate-100 bg-white">
-                            <CardTitle className="text-md font-black text-slate-900 uppercase tracking-tight">Private Sector Assets</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <table className="w-full text-left text-xs font-bold uppercase text-slate-500">
-                                <tbody className="divide-y divide-slate-50">
-                                    {privatePartners.map(biz => (
-                                        <tr key={biz.id} className="hover:bg-slate-50">
-                                            <td className="px-6 py-4 text-slate-900">{biz.name}</td>
-                                            <td className="px-6 py-4">{biz.sector}</td>
-                                            <td className="px-6 py-4 text-emerald-600">{biz.status}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </CardContent>
-                    </Card>
-                </div>
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-1 bg-[#33375D] rounded-full" />
+                                <h2 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.4em]">Administrative Infrastructure</h2>
+                            </div>
+
+                            {/* Unified Personnel Search */}
+                            <div className="relative max-w-md group">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#33375D] transition-colors w-4 h-4" />
+                                <input
+                                    type="search"
+                                    placeholder="Search Identity Registry..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="w-full bg-white border border-slate-200 rounded-2xl pl-11 pr-4 py-4 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-[#33375D]/5 focus:border-[#33375D] transition-all shadow-sm"
+                                />
+                            </div>
+
+                            {/* Admin Table */}
+                            <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+                                <CardHeader className="p-6 border-b border-slate-100 bg-white flex flex-row items-center justify-between">
+                                    <CardTitle className="text-lg font-black text-slate-900 uppercase tracking-tight">Decision Makers & Dispatchers</CardTitle>
+                                    <Badge className="bg-[#33375D] text-white px-3 py-1 rounded-full text-[10px] font-bold border-none">{adminNodes.length} Verified Accounts</Badge>
+                                </CardHeader>
+                                <CardContent className="p-0">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left">
+                                            <thead className="bg-slate-50 border-b border-slate-100">
+                                                <tr>
+                                                    <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Name</th>
+                                                    <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Role</th>
+                                                    <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Access</th>
+                                                    <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Oversight</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50">
+                                                {adminNodes.length === 0 ? (
+                                                    <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-400 italic">Zero administrative nodes detected</td></tr>
+                                                ) : (
+                                                    adminNodes.map((user) => (
+                                                        <tr
+                                                            key={user._id}
+                                                            onClick={() => handleUserSelect(user)}
+                                                            className={cn(
+                                                                "transition-colors cursor-pointer",
+                                                                selectedUserId === user._id ? "bg-blue-50/50" : "hover:bg-slate-50"
+                                                            )}
+                                                        >
+                                                            <td className="px-6 py-5 text-sm font-bold text-slate-900 leading-none">{user.name}</td>
+                                                            <td className="px-6 py-5">
+                                                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">{user.role?.replace('-', ' ')}</span>
+                                                            </td>
+                                                            <td className="px-6 py-5 text-sm">
+                                                                <Badge className={cn("px-2 py-0.5 rounded-md border-none", user.accountStatus === 'approved' ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600")}>
+                                                                    {user.accountStatus}
+                                                                </Badge>
+                                                            </td>
+                                                            <td className="px-6 py-5 text-right">
+                                                                {user.role === 'sub-admin' && !user.licenseId ? (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        onClick={(e) => { e.stopPropagation(); setSelectedUser(user); setIsGrantModalOpen(true); }}
+                                                                        className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                                                                        title="Grant License"
+                                                                    >
+                                                                        <Shield size={16} />
+                                                                    </Button>
+                                                                ) : user.licenseId ? (
+                                                                    <div className="flex justify-end pr-2 text-emerald-500" title="License Active">
+                                                                        <CheckCircle size={16} />
+                                                                    </div>
+                                                                ) : <MoreVertical size={16} className="text-slate-300 ml-auto" />}
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="space-y-10 animate-in slide-in-from-right-10 fade-in duration-500">
+                        {/* Detail View Header */}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-8 bg-white border border-slate-200 rounded-[32px] shadow-sm relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full -mr-32 -mt-32 blur-3xl" />
+                            <div className="flex items-center gap-6 relative z-10">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => {
+                                        setViewMode('overview')
+                                        setSelectedUserId(null)
+                                        setSelectedOrgId(null)
+                                        setSelectedOrgName('')
+                                        fetchUsers(null)
+                                    }}
+                                    className="px-6 h-12 bg-slate-100 hover:bg-[#33375D] hover:text-white rounded-2xl flex items-center justify-center gap-3 transition-all font-black uppercase tracking-widest text-[10px]"
+                                >
+                                    <ArrowLeft size={18} />
+                                    <span>Back</span>
+                                </Button>
+                                <div>
+                                    <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter leading-none mb-2">{selectedOrgName || 'Operational Node'}</h2>
+                                    <div className="flex items-center gap-3">
+                                        <p className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Active Personnel Matrix</p>
+                                        <div className="w-1 h-1 rounded-full bg-slate-300" />
+                                        <div className="text-emerald-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live Status
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <Button
+                                onClick={() => setIsAddUserModalOpen(true)}
+                                className="bg-[#33375D] hover:bg-[#33375D]/90 text-white px-8 py-3 rounded-2xl h-14 font-black uppercase tracking-widest text-[10px] shadow-xl shadow-blue-900/10 flex items-center gap-3 relative z-10"
+                            >
+                                <UserPlus size={18} /> Add New Operator
+                            </Button>
+                        </div>
+
+                        {/* Search in Detail View */}
+                        <div className="relative max-w-md">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                            <input
+                                type="search"
+                                placeholder="Filter node personnel..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-full bg-white border border-slate-200 rounded-2xl pl-11 pr-4 py-4 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-[#33375D]/5 focus:border-[#33375D] shadow-sm"
+                            />
+                        </div>
+
+                        {/* Responders Table */}
+                        <Card id="responders-registry" className="border-slate-200 shadow-sm rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
+                            <CardHeader className="p-8 border-b border-slate-100 bg-white">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-blue-50 text-[#33375D] rounded-xl flex items-center justify-center">
+                                        <Users size={20} />
+                                    </div>
+                                    <div>
+                                        <CardTitle className="text-lg font-black text-slate-900 uppercase tracking-tight leading-none mb-1">Active Duty Responders</CardTitle>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Verified Tactical Personnel</p>
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-slate-50/50 border-b border-slate-100">
+                                            <tr>
+                                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Personnel</th>
+                                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Assignment</th>
+                                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                                                <th className="px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Protocol</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {fieldResponders.length === 0 ? (
+                                                <tr><td colSpan={4} className="px-8 py-16 text-center text-slate-400 italic">No operators activated in this sector</td></tr>
+                                            ) : (
+                                                fieldResponders.map((user) => (
+                                                    <tr key={user._id} className="hover:bg-slate-50/50 transition-colors group">
+                                                        <td className="px-8 py-6">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-[10px] uppercase">
+                                                                    {user.name.charAt(0)}
+                                                                </div>
+                                                                <span className="text-sm font-black text-slate-900 group-hover:text-[#33375D] transition-colors">{user.name}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-8 py-6">
+                                                            <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">{user.responderFunction || 'General Support'}</span>
+                                                        </td>
+                                                        <td className="px-8 py-6">
+                                                            <Badge className={cn("text-[8px] font-black uppercase px-3 py-1 rounded-full border-none shadow-sm", user.accountStatus === 'approved' ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>
+                                                                {user.accountStatus === 'approved' ? 'Active' : 'Standby'}
+                                                            </Badge>
+                                                        </td>
+                                                        <td className="px-8 py-6 text-right">
+                                                            <Button variant="outline" size="sm" className="h-9 px-4 text-[9px] font-black uppercase border-slate-200 rounded-xl hover:bg-[#33375D] hover:text-white hover:border-[#33375D] transition-all">Tactical Profile</Button>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Partner Tables Logic */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden bg-white/50 backdrop-blur-sm">
+                                <CardHeader className="p-8 border-b border-slate-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center">
+                                            <Building2 size={16} />
+                                        </div>
+                                        <CardTitle className="text-sm font-black text-slate-900 uppercase tracking-tight">Non-Profit Partners</CardTitle>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-0">
+                                    <table className="w-full text-left text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                        <tbody className="divide-y divide-slate-50">
+                                            {nonprofits.map(org => (
+                                                <tr key={org.id} className="hover:bg-slate-50/50">
+                                                    <td className="px-8 py-5 text-slate-900">{org.name}</td>
+                                                    <td className="px-8 py-5 text-slate-500">{org.function}</td>
+                                                    <td className="px-8 py-5 text-emerald-600">{org.status}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden bg-white/50 backdrop-blur-sm">
+                                <CardHeader className="p-8 border-b border-slate-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
+                                            <Shield size={16} />
+                                        </div>
+                                        <CardTitle className="text-sm font-black text-slate-900 uppercase tracking-tight">Private Sector Assets</CardTitle>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-0">
+                                    <table className="w-full text-left text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                        <tbody className="divide-y divide-slate-50">
+                                            {privatePartners.map(biz => (
+                                                <tr key={biz.id} className="hover:bg-slate-50/50">
+                                                    <td className="px-8 py-5 text-slate-900">{biz.name}</td>
+                                                    <td className="px-8 py-5 text-slate-500">{biz.sector}</td>
+                                                    <td className="px-8 py-5 text-emerald-600">{biz.status}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                )}
 
             </main>
 

@@ -112,9 +112,9 @@ export default function LoginPage() {
               <Shield size={160} className="text-[#33375D]" />
             </div>
 
-            <div className="mb-14 text-center lg:text-left relative z-10">
-              <h2 className="text-4xl font-black text-[#33375D] mb-3 tracking-tighter uppercase">Sign In</h2>
-              <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em]">Deployment Identity Verification</p>
+            <div className="mb-14 text-center relative z-10">
+              <h2 className="text-5xl font-black text-[#33375D] mb-3 tracking-tighter uppercase leading-none">Sign In</h2>
+              <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em]">Authorize Entry</p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-6 relative z-10">
@@ -193,12 +193,12 @@ export default function LoginPage() {
 
             <div className="mt-14 text-center pt-10 border-t border-slate-50 relative z-10">
               <p className="text-slate-400 font-bold text-[11px] uppercase tracking-widest">
-                New command personnel?{' '}
+                New command personnel? Don't have an account?{' '}
                 <button
                   onClick={() => router.push('/signup')}
                   className="text-[#33375D] font-black hover:underline underline-offset-4 decoration-2"
                 >
-                  Request Access
+                  Create Account
                 </button>
               </p>
             </div>

@@ -4,6 +4,20 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   AlertTriangle,
   Zap,
   CloudRain,
@@ -33,16 +47,39 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 
 const NWS_NATIONAL_ALERTS = [
-  { id: 'tornado_warning', name: 'Tornado Warning', severity: 'Extreme', icon: <AlertTriangle className="text-red-500" size={16} /> },
-  { id: 'severe_thunderstorm', name: 'Severe Thunderstorm Warning', severity: 'Severe', icon: <Zap className="text-amber-500" size={16} /> },
-  { id: 'flash_flood', name: 'Flash Flood Warning', severity: 'Severe', icon: <CloudRain className="text-blue-500" size={16} /> },
-  { id: 'blizzard_warning', name: 'Blizzard Warning', severity: 'Extreme', icon: <CloudRain className="text-indigo-500" size={16} /> },
-  { id: 'winter_storm', name: 'Winter Storm Warning', severity: 'High', icon: <CloudRain className="text-slate-500" size={16} /> },
-  { id: 'hurricane_warning', name: 'Hurricane Warning', severity: 'Extreme', icon: <Zap className="text-red-600" size={16} /> },
-  { id: 'heat_advisory', name: 'Excessive Heat Advisory', severity: 'Moderate', icon: <Info className="text-orange-500" size={16} /> },
-  { id: 'fire_weather', name: 'Fire Weather Warning', severity: 'High', icon: <AlertTriangle className="text-orange-600" size={16} /> },
-  { id: 'tsunami_warning', name: 'Tsunami Warning', severity: 'Extreme', icon: <AlertTriangle className="text-red-700" size={16} /> },
-  { id: 'high_wind', name: 'High Wind Warning', severity: 'High', icon: <Zap className="text-blue-400" size={16} /> },
+  // Severe Weather
+  { id: 'tornado_warning', name: 'Tornado Warning', severity: 'Extreme', category: 'Severe', icon: <AlertTriangle className="text-red-600" size={16} /> },
+  { id: 'tornado_watch', name: 'Tornado Watch', severity: 'High', category: 'Severe', icon: <AlertTriangle className="text-red-400" size={16} /> },
+  { id: 'severe_thunderstorm_warning', name: 'Severe Thunderstorm Warning', severity: 'Severe', category: 'Severe', icon: <Zap className="text-amber-500" size={16} /> },
+  { id: 'severe_thunderstorm_watch', name: 'Severe Thunderstorm Watch', severity: 'High', category: 'Severe', icon: <Zap className="text-amber-300" size={16} /> },
+  { id: 'flash_flood_warning', name: 'Flash Flood Warning', severity: 'Severe', category: 'Severe', icon: <CloudRain className="text-blue-600" size={16} /> },
+  { id: 'flash_flood_watch', name: 'Flash Flood Watch', severity: 'High', category: 'Severe', icon: <CloudRain className="text-blue-400" size={16} /> },
+  { id: 'flood_warning', name: 'Flood Warning', severity: 'Moderate', category: 'Severe', icon: <CloudRain className="text-blue-300" size={16} /> },
+
+  // Winter Hazards
+  { id: 'blizzard_warning', name: 'Blizzard Warning', severity: 'Extreme', category: 'Winter', icon: <CloudRain className="text-indigo-500" size={16} /> },
+  { id: 'winter_storm_warning', name: 'Winter Storm Warning', severity: 'High', category: 'Winter', icon: <CloudRain className="text-slate-500" size={16} /> },
+  { id: 'winter_storm_watch', name: 'Winter Storm Watch', severity: 'Moderate', category: 'Winter', icon: <CloudRain className="text-slate-400" size={16} /> },
+  { id: 'ice_storm_warning', name: 'Ice Storm Warning', severity: 'High', category: 'Winter', icon: <Zap className="text-cyan-500" size={16} /> },
+  { id: 'extreme_cold_warning', name: 'Extreme Cold Warning', severity: 'High', category: 'Winter', icon: <Smartphone className="text-blue-700" size={16} /> },
+
+  // Coastal & Marine
+  { id: 'hurricane_warning', name: 'Hurricane Warning', severity: 'Extreme', category: 'Coastal', icon: <Zap className="text-red-700" size={16} /> },
+  { id: 'hurricane_watch', name: 'Hurricane Watch', severity: 'High', category: 'Coastal', icon: <Zap className="text-red-500" size={16} /> },
+  { id: 'tropical_storm_warning', name: 'Tropical Storm Warning', severity: 'High', category: 'Coastal', icon: <Zap className="text-orange-500" size={16} /> },
+  { id: 'tsunami_warning', name: 'Tsunami Warning', severity: 'Extreme', category: 'Coastal', icon: <AlertTriangle className="text-red-800" size={16} /> },
+  { id: 'coastal_flood_warning', name: 'Coastal Flood Warning', severity: 'High', category: 'Coastal', icon: <CloudRain className="text-blue-800" size={16} /> },
+
+  // Fire & Heat
+  { id: 'fire_weather_warning', name: 'Fire Weather Warning (Red Flag)', severity: 'High', category: 'Fire/Heat', icon: <AlertTriangle className="text-orange-600" size={16} /> },
+  { id: 'excessive_heat_warning', name: 'Excessive Heat Warning', severity: 'Extreme', category: 'Fire/Heat', icon: <Info className="text-red-500" size={16} /> },
+  { id: 'heat_advisory', name: 'Heat Advisory', severity: 'Moderate', category: 'Fire/Heat', icon: <Info className="text-orange-400" size={16} /> },
+
+  // Others
+  { id: 'high_wind_warning', name: 'High Wind Warning', severity: 'High', category: 'Other', icon: <Zap className="text-blue-400" size={16} /> },
+  { id: 'dust_storm_warning', name: 'Dust Storm Warning', severity: 'High', category: 'Other', icon: <AlertTriangle className="text-yellow-700" size={16} /> },
+  { id: 'air_stagnation_advisory', name: 'Air Stagnation Advisory', severity: 'Low', category: 'Other', icon: <Info className="text-slate-400" size={16} /> },
+  { id: 'special_marine_warning', name: 'Special Marine Warning', severity: 'High', category: 'Other', icon: <AlertTriangle className="text-indigo-600" size={16} /> },
 ];
 
 export default function AlertsCommunicationPage() {
@@ -57,7 +94,6 @@ export default function AlertsCommunicationPage() {
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null)
   const [countryStatuses, setCountryStatuses] = useState<any[]>([])
   const [isSuperAdmin, setIsSuperAdmin] = useState(false)
-  const [broadcastingCountry, setBroadcastingCountry] = useState<string | null>(null)
 
   // National Dispatch Wizard States
   const [dispatchStep, setDispatchStep] = useState(1)
@@ -67,6 +103,21 @@ export default function AlertsCommunicationPage() {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
   const [isDispatching, setIsDispatching] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [dispatchTarget, setDispatchTarget] = useState<string>('National')
+
+  // Per-card manual alert states
+  const [cardAlertTypes, setCardAlertTypes] = useState<Record<string, string>>({})
+  const [cardMessages, setCardMessages] = useState<Record<string, string>>({})
+
+  // Unified Channel Selection States
+  const [isChannelModalOpen, setIsChannelModalOpen] = useState(false)
+  const [modalChannels, setModalChannels] = useState<string[]>(['push', 'sms'])
+  const [pendingDispatch, setPendingDispatch] = useState<{
+    type: 'country' | 'national' | 'monitoring',
+    country?: string,
+    alertType?: string,
+    message?: string
+  } | null>(null)
 
   const fetchDynamicAlerts = useCallback(async () => {
     try {
@@ -104,7 +155,19 @@ export default function AlertsCommunicationPage() {
         const res = await fetch('/api/admin/sub-admin-country-status')
         if (res.ok) {
           const data = await res.json()
-          setCountryStatuses(data.countries || [])
+          const countries = data.countries || []
+          setCountryStatuses(countries)
+          
+          // Auto-populate defaults from AI suggestions
+          const defaultTypes: Record<string, string> = {}
+          const defaultMessages: Record<string, string> = {}
+          countries.forEach((c: any) => {
+            if (c.suggestedType) defaultTypes[c.country] = c.suggestedType
+            if (c.suggestedMessage) defaultMessages[c.country] = c.suggestedMessage
+          })
+          setCardAlertTypes(prev => ({ ...defaultTypes, ...prev }))
+          setCardMessages(prev => ({ ...defaultMessages, ...prev }))
+          
           setIsSuperAdmin(true)
         }
       } catch (err) {
@@ -118,40 +181,122 @@ export default function AlertsCommunicationPage() {
     return () => clearInterval(interval)
   }, [fetchDynamicAlerts])
 
-  const handleBroadcast = async (country: string, status: string) => {
+  const handleStartManualDispatch = (target: string) => {
+    setDispatchTarget(target)
+    setDispatchStep(1)
+    setSelectedNwsType(null)
+    setDispatchMessage('')
+    // Scroll to the dispatch section
+    const element = document.getElementById('national-dispatch-wizard')
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    toast.info(`Manual Dispatch: ${target}`, {
+      description: 'Please select an alert type from the pick list below.'
+    })
+  }
+
+  const handleApplyCardAlert = (country: string, typeName: string) => {
+    setCardAlertTypes(prev => ({ ...prev, [country]: typeName }))
+    setCardMessages(prev => ({
+      ...prev,
+      [country]: `Official NWS Alert for ${country}: ${typeName} in effect. Please monitor local conditions and follow safety protocols.`
+    }))
+  }
+
+  const handleApplyAIRecommendation = (country: string) => {
+    const status = countryStatuses.find(c => c.country === country)
+    if (status && status.suggestedType) {
+      setCardAlertTypes(prev => ({ ...prev, [country]: status.suggestedType }))
+      setCardMessages(prev => ({ ...prev, [country]: status.suggestedMessage }))
+      toast.success('AI Recommendation Applied', {
+        description: `Alert type and message have been drafted for ${country}.`
+      })
+    }
+  }
+
+  const handleCountryBroadcast = async (country: string) => {
+    const alertType = cardAlertTypes[country]
+    const message = cardMessages[country]
+
+    if (!alertType || !message) {
+      toast.error('Missing Information', { description: 'Please select an alert type and message first.' })
+      return
+    }
+
+    setPendingDispatch({
+      type: 'country',
+      country,
+      alertType,
+      message
+    })
+    setIsChannelModalOpen(true)
+  }
+
+  const handleConfirmUnifiedDispatch = async () => {
+    if (!pendingDispatch) return
+
     try {
-      setBroadcastingCountry(country)
-      const res = await fetch('/api/admin/broadcast-country-alert', {
+      setIsDispatching(true)
+
+      const payload = {
+        alertType: pendingDispatch.alertType,
+        message: pendingDispatch.message,
+        channels: modalChannels,
+        target: pendingDispatch.type === 'country' ? pendingDispatch.country : (pendingDispatch.type === 'monitoring' ? 'Regional' : 'National')
+      }
+
+      const endpoint = pendingDispatch.type === 'country'
+        ? '/api/admin/broadcast-country-alert'
+        : '/api/admin/national-alert-dispatch'
+
+      const res = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          country,
-          message: `Regional Intelligence Update for ${country}: ${status}`,
-          title: `Emergency Protocol: ${country}`
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       })
 
       if (res.ok) {
-        const data = await res.json()
-        toast.success(`Broadcast Successful`, {
-          description: `Notification sent to ${data.count} users in ${country}.`
+        toast.success('Dispatch Successful', {
+          description: `Alert sent via ${modalChannels.join(', ')} to ${payload.target}.`
         })
+        setIsChannelModalOpen(false)
+        if (pendingDispatch.type === 'national') {
+          setDispatchStep(1)
+          setSelectedNwsType(null)
+          setDispatchMessage('')
+        }
       } else {
-        const error = await res.json()
-        toast.error(`Broadcast Failed`, {
-          description: error.error || 'Failed to send regional alert.'
-        })
+        toast.error('Dispatch Failed')
       }
     } catch (err) {
-      console.error('Broadcast error:', err)
-      toast.error('System Error', {
-        description: 'Failed to connect to the broadcast service.'
-      })
+      toast.error('System Error')
     } finally {
-      setBroadcastingCountry(null)
+      setIsDispatching(false)
     }
+  }
+
+  const handleMonitoringDispatch = () => {
+    if (alerts.length === 0) {
+      toast.error('No Live Alerts', { description: 'Cannot dispatch from empty feed.' })
+      return
+    }
+    const latest = alerts[0]
+    setPendingDispatch({
+      type: 'monitoring',
+      alertType: latest.title,
+      message: latest.description
+    })
+    setIsChannelModalOpen(true)
+  }
+
+  const handleFeedDispatch = (alert: any) => {
+    setPendingDispatch({
+      type: 'monitoring',
+      alertType: alert.title,
+      message: alert.description
+    })
+    setIsChannelModalOpen(true)
   }
 
   const handleAIDraft = async () => {
@@ -184,7 +329,8 @@ export default function AlertsCommunicationPage() {
         body: JSON.stringify({
           alertType: selectedNwsType,
           channels: dispatchChannels,
-          message: dispatchMessage
+          message: dispatchMessage,
+          target: dispatchTarget
         })
       })
       if (res.ok) {
@@ -270,45 +416,96 @@ export default function AlertsCommunicationPage() {
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{item.subAdminCount} Units Deployed</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100">
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                    <span className="text-[9px] font-black uppercase tracking-widest">Active Monitoring</span>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100">
+                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                      <span className="text-[9px] font-black uppercase tracking-widest">Active Monitoring</span>
+                    </div>
+                    {item.weatherCount > 0 && (
+                      <Badge className="bg-amber-50 text-amber-600 border-none text-[8px] font-black uppercase px-2 py-0.5">
+                        {item.weatherCount} Weather Threats
+                      </Badge>
+                    )}
+                    {item.earthquakeCount > 0 && (
+                      <Badge className="bg-red-50 text-red-600 border-none text-[8px] font-black uppercase px-2 py-0.5">
+                        {item.earthquakeCount} Seismic Signals
+                      </Badge>
+                    )}
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-100 relative group-hover:bg-white transition-colors">
-                    <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                      <ShieldCheck size={12} /> AI Area Summary
-                    </p>
-                    <p className="text-[12px] font-bold text-slate-700 leading-relaxed italic">
-                      "{item.status}"
-                    </p>
+                <div className="mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 relative group/insight mt-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ShieldAlert size={14} className="text-indigo-500" />
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">AI Situation Summary</span>
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-slate-500 font-black uppercase tracking-wider px-1">
-                    <span className="flex items-center gap-1.5 bg-amber-50 text-amber-600 px-2 py-0.5 rounded-md border border-amber-100">
-                      <AlertTriangle size={12} /> {item.alertCount} Local Hazards
-                    </span>
-                    <span className="text-slate-400">Sync: {new Date(item.lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
+                  <p className="text-[11px] font-bold text-slate-700 leading-relaxed italic lowercase first-letter:uppercase">
+                    {item.status}
+                  </p>
+                </div>
 
-                  <div className="pt-2">
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleBroadcast(item.country, item.status);
-                      }}
-                      disabled={broadcastingCountry === item.country}
-                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-5 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-indigo-100 mt-2 transition-all active:scale-95 group"
+                <div className="space-y-5">
+                  <div className="flex justify-between items-center px-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Manual Alert Type</label>
+                    <button
+                      onClick={() => handleApplyAIRecommendation(item.country)}
+                      className="flex items-center gap-1.5 text-[9px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded-lg transition-all"
+                      title="Apply AI Suggested Alert"
                     >
-                      {broadcastingCountry === item.country ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      ) : (
-                        <Send className="w-4 h-4 mr-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                      )}
-                      {broadcastingCountry === item.country ? 'Sending...' : 'Send to All Users'}
-                    </Button>
+                      <Wand2 size={10} /> Apply AI Insight
+                    </button>
                   </div>
+                  <div className="p-4 bg-indigo-50/30 rounded-2xl border border-indigo-100/50 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] leading-none mb-1.5">Selected Alert Category</p>
+                      <p className="text-sm font-black text-indigo-900 tracking-tight">
+                        {cardAlertTypes[item.country] || "General Safety Alert"}
+                      </p>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center border border-indigo-100 shadow-sm text-indigo-600">
+                      {NWS_NATIONAL_ALERTS.find(a => a.name === cardAlertTypes[item.country])?.icon || <ShieldAlert size={18} />}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center px-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Broadcast Message</label>
+                    <button
+                      onClick={() => toast.info('AI is refining your draft...')}
+                      className="text-[9px] font-black text-indigo-500 uppercase hover:underline"
+                    >
+                      AI Refine
+                    </button>
+                  </div>
+                  <Textarea
+                    value={cardMessages[item.country] || ""}
+                    onChange={(e) => setCardMessages(prev => ({ ...prev, [item.country]: e.target.value }))}
+                    placeholder="Draft your emergency alert here..."
+                    className="min-h-[100px] bg-slate-50 border-slate-100 rounded-2xl text-[12px] font-medium leading-relaxed resize-none p-4"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-[10px] text-slate-400 font-black uppercase tracking-wider px-1 pt-1">
+                  <span className="flex items-center gap-1.5">
+                    <Clock size={12} /> Real-time Dispatch
+                  </span>
+                  <span>Target: {item.country}</span>
+                </div>
+
+                <div className="pt-2">
+                  <Button
+                    onClick={() => handleCountryBroadcast(item.country)}
+                    disabled={isDispatching || !cardAlertTypes[item.country]}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-5 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-indigo-100 mt-2 transition-all active:scale-95 group"
+                  >
+                    {isDispatching && pendingDispatch?.country === item.country ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Send className="w-4 h-4 mr-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    )}
+                    {isDispatching && pendingDispatch?.country === item.country ? 'Sending...' : 'Send to All Users'}
+                  </Button>
                 </div>
               </Card>
             ))}
@@ -318,17 +515,19 @@ export default function AlertsCommunicationPage() {
 
       {/* National Alert Dispatch Wizard (Super Admin Only) */}
       {isSuperAdmin && (
-        <section className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-700 delay-150">
+        <section id="national-dispatch-wizard" className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-700 delay-150 scroll-mt-24">
           <div className="flex items-center gap-3 px-2">
             <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-red-200 border border-red-400">
               <ShieldAlert size={20} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Send National Alert</h2>
+              <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">
+                {dispatchTarget === 'National' ? 'Send National Alert' : `Send Alert to ${dispatchTarget}`}
+              </h2>
               <div className="flex items-center gap-2">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Pick NWS Alert • Send to All Users</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Pick NWS Alert • Manual Dispatch</p>
                 <div className="w-1 h-1 rounded-full bg-slate-300" />
-                <p className="text-[10px] font-black text-red-600 uppercase tracking-widest leading-none underline decoration-2 underline-offset-4 decoration-red-200">Admin Dispatch Controls</p>
+                <p className="text-[10px] font-black text-red-600 uppercase tracking-widest leading-none underline decoration-2 underline-offset-4 decoration-red-200">Admin Controls</p>
               </div>
             </div>
           </div>
@@ -352,9 +551,9 @@ export default function AlertsCommunicationPage() {
                     >
                       <div className={cn(
                         "w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm",
-                        dispatchStep === s.step ? "bg-red-600 text-white shadow-lg shadow-red-100" : "bg-white border border-slate-200 text-slate-400"
+                        dispatchStep === s.step ? "bg-red-600 text-white shadow-lg shadow-red-100" : (dispatchStep > s.step ? "bg-emerald-500 text-white" : "bg-white border border-slate-200 text-slate-400")
                       )}>
-                        {s.step}
+                        {dispatchStep > s.step ? <ShieldCheck size={18} /> : s.step}
                       </div>
                       <div>
                         <p className={cn("text-[10px] uppercase font-black tracking-widest leading-none mb-1", dispatchStep === s.step ? "text-red-600" : "text-slate-400")}>Step {s.step}</p>
@@ -432,9 +631,14 @@ export default function AlertsCommunicationPage() {
                           <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-2">Select Channels</h3>
                           <p className="text-sm font-bold text-slate-400">Choose how users will receive this alert (Push, Text, or Email).</p>
                         </div>
-                        <Badge className="bg-red-50 text-red-600 border-red-100 px-3 py-1 text-[10px] font-black uppercase">
-                          Selected: {selectedNwsType}
-                        </Badge>
+                        <div className="flex flex-col items-end gap-2">
+                          <Badge className="bg-red-50 text-red-600 border-red-100 px-3 py-1 text-[10px] font-black uppercase">
+                            Selected: {selectedNwsType}
+                          </Badge>
+                          <Badge className="bg-indigo-50 text-indigo-600 border-indigo-100 px-3 py-1 text-[10px] font-black uppercase">
+                            Target: {dispatchTarget}
+                          </Badge>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -478,8 +682,13 @@ export default function AlertsCommunicationPage() {
                           <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-2">Write Your Message</h3>
                           <p className="text-sm font-bold text-slate-400">Type your alert message here. You can also use AI to help you write it.</p>
                         </div>
-                        <div className="flex gap-2">
-                          {dispatchChannels.map(c => <Badge key={c} variant="outline" className="text-[9px] font-black uppercase tracking-widest bg-slate-50">{c}</Badge>)}
+                        <div className="flex flex-col items-end gap-2">
+                          <div className="flex gap-2">
+                            {dispatchChannels.map(c => <Badge key={c} variant="outline" className="text-[9px] font-black uppercase tracking-widest bg-slate-50">{c}</Badge>)}
+                          </div>
+                          <Badge className="bg-indigo-50 text-indigo-600 border-indigo-100 px-3 py-1 text-[10px] font-black uppercase">
+                            Target: {dispatchTarget}
+                          </Badge>
                         </div>
                       </div>
 
@@ -549,8 +758,8 @@ export default function AlertsCommunicationPage() {
                       disabled={isDispatching || !dispatchMessage}
                       className="bg-red-600 hover:bg-red-700 text-white px-10 py-6 rounded-2xl font-black uppercase tracking-widest text-[12px] flex items-center gap-2 group shadow-2xl shadow-red-200 ring-4 ring-red-500/10 active:scale-95 transition-all"
                     >
-                      {isDispatching ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldAlert className="w-5 h-5 mr-1" />}
-                      {isDispatching ? 'Sending...' : 'Send National Alert'}
+                      {isDispatching ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-5 h-5 mr-1" />}
+                      {isDispatching ? 'Sending...' : (dispatchTarget === 'National' ? 'Send National Alert' : `Send to ${dispatchTarget}`)}
                     </Button>
                   )}
                 </div>
@@ -561,20 +770,83 @@ export default function AlertsCommunicationPage() {
       )}
 
       {/* Status Bar */}
-      <div className="bg-[#EBEBFF] border border-[#6366F1]/10 p-4 rounded-xl flex items-center gap-4 text-[#4338CA]">
-        <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-white">
-          <Info size={16} />
+      <div className="bg-[#EBEBFF] border border-[#6366F1]/10 p-4 rounded-xl flex items-center justify-between text-[#4338CA]">
+        <div className="flex items-center gap-4">
+          <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-white">
+            <Info size={16} />
+          </div>
+          <div className="flex items-center gap-1.5 text-sm font-semibold">
+            <span className="text-[#3730A3]">Real-time monitoring:</span>
+            <span className="font-medium text-[#4338CA]/80">
+              {alerts.length > 0
+                ? `Signals are live: Most recent alert detected in ${alerts[0].affectedAreas[0]}.`
+                : "Polling the National Weather Service every minute for the latest alerts."
+              }
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 text-sm font-semibold">
-          <span className="text-[#3730A3]">Real-time monitoring:</span>
-          <span className="font-medium text-[#4338CA]/80">
-            {alerts.length > 0
-              ? `Signals are live: Most recent alert detected in ${alerts[0].affectedAreas[0]}.`
-              : "Polling the National Weather Service every minute for the latest alerts."
-            }
-          </span>
-        </div>
+
       </div>
+
+      {/* Channel Selection Modal */}
+      <Dialog open={isChannelModalOpen} onOpenChange={setIsChannelModalOpen}>
+        <DialogContent className="sm:max-w-md bg-white rounded-[32px] border-slate-100 p-8">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-slate-900 uppercase tracking-tight mb-2">How to send this alert?</DialogTitle>
+            <DialogDescription className="text-xs font-bold text-slate-400 uppercase tracking-widest">Select up to 3 communication channels</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {[
+              { id: 'push', label: 'Push Notification', icon: <Smartphone size={18} /> },
+              { id: 'sms', label: 'SMS (Text)', icon: <MessageSquare size={18} /> },
+              { id: 'email', label: 'Email', icon: <Mail size={18} /> },
+            ].map((ch) => (
+              <div
+                key={ch.id}
+                className={cn(
+                  "flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer",
+                  modalChannels.includes(ch.id) ? "border-indigo-500 bg-indigo-50/50" : "border-slate-50 bg-slate-50"
+                )}
+                onClick={() => {
+                  if (modalChannels.includes(ch.id)) {
+                    setModalChannels(modalChannels.filter(c => c !== ch.id))
+                  } else {
+                    setModalChannels([...modalChannels, ch.id])
+                  }
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", modalChannels.includes(ch.id) ? "bg-indigo-600 text-white" : "bg-white text-slate-400")}>
+                    {ch.icon}
+                  </div>
+                  <span className="text-sm font-black text-slate-700">{ch.label}</span>
+                </div>
+                <Switch
+                  checked={modalChannels.includes(ch.id)}
+                  onCheckedChange={() => { }}
+                  className="data-[state=checked]:bg-indigo-600"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="pt-4 flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setIsChannelModalOpen(false)}
+              className="flex-1 rounded-xl h-12 text-[10px] font-black uppercase tracking-widest text-slate-400 border-slate-100"
+            >
+              Abort
+            </Button>
+            <Button
+              onClick={handleConfirmUnifiedDispatch}
+              disabled={modalChannels.length === 0 || isDispatching}
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 gap-2"
+            >
+              {isDispatching ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send size={14} /> Confirm Dispatch</>}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Alerts Feed */}
@@ -635,7 +907,10 @@ export default function AlertsCommunicationPage() {
                       <Clock size={16} />
                       <span className="text-xs font-semibold">Expires: {new Date(alert.expiresAt || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
-                    <Button className={cn("rounded-lg px-8 py-6 font-bold text-white transition-all active:scale-95 shadow-sm", buttonColor)}>
+                    <Button
+                      onClick={() => handleFeedDispatch(alert)}
+                      className={cn("rounded-lg px-8 py-6 font-bold text-white transition-all active:scale-95 shadow-sm", buttonColor)}
+                    >
                       {buttonText}
                     </Button>
                   </div>

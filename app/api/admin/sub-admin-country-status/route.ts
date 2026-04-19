@@ -62,7 +62,11 @@ export async function GET(req: NextRequest) {
             return {
                 country,
                 subAdminCount: admins.length,
-                status: statusSummary,
+                status: statusSummary.summary,
+                suggestedType: statusSummary.suggestedType,
+                suggestedMessage: statusSummary.suggestedMessage,
+                weatherCount: weatherAlerts.length,
+                earthquakeCount: quakeAlerts.length,
                 representativeLocation: locationStr,
                 alertCount: weatherAlerts.length + quakeAlerts.length,
                 lastUpdated: new Date().toISOString()

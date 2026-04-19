@@ -24,51 +24,23 @@ import {
 import { GoogleMap } from '@/components/google-map'
 import { cn } from '@/lib/utils'
 import { ShieldCheck, Truck, Siren, Building2, MapPin } from 'lucide-react'
-import { geocodeAddress } from '@/lib/services/mock-map-service'
-import { useGeolocation } from '@/lib/hooks/use-geolocation'
+import { geocodeAddress, calculateDistance } from '@/lib/services/mock-map-service'
 
-interface CitizenLocation {
-  id: string
-  name: string
-  location: string
-  role: string
-  isSafe: boolean
-  alerts: any[]
-  weather?: { temp: number, code: number, wind: number }
-  position?: { lat: number; lng: number }
+interface GISMapProps {
+  selectedLocation?: string
 }
 
-interface IncidentMarker {
-  _id: string
-  type: string
-  location: string
-  description: string
-  status: string
-  lat?: number
-  lng?: number
-  timestamp?: string
-}
-
-interface EventMarker {
-  _id: string
-  type: string
-  title: string
-  description: string
-  severity: string
-  location: { lat: number; lng: number; address: string }
-  magnitude?: number
-  timestamp?: string
-}
-
-export function GISMap() {
+export function GISMap({ selectedLocation = 'All' }: GISMapProps) {
   const [activeEmergencies, setActiveEmergencies] = useState<any[]>([])
   const [impactedUsers, setImpactedUsers] = useState<any[]>([])
   const [responders, setResponders] = useState<any[]>([])
   const [subAdmins, setSubAdmins] = useState<any[]>([])
+  const [dynamicInfra, setDynamicInfra] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [mapCenter] = useState<{ lat: number; lng: number }>({ lat: 37.0902, lng: -95.7129 }) // Center of USA
-  const [mapZoom] = useState(4)
-  const [activeTab, setActiveTab] = useState<'Citizens' | 'Responders' | 'City Leaders' | 'Infrastructure'>('Citizens')
+  const [isSearchingInfra, setIsSearchingInfra] = useState(false)
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 37.0902, lng: -95.7129 }) // Center of USA
+  const [mapZoom, setMapZoom] = useState(4)
+  const [activeTab, setActiveTab] = useState<'Citizens' | 'Responders' | 'Leaders' | 'Infrastructure'>('Citizens')
 
   useEffect(() => {
     async function fetchData() {
@@ -88,61 +60,63 @@ export function GISMap() {
           respondersRes.ok ? respondersRes.json() : []
         ])
 
-        // Process Active Emergencies (Background Layer or separate)
-        const emergencyMarkers = await Promise.all((activeData || []).map(async (item: any) => {
-          const pos = await geocodeAddress(item.location || 'USA')
-          return {
-            id: item._id,
-            position: pos,
-            title: item.name,
-            type: 'incident',
-            status: item.status || 'Active',
-            description: `${item.type} - ${item.location}`,
-            color: '#DC2626'
-          }
-        }))
-        setActiveEmergencies(emergencyMarkers)
+        // Process Impacted Users
+        const userMarkersArray = Array.isArray(impactedData) ? impactedData : impactedData?.users || []
+        const userMarkers = await Promise.all((userMarkersArray || []).map(async (item: any) => {
+          // Use stored coordinates if available, otherwise geocode
+          let pos = (item.lat && item.lng)
+            ? { lat: Number(item.lat), lng: Number(item.lng) }
+            : await geocodeAddress(item.location || 'USA');
 
-        // Process Impacted Users for Citizens tab (As requested)
-        const userMarkers = await Promise.all((impactedData || []).map(async (item: any) => {
-          const pos = await geocodeAddress(item.location || 'USA')
+          // Add small jitter ONLY if it's a generic fallback to prevent hiding markers
+          if (pos.lat === 37.0902 && pos.lng === -95.7129) {
+            pos = {
+              lat: pos.lat + (Math.random() - 0.5) * 0.5,
+              lng: pos.lng + (Math.random() - 0.5) * 0.5
+            }
+          }
           return {
-            id: item._id,
+            id: item._id || Math.random().toString(),
             position: pos,
             title: item.name || 'Impacted User',
             type: 'user',
             isSafe: false,
-            status: 'At Risk',
-            description: `Affected Zone: ${item.location}`
+            status: item.status || 'At Risk',
+            location: item.location || item.city,
+            description: `Affected Zone: ${item.location || item.city || 'Unknown'}`
           }
         }))
         setImpactedUsers(userMarkers)
 
-        // Process Responders for Responders tab
-        const responderMarkers = await Promise.all((respondersData || []).map(async (item: any) => {
+        // Process Responders
+        const respondersArray = Array.isArray(respondersData) ? respondersData : []
+        const responderMarkers = await Promise.all((respondersArray || []).map(async (item: any) => {
           const pos = item.coordinates || await geocodeAddress(item.location || 'USA')
           return {
-            id: item._id,
+            id: item._id || Math.random().toString(),
             position: pos,
             title: item.name,
             type: 'incident',
             status: item.status,
+            location: item.location,
             description: `${item.type} Unit - ${item.location}`,
             color: item.type === 'Fire' ? '#EF4444' : item.type === 'Police' ? '#3B82F6' : '#10B981',
-            icon: item.type === 'Police' ? 'siren' : item.type === 'Fire' ? 'truck' : 'medical'
+            icon: item.type === 'Police' ? 'police' : item.type === 'Fire' ? 'fire' : 'medical'
           }
         }))
         setResponders(responderMarkers)
 
-        // Process Sub-Admins for City Leaders tab
-        const adminMarkers = await Promise.all((subAdminsData.users || []).map(async (user: any) => {
+        // Process Leaders
+        const adminMarkersArray = Array.isArray(subAdminsData.users) ? subAdminsData.users : []
+        const adminMarkers = await Promise.all((adminMarkersArray || []).map(async (user: any) => {
           const pos = await geocodeAddress(user.city || user.country || 'USA')
           return {
-            id: user._id,
+            id: user._id || Math.random().toString(),
             position: pos,
             title: user.name,
             type: 'admin',
             status: 'Online',
+            location: user.city || user.country,
             description: `Sub-Admin: ${user.city || ''} ${user.country || ''}`
           }
         }))
@@ -157,39 +131,180 @@ export function GISMap() {
     fetchData()
   }, [])
 
-  const infraMarkers = useMemo(() => [
-    // Hospitals
-    { id: 'h1', position: { lat: 40.7128, lng: -74.0060 }, title: 'NY Presbyterian Hospital', type: 'incident', status: 'Critical Support', description: 'Level 1 Trauma Center', color: '#10B981', icon: 'medical' },
-    { id: 'h2', position: { lat: 34.0522, lng: -118.2437 }, title: 'Cedars-Sinai Medical', type: 'incident', status: 'Ready', description: 'Regional Emergency Hub', color: '#10B981', icon: 'medical' },
-    { id: 'h3', position: { lat: 41.8781, lng: -87.6298 }, title: 'Northwestern Memorial', type: 'incident', status: 'Active', description: 'Primary Care Node', color: '#10B981', icon: 'medical' },
+  // Fetch Infrastructure when the "Infrastructure" tab is activated
+  useEffect(() => {
+    if (activeTab !== 'Infrastructure' || impactedUsers.length === 0) return;
 
-    // Petrol Pumps
-    { id: 'p1', position: { lat: 29.7604, lng: -95.3698 }, title: 'Houston Fuel Point', type: 'incident', status: 'Stock High', description: 'Primary Refueling Center', color: '#F59E0B', icon: 'caution' },
-    { id: 'p2', position: { lat: 33.4484, lng: -112.0740 }, title: 'Phoenix Gas Hub', type: 'incident', status: 'Open', description: '24/7 Energy Access', color: '#F59E0B', icon: 'caution' },
+    // Avoid refetching if we already have results (optional, but good for performance)
+    // If you want to refresh every time, remove the next line:
+    if (dynamicInfra.length > 0) return;
 
-    // Hotels (Shelters)
-    { id: 'ht1', position: { lat: 39.9526, lng: -75.1652 }, title: 'Philly Grand Shelter', type: 'incident', status: 'Capacity Available', description: 'Designated Relief Housing', color: '#3B82F6', icon: 'caution' },
-    { id: 'ht2', position: { lat: 47.6062, lng: -122.3321 }, title: 'Seattle Harbor Inn', type: 'incident', status: 'Designated Shelter', description: 'Emergency Safe House', color: '#3B82F6', icon: 'caution' },
-  ], [])
+    async function fetchNearbyInfra() {
+      setIsSearchingInfra(true)
+      try {
+        const types = ['hospital', 'pharmacy', 'gas_station', 'community_center', 'school']
+        const allResults: any[] = []
+        const seenIds = new Set()
+
+        // 1. Get unique search centers (unique user positions)
+        const searchCenters: { lat: number, lng: number }[] = []
+        for (const user of impactedUsers) {
+          if (!user.position) continue;
+
+          const isIdentical = searchCenters.some(center => {
+            const dist = calculateDistance(user.position.lat, user.position.lng, center.lat, center.lng);
+            return dist < 0.5;
+          });
+
+          if (!isIdentical) {
+            searchCenters.push(user.position);
+          }
+        }
+
+        console.log(`Searching infrastructure for ${searchCenters.length} locations...`);
+
+        // 2. Fetch infrastructure for each type at each location
+        await Promise.all(searchCenters.map(async (center) => {
+          await Promise.all(types.map(async (type) => {
+            try {
+              const res = await fetch(`/api/places?lat=${center.lat}&lng=${center.lng}&type=${type}&radius=2000`)
+              if (res.ok) {
+                const data = await res.json()
+                const results = data.results || []
+
+                results.forEach((place: any) => {
+                  if (!seenIds.has(place.place_id)) {
+                    seenIds.add(place.place_id)
+
+                    // Distinct styling based on type
+                    let color = '#10B981'; // Green for hospital
+                    let icon = 'medical';
+                    if (type === 'pharmacy') {
+                      color = '#3B82F6'; // Blue for pharmacy
+                      icon = 'pharmacy';
+                    } else if (type === 'gas_station') {
+                      color = '#F59E0B'; // Amber for gas station
+                      icon = 'gas';
+                    } else if (type === 'community_center' || type === 'school') {
+                      color = '#06B6D4'; // Cyan for shelters/community
+                      icon = 'home';
+                    }
+
+                    allResults.push({
+                      id: place.place_id,
+                      position: place.geometry.location,
+                      title: place.name,
+                      type: 'infrastructure',
+                      status: (type === 'community_center' || type === 'school') ? 'Emergency Shelter' : `Verified ${type.replace('_', ' ')}`,
+                      description: (type === 'community_center' || type === 'school')
+                        ? 'Official Community Shelter Site'
+                        : place.vicinity || 'Real-time infrastructure',
+                      color: color,
+                      icon: icon,
+                      location: selectedLocation !== 'All' ? selectedLocation : 'USA'
+                    })
+                  }
+                })
+              }
+            } catch (err) {
+              console.warn(`Search failed for ${type} at ${center.lat},${center.lng}`, err);
+            }
+          }))
+        }));
+
+        // 3. Add Mock Data for Waivers and Evacuation Routes if in a specific area
+        if (searchCenters.length > 0) {
+          const mainCenter = searchCenters[0];
+
+          // Add a Waiver
+          allResults.push({
+            id: 'waiver-1',
+            position: { lat: mainCenter.lat + 0.005, lng: mainCenter.lng + 0.005 },
+            title: 'Resource Allocation Waiver #442',
+            type: 'infrastructure',
+            status: 'Active Waiver',
+            description: 'Emergency waiver active for medical supply distribution.',
+            color: '#6366F1', // Indigo
+            icon: 'shield',
+            location: selectedLocation !== 'All' ? selectedLocation : 'USA'
+          });
+
+          // Add an Evacuation Route Start
+          allResults.push({
+            id: 'evac-route-1',
+            position: { lat: mainCenter.lat - 0.008, lng: mainCenter.lng - 0.002 },
+            title: 'Evacuation Route 7 - Checkpoint',
+            type: 'infrastructure',
+            status: 'Route Active',
+            description: 'Primary evacuation corridor to North shelters.',
+            color: '#EC4899', // Pink
+            icon: 'navigation',
+            location: selectedLocation !== 'All' ? selectedLocation : 'USA'
+          });
+        }
+
+        setDynamicInfra(allResults)
+      } catch (error) {
+        console.warn('Infra search error:', error)
+      } finally {
+        setIsSearchingInfra(false)
+      }
+    }
+
+    fetchNearbyInfra()
+
+    // Automatic Zoom for visibility
+    if (impactedUsers.length > 0) {
+      const firstUser = impactedUsers[0].position
+      setMapCenter(firstUser)
+      setMapZoom(12) // Zoom in to see local infrastructure clearly
+    }
+  }, [activeTab, impactedUsers.length, dynamicInfra.length])
 
   const markers = useMemo(() => {
+    let currentFiltered: any[] = []
+
     switch (activeTab) {
-      case 'Citizens': return impactedUsers
-      case 'Responders': return responders
-      case 'City Leaders': return subAdmins
-      case 'Infrastructure': return infraMarkers
-      default: return []
+      case 'Citizens': currentFiltered = impactedUsers; break;
+      case 'Responders': currentFiltered = responders; break;
+      case 'Leaders': currentFiltered = subAdmins; break;
+      case 'Infrastructure': currentFiltered = dynamicInfra; break;
+      default: currentFiltered = [];
     }
-  }, [activeTab, impactedUsers, responders, subAdmins, infraMarkers])
+
+    // Apply location filtering
+    if (selectedLocation !== 'All') {
+      currentFiltered = currentFiltered.filter(m =>
+        m.location === selectedLocation ||
+        (m.description && m.description.includes(selectedLocation)) ||
+        (m.title && m.title.includes(selectedLocation))
+      )
+    }
+
+    // LAYER ORDERING: Ensure Citizens 'float' to the top of the map
+    // We do this by putting them LAST in the array when merged
+    if (activeTab === 'Citizens' || activeTab === 'Infrastructure') {
+      // Start with infrastructure as the base layer
+      const layer1 = [...dynamicInfra]
+      // Add citizens on top (last in array = higher z-index in Google Maps)
+      const layer2 = impactedUsers.filter(user => !layer1.find(m => m.id === user.id))
+
+      if (activeTab === 'Infrastructure') return [...layer2, ...layer1]
+      return [...layer1, ...layer2]
+    }
+
+    return currentFiltered
+  }, [activeTab, impactedUsers, responders, subAdmins, dynamicInfra])
 
   return (
     <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm h-[700px] flex flex-col">
-      {/* Real-time Impact Map Header */}
       <div className="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between gap-4">
-        <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tighter uppercase whitespace-nowrap shrink-0">GIS Impact Map</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tighter uppercase shrink-0">GIS Impact Map</h2>
+        </div>
 
         <div className="flex bg-slate-50 p-1 rounded-2xl gap-0.5 overflow-x-auto no-scrollbar">
-          {(['Citizens', 'Responders', 'City Leaders', 'Infrastructure'] as const).map((tab) => (
+          {(['Citizens', 'Responders', 'Leaders', 'Infrastructure'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -208,6 +323,12 @@ export function GISMap() {
 
       <div className="flex-1 relative">
         <GoogleMap markers={markers} zoom={mapZoom} center={mapCenter} />
+        {isSearchingInfra && (
+          <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl shadow-2xl border border-slate-100 flex items-center gap-2 z-50 animate-in fade-in slide-in-from-top-2 duration-300">
+            <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Locating Facilities...</span>
+          </div>
+        )}
       </div>
     </div>
   )

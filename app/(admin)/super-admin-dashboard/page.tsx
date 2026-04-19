@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { GISMap } from '@/components/gis-map'
 import { LicenseRequestList } from '@/components/license-request-list'
+import { ThreatMonitoring } from '@/components/threat-monitoring'
 import {
   Shield,
   Wifi,
@@ -35,6 +36,7 @@ export default function SuperAdminDashboard() {
   const [impactedUsers, setImpactedUsers] = useState<GenericEmergencyMetric[]>([])
   const [eocStatus, setEocStatus] = useState<GenericEmergencyMetric[]>([])
   const [responders, setResponders] = useState<any[]>([])
+  const [licenses, setLicenses] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedLocation, setSelectedLocation] = useState('All')
 
@@ -59,7 +61,8 @@ export default function SuperAdminDashboard() {
         fetchMetric('/api/alerts-sent-emergencies', setAlertsSent),
         fetchMetric('/api/ready2go-users-impacted', setImpactedUsers),
         fetchMetric('/api/virtual-eoc-status', setEocStatus),
-        fetchMetric('/api/responders', setResponders)
+        fetchMetric('/api/responders', setResponders),
+        fetchMetric('/api/admin/licenses', (data) => setLicenses(data.licenses || []))
       ])
 
       setLoading(false)
@@ -69,6 +72,7 @@ export default function SuperAdminDashboard() {
   }, [])
 
   const allLocations = Array.from(new Set([
+    ...licenses.map(l => l.organizationName),
     ...activeEmergencies.map(e => e.location),
     ...alertsSent.map(e => e.location),
     ...impactedUsers.map(e => e.location),
@@ -166,7 +170,7 @@ export default function SuperAdminDashboard() {
           {/* Emergencies Sent */}
           <Card className="p-6 border border-slate-200 border-l-4 border-l-[#33375D] rounded-lg shadow-sm bg-white relative overflow-hidden group">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-slate-900 font-bold text-lg leading-tight">Emergencies</h3>
+              <h3 className="text-slate-900 font-bold text-lg leading-tight">Alerts</h3>
               <Radio className="text-[#3B82F6]" size={18} />
             </div>
             <div className="flex items-baseline gap-3 mb-4">
@@ -238,7 +242,7 @@ export default function SuperAdminDashboard() {
         {/* Main Content Area */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
           <div className="lg:col-span-2 space-y-8">
-            <GISMap />
+            <GISMap selectedLocation={selectedLocation} />
           </div>
 
           <div className="space-y-8">
@@ -258,6 +262,8 @@ export default function SuperAdminDashboard() {
               </div>
               <LicenseRequestList />
             </div>
+
+            <ThreatMonitoring />
           </div>
         </div>
 

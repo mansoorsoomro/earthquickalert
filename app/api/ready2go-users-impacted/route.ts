@@ -6,6 +6,7 @@ export async function GET() {
     try {
         await dbConnect();
         const data = await Ready2GoUserImpacted.find({}).sort({ createdAt: -1 });
+
         return NextResponse.json(data);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
