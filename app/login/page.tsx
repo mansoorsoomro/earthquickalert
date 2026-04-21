@@ -82,11 +82,11 @@ export default function LoginPage() {
           </div>
 
           <h1 className="text-4xl font-black mb-6 tracking-tighter uppercase whitespace-nowrap">
-            Command <span className="text-[#FFD75E]">Hub</span> Access
+            Sign In to <span className="text-[#FFD75E]">Dashboard</span>
           </h1>
 
           <p className="text-xl text-slate-300/80 font-medium leading-relaxed mb-12">
-            Secure your community. Empower your team. Access your real-time emergency intelligence terminal.
+            Access your dashboard and stay updated with real-time alerts.
           </p>
 
 
@@ -114,13 +114,13 @@ export default function LoginPage() {
 
             <div className="mb-14 text-center relative z-10">
               <h2 className="text-5xl font-black text-[#33375D] mb-3 tracking-tighter uppercase leading-none">Sign In</h2>
-              <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em]">Authorize Entry</p>
+              <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em]">Enter your details</p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-6 relative z-10">
               <div className="space-y-3">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                  Tactical Email Address
+                  Email Address
                 </label>
                 <div className="relative group">
                   <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#33375D] transition-colors">
@@ -130,7 +130,7 @@ export default function LoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@agency.gov"
+                    placeholder="name@example.com"
                     className="w-full pl-16 pr-6 py-5 bg-slate-50 border border-slate-200 rounded-3xl focus:outline-none focus:ring-4 focus:ring-[#33375D]/5 focus:border-[#33375D] transition-all font-bold text-[#33375D] placeholder:text-slate-300"
                     required
                   />
@@ -140,9 +140,9 @@ export default function LoginPage() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center ml-1">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                    Security Passkey
+                    Password
                   </label>
-                  <button type="button" className="text-[10px] font-black text-[#33375D] hover:underline uppercase tracking-widest underline-offset-4">Forgot Key?</button>
+                  <button type="button" className="text-[10px] font-black text-[#33375D] hover:underline uppercase tracking-widest underline-offset-4">Forgot Password?</button>
                 </div>
                 <div className="relative group">
                   <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#33375D] transition-colors">
@@ -183,17 +183,17 @@ export default function LoginPage() {
                 {loading ? (
                   <div className="flex items-center gap-3">
                     <div className="h-5 w-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    <span>Authorizing Hub...</span>
+                    <span>Signing in...</span>
                   </div>
                 ) : (
-                  'Authorize Entry'
+                  'Sign In'
                 )}
               </Button>
             </form>
 
             <div className="mt-14 text-center pt-10 border-t border-slate-50 relative z-10">
               <p className="text-slate-400 font-bold text-[11px] uppercase tracking-widest">
-                New command personnel? Don't have an account?{' '}
+                New here? Don't have an account?{' '}
                 <button
                   onClick={() => router.push('/signup')}
                   className="text-[#33375D] font-black hover:underline underline-offset-4 decoration-2"
@@ -205,7 +205,7 @@ export default function LoginPage() {
           </div>
 
           <p className="mt-14 text-center text-slate-400 text-[9px] font-black uppercase tracking-[0.4em]">
-            © 2026 Ready2Go Operations • Secure Node Terminal
+            © 2026 Ready2Go Operations
           </p>
         </div>
       </div>

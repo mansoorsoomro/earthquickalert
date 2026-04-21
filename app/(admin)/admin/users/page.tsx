@@ -263,18 +263,18 @@ export default function AdminUsersPage() {
 
                                                 <div className="mt-8 pt-6 border-t border-white/10 flex flex-col gap-5">
                                                     <Button
-                                                        variant="ghost"
-                                                        size="sm"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             handleOrgSelect(org._id, org.organizationName);
                                                         }}
                                                         className={cn(
-                                                            "w-full h-12 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] border border-white/10 shadow-xl backdrop-blur-md group/btn transition-all active:scale-95 flex items-center justify-center gap-3",
-                                                            selectedOrgId === org._id ? "bg-white/10 hover:bg-white/20 text-white" : "bg-slate-900 text-white hover:bg-slate-800"
+                                                            "w-full h-12 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl group/btn transition-all active:scale-95 flex items-center justify-center gap-3",
+                                                            selectedOrgId === org._id 
+                                                                ? "bg-white/20 hover:bg-white/30 text-white border border-white/20" 
+                                                                : "bg-[#33375D] text-white hover:bg-[#1E293B] border-none"
                                                         )}
                                                     >
-                                                        Verify Dispatch <ArrowUpRight size={18} className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
+                                                        Verify Dispatch <ArrowUpRight size={18} className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform text-white" />
                                                     </Button>
                                                 </div>
                                             </div>

@@ -83,6 +83,7 @@ export function GISMap({ selectedLocation = 'All' }: GISMapProps) {
             isSafe: false,
             status: item.status || 'At Risk',
             location: item.location || item.city,
+            subAdminName: item.subAdminName,
             description: `Affected Zone: ${item.location || item.city || 'Unknown'}`
           }
         }))
@@ -130,6 +131,53 @@ export function GISMap({ selectedLocation = 'All' }: GISMapProps) {
     }
     fetchData()
   }, [])
+
+  // Auto-zoom and center when selection changes
+  useEffect(() => {
+    if (selectedLocation === 'All') {
+      setMapCenter({ lat: 37.0902, lng: -95.7129 });
+      setMapZoom(4);
+    } else {
+      // 1. Find the admin's coordinates (for fallback)
+      const rawAdmin = subAdmins.find(u => u.name === selectedLocation);
+      const adminPos = rawAdmin && rawAdmin.lat && rawAdmin.lng 
+        ? { lat: Number(rawAdmin.lat), lng: Number(rawAdmin.lng) }
+        : null;
+
+      // 2. Filter impacted users for this admin
+      const filteredUsers = impactedUsers.filter(u => u.subAdminName === selectedLocation);
+
+      if (filteredUsers.length > 0) {
+        // 3. Calculate center of users
+        const lats = filteredUsers.map(u => u.position.lat);
+        const lngs = filteredUsers.map(u => u.position.lng);
+        const avgLat = lats.reduce((a, b) => a + b, 0) / lats.length;
+        const avgLng = lngs.reduce((a, b) => a + b, 0) / lngs.length;
+
+        // 4. Calculate appropriate zoom level based on spread
+        const latSpan = Math.max(...lats) - Math.min(...lats);
+        const lngSpan = Math.max(...lngs) - Math.min(...lngs);
+        const maxSpan = Math.max(latSpan, lngSpan);
+
+        // Heuristic: Zoom levels roughly correlate to span
+        // Zoom 12 is city level (~0.1 deg span)
+        // Zoom 6 is state level (~5.0 deg span)
+        let dynamicZoom = 12;
+        if (maxSpan > 5) dynamicZoom = 5;
+        else if (maxSpan > 2) dynamicZoom = 6;
+        else if (maxSpan > 1) dynamicZoom = 7;
+        else if (maxSpan > 0.5) dynamicZoom = 9;
+        else if (maxSpan > 0.1) dynamicZoom = 11;
+        
+        setMapCenter({ lat: avgLat, lng: avgLng });
+        setMapZoom(dynamicZoom);
+      } else if (adminPos) {
+        // Fallback to admin city if no users found
+        setMapCenter(adminPos);
+        setMapZoom(12);
+      }
+    }
+  }, [selectedLocation, subAdmins, impactedUsers]);
 
   // Fetch Infrastructure when the "Infrastructure" tab is activated
   useEffect(() => {
@@ -190,11 +238,17 @@ export function GISMap({ selectedLocation = 'All' }: GISMapProps) {
                       icon = 'home';
                     }
 
+                    const category = type === 'hospital' ? '🏥 Hospital' :
+                      type === 'pharmacy' ? '💊 Pharmacy' :
+                        type === 'gas_station' ? '⛽ Petrol Pump' :
+                          (type === 'community_center' || type === 'school') ? '🏠 Shelter' : '🏢 Infrastructure';
+
                     allResults.push({
                       id: place.place_id,
                       position: place.geometry.location,
                       title: place.name,
                       type: 'infrastructure',
+                      category: category,
                       status: (type === 'community_center' || type === 'school') ? 'Emergency Shelter' : `Verified ${type.replace('_', ' ')}`,
                       description: (type === 'community_center' || type === 'school')
                         ? 'Official Community Shelter Site'
@@ -222,6 +276,7 @@ export function GISMap({ selectedLocation = 'All' }: GISMapProps) {
             position: { lat: mainCenter.lat + 0.005, lng: mainCenter.lng + 0.005 },
             title: 'Resource Allocation Waiver #442',
             type: 'infrastructure',
+            category: '📜 Waiver',
             status: 'Active Waiver',
             description: 'Emergency waiver active for medical supply distribution.',
             color: '#6366F1', // Indigo
@@ -235,6 +290,7 @@ export function GISMap({ selectedLocation = 'All' }: GISMapProps) {
             position: { lat: mainCenter.lat - 0.008, lng: mainCenter.lng - 0.002 },
             title: 'Evacuation Route 7 - Checkpoint',
             type: 'infrastructure',
+            category: '📍 Evacuation Point',
             status: 'Route Active',
             description: 'Primary evacuation corridor to North shelters.',
             color: '#EC4899', // Pink
@@ -252,13 +308,6 @@ export function GISMap({ selectedLocation = 'All' }: GISMapProps) {
     }
 
     fetchNearbyInfra()
-
-    // Automatic Zoom for visibility
-    if (impactedUsers.length > 0) {
-      const firstUser = impactedUsers[0].position
-      setMapCenter(firstUser)
-      setMapZoom(12) // Zoom in to see local infrastructure clearly
-    }
   }, [activeTab, impactedUsers.length, dynamicInfra.length])
 
   const markers = useMemo(() => {
@@ -275,26 +324,15 @@ export function GISMap({ selectedLocation = 'All' }: GISMapProps) {
     // Apply location filtering
     if (selectedLocation !== 'All') {
       currentFiltered = currentFiltered.filter(m =>
+        m.subAdminName === selectedLocation ||
         m.location === selectedLocation ||
         (m.description && m.description.includes(selectedLocation)) ||
         (m.title && m.title.includes(selectedLocation))
       )
     }
 
-    // LAYER ORDERING: Ensure Citizens 'float' to the top of the map
-    // We do this by putting them LAST in the array when merged
-    if (activeTab === 'Citizens' || activeTab === 'Infrastructure') {
-      // Start with infrastructure as the base layer
-      const layer1 = [...dynamicInfra]
-      // Add citizens on top (last in array = higher z-index in Google Maps)
-      const layer2 = impactedUsers.filter(user => !layer1.find(m => m.id === user.id))
-
-      if (activeTab === 'Infrastructure') return [...layer2, ...layer1]
-      return [...layer1, ...layer2]
-    }
-
     return currentFiltered
-  }, [activeTab, impactedUsers, responders, subAdmins, dynamicInfra])
+  }, [activeTab, impactedUsers, responders, subAdmins, dynamicInfra, selectedLocation])
 
   return (
     <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm h-[700px] flex flex-col">

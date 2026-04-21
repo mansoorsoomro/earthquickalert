@@ -14,22 +14,32 @@ interface ThreatAssessment {
     summary: string;
 }
 
-export function ThreatMonitoring() {
+interface ThreatMonitoringProps {
+    lat?: number;
+    lon?: number;
+    locationName?: string;
+}
+
+export function ThreatMonitoring({ lat, lon, locationName }: ThreatMonitoringProps) {
     const [loading, setLoading] = useState(true);
     const [assessment, setAssessment] = useState<ThreatAssessment | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        async function fetchAssessment(lat?: number, lon?: number) {
+        async function fetchAssessment(targetLat?: number, targetLon?: number) {
             setLoading(true);
             setError(null);
             try {
-                let url = '/api/threats/assessment';
-                if (lat && lon) {
-                    url += `?lat=${lat}&lon=${lon}`;
-                } else {
-                    // Fallback to LA coordinates if no geo
-                    url += `?lat=34.0522&lon=-118.2437`;
+                let url = `/api/threats/assessment?locationName=${encodeURIComponent(locationName || 'Current Location')}`;
+
+                // Only append lat/lon if we are NOT in USA National mode
+                if (locationName !== 'USA') {
+                    if (targetLat && targetLon) {
+                        url += `&lat=${targetLat}&lon=${targetLon}`;
+                    } else {
+                        // Local fallback to LA if no coordinates provided and not USA
+                        url += `&lat=34.0522&lon=-118.2437`;
+                    }
                 }
 
                 const response = await fetch(url);
@@ -48,19 +58,27 @@ export function ThreatMonitoring() {
             }
         }
 
-        if (navigator.geolocation) {
+        // Selection Logic
+        if (locationName === 'USA') {
+            // National Mode: No coordinates needed
+            fetchAssessment();
+        } else if (lat && lon) {
+            // Admin Specific Mode
+            fetchAssessment(lat, lon);
+        } else if (navigator.geolocation) {
+            // Personal fallback mode
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     fetchAssessment(position.coords.latitude, position.coords.longitude);
                 },
                 () => {
-                    fetchAssessment(); // Use fallback
+                    fetchAssessment(); // Final fallback
                 }
             );
         } else {
             fetchAssessment();
         }
-    }, [])
+    }, [lat, lon, locationName])
 
     const liveInputs = [
         "NWS Severe Weather Alerts",
@@ -96,7 +114,7 @@ export function ThreatMonitoring() {
                     <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">AI Assessment</h3>
                     {loading && <Loader2 className="animate-spin text-blue-500" size={16} />}
                 </div>
-                
+
                 {error ? (
                     <div className="flex flex-col items-center justify-center py-10 text-center space-y-3">
                         <AlertCircle className="text-rose-400" size={32} />
@@ -107,9 +125,9 @@ export function ThreatMonitoring() {
                         <div className="space-y-1">
                             <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Geo-relevance</p>
                             {loading ? <Skeleton className="h-6 w-16 bg-slate-50" /> : (
-                                <p className={cn("text-lg font-black", 
-                                    assessment?.relevance === 'High' ? 'text-rose-600' : 
-                                    assessment?.relevance === 'Medium' ? 'text-amber-600' : 'text-emerald-600'
+                                <p className={cn("text-lg font-black",
+                                    assessment?.relevance === 'High' ? 'text-rose-600' :
+                                        assessment?.relevance === 'Medium' ? 'text-amber-600' : 'text-emerald-600'
                                 )}>
                                     {assessment?.relevance || 'Low'}
                                 </p>
@@ -142,7 +160,7 @@ export function ThreatMonitoring() {
                                 )}
                             </div>
                             <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                                <div 
+                                <div
                                     className="bg-emerald-500 h-full rounded-full transition-all duration-1000"
                                     style={{ width: `${loading ? 0 : (assessment?.confidence || 0)}%` }}
                                 />

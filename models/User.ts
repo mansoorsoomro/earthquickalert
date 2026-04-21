@@ -133,6 +133,14 @@ const UserSchema = new Schema({
         type: String,
         default: '',
     },
+    lat: {
+        type: Number,
+        default: null,
+    },
+    lng: {
+        type: Number,
+        default: null,
+    },
     createdAt: {
         type: Date,
         default: Date.now,

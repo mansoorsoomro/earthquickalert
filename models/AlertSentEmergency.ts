@@ -6,6 +6,7 @@ const AlertSentEmergencySchema = new Schema({
     city: { type: String, required: true },
     time: { type: String, required: true },
     status: { type: String, required: true },
+    subAdminName: { type: String },
 }, {
     timestamps: true,
 });

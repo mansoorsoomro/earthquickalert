@@ -45,6 +45,7 @@ const Ready2GoUserImpactedSchema = new mongoose.Schema({
   city: { type: String, required: true },
   time: { type: String, required: true },
   status: { type: String, required: true },
+  subAdminName: { type: String },
   lat: { type: Number },
   lng: { type: Number },
 }, { timestamps: true });
@@ -63,8 +64,50 @@ const ResponderSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+const ActiveEmergencySchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  location: { type: String, required: true },
+  city: { type: String, required: true },
+  time: { type: String, required: true },
+  status: { type: String, required: true },
+  subAdminName: { type: String },
+}, { timestamps: true });
+
+const AlertSentEmergencySchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  location: { type: String, required: true },
+  city: { type: String, required: true },
+  time: { type: String, required: true },
+  status: { type: String, required: true },
+  subAdminName: { type: String },
+}, { timestamps: true });
+
+const VirtualEOCStatusSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  location: { type: String, required: true },
+  city: { type: String, required: true },
+  time: { type: String, required: true },
+  status: { type: String, required: true },
+  subAdminName: { type: String },
+}, { timestamps: true });
+
 const Ready2GoUserImpacted = mongoose.models.Ready2GoUserImpacted || mongoose.model('Ready2GoUserImpacted', Ready2GoUserImpactedSchema);
 const Responder = mongoose.models.Responder || mongoose.model('Responder', ResponderSchema);
+const ActiveEmergency = mongoose.models.ActiveEmergency || mongoose.model('ActiveEmergency', ActiveEmergencySchema);
+const AlertSentEmergency = mongoose.models.AlertSentEmergency || mongoose.model('AlertSentEmergency', AlertSentEmergencySchema);
+const VirtualEOCStatus = mongoose.models.VirtualEOCStatus || mongoose.model('VirtualEOCStatus', VirtualEOCStatusSchema);
+
+const UserSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, default: 'user' },
+  lat: { type: Number },
+  lng: { type: Number },
+  accountStatus: { type: String, default: 'approved' }
+}, { timestamps: true });
+
+const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
 async function seed() {
   try {
@@ -76,96 +119,84 @@ async function seed() {
     console.log('Clearing old collections...');
     await Ready2GoUserImpacted.deleteMany({});
     await Responder.deleteMany({});
+    await ActiveEmergency.deleteMany({});
+    await AlertSentEmergency.deleteMany({});
+    await VirtualEOCStatus.deleteMany({});
+    await User.deleteMany({});
 
-    // Seed Citizens
-    const mockUsers = [
-      {
-        name: "Maria Hernandez",
-        location: "Downtown Houston, TX",
-        city: "Houston",
-        time: new Date().toLocaleTimeString(),
-        status: "At Risk",
-        lat: 29.7604,
-        lng: -95.3698
-      },
-      {
-        name: "James Wilson",
-        location: "Lower Manhattan, NY",
-        city: "New York",
-        time: new Date().toLocaleTimeString(),
-        status: "At Risk",
-        lat: 40.7128,
-        lng: -74.0060
-      },
-      {
-        name: "Sarah Chen",
-        location: "Santa Monica, CA",
-        city: "Santa Monica",
-        time: new Date().toLocaleTimeString(),
-        status: "At Risk",
-        lat: 34.0195,
-        lng: -118.4912
-      },
-      {
-        name: "Robert Taylor",
-        location: "Loop District, Chicago, IL",
-        city: "Chicago",
-        time: new Date().toLocaleTimeString(),
-        status: "At Risk",
-        lat: 41.8781,
-        lng: -87.6298
-      }
+    // Seed Sub-Admins
+    const bcrypt = require('bcryptjs');
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash('password123', salt);
+
+    const mockAdmins = [
+      { name: "Mansoor Soomro", email: "mansoor@example.com", password: hashedPassword, role: "sub-admin", lat: 29.7604, lng: -95.3698 }, // Houston, TX
+      { name: "Atiya Mansoor", email: "atiya@example.com", password: hashedPassword, role: "sub-admin", lat: 34.0522, lng: -118.2437 }, // LA, CA
+      { name: "John Smith", email: "john@example.com", password: hashedPassword, role: "sub-admin", lat: 41.8781, lng: -87.6298 },   // Chicago, IL
+      { name: "Jane Doe", email: "jane@example.com", password: hashedPassword, role: "sub-admin", lat: 40.7128, lng: -74.0060 }       // NYC, NY
     ];
 
-    console.log(`Seeding ${mockUsers.length} Citizens...`);
+    console.log(`Seeding ${mockAdmins.length} Sub-Admin users...`);
+    await User.insertMany(mockAdmins);
+
+    // Seed Citizens (Distributed by State)
+    const mockUsers = [
+      // Texas (TX) -> Mansoor Soomro
+      { name: "Maria Hernandez", location: "Downtown Houston, TX", city: "Houston", time: new Date().toLocaleTimeString(), status: "At Risk", subAdminName: "Mansoor Soomro", lat: 29.7604, lng: -95.3698 },
+      { name: "Elena Gomez", location: "Eastside, Austin, TX", city: "Austin", time: new Date().toLocaleTimeString(), status: "At Risk", subAdminName: "Mansoor Soomro", lat: 30.2672, lng: -97.7431 },
+      
+      // California (CA) -> Atiya Mansoor
+      { name: "Sarah Chen", location: "Santa Monica, CA", city: "Santa Monica", time: new Date().toLocaleTimeString(), status: "Safe", subAdminName: "Atiya Mansoor", lat: 34.0195, lng: -118.4912 },
+      { name: "Li Wang", location: "Chinatown, San Francisco, CA", city: "San Francisco", time: new Date().toLocaleTimeString(), status: "Safe", subAdminName: "Atiya Mansoor", lat: 37.7749, lng: -122.4194 },
+      
+      // Illinois (IL) -> John Smith
+      { name: "Robert Taylor", location: "Loop District, Chicago, IL", city: "Chicago", time: new Date().toLocaleTimeString(), status: "At Risk", subAdminName: "John Smith", lat: 41.8781, lng: -87.6298 },
+      
+      // New York (NY) -> Jane Doe
+      { name: "James Wilson", location: "Lower Manhattan, NY", city: "New York", time: new Date().toLocaleTimeString(), status: "At Risk", subAdminName: "Jane Doe", lat: 40.7128, lng: -74.0060 }
+    ];
+
+    console.log(`Seeding ${mockUsers.length} Citizens across 4 admins...`);
     await Ready2GoUserImpacted.insertMany(mockUsers);
 
     // Seed Responders
     const mockResponders = [
-      {
-        name: "Squad 42 - Fire & Rescue",
-        type: "Fire",
-        status: "Active",
-        location: "Downtown Station",
-        city: "Los Angeles",
-        availability: true,
-        contact: "+1-555-0101",
-        coordinates: { lat: 34.0522, lng: -118.2437 }
-      },
-      {
-        name: "Metro Police Unit 12",
-        type: "Police",
-        status: "Active",
-        location: "North sector",
-        city: "New York",
-        availability: true,
-        contact: "+1-555-0102",
-        coordinates: { lat: 40.7128, lng: -74.0060 }
-      },
-      {
-        name: "EMS Critical Care Team 5",
-        type: "EMS",
-        status: "Standby",
-        location: "Central Hospital",
-        city: "Chicago",
-        availability: true,
-        contact: "+1-555-0103",
-        coordinates: { lat: 41.8781, lng: -87.6298 }
-      },
-      {
-        name: "Hazmat Response Team Alpha",
-        type: "Hazmat",
-        status: "Active",
-        location: "Industrial Zone",
-        city: "Houston",
-        availability: false,
-        contact: "+1-555-0104",
-        coordinates: { lat: 29.7604, lng: -95.3698 }
-      }
+      { name: "Squad 42 - Fire & Rescue", type: "Fire", status: "Active", location: "Downtown Station", city: "Los Angeles", availability: true, contact: "+1-555-0101", coordinates: { lat: 34.0522, lng: -118.2437 } },
+      { name: "Metro Police Unit 12", type: "Police", status: "Active", location: "North sector", city: "New York", availability: true, contact: "+1-555-0102", coordinates: { lat: 40.7128, lng: -74.0060 } }
     ];
 
     console.log(`Seeding ${mockResponders.length} Responders...`);
     await Responder.insertMany(mockResponders);
+
+    // Seed Active Emergencies (Across 4 admins)
+    const mockActive = [
+      { name: "Flash Flood Warning", location: "Central Houston", city: "Houston", time: "10:00 AM", status: "Critical", subAdminName: "Mansoor Soomro" },
+      { name: "Wildfire Alert", location: "Bel Air", city: "Los Angeles", time: "11:00 AM", status: "Active", subAdminName: "Atiya Mansoor" },
+      { name: "Winter Storm", location: "North Side", city: "Chicago", time: "09:00 AM", status: "Watch", subAdminName: "John Smith" },
+      { name: "Subway Flooding", location: "Brooklyn", city: "New York", time: "08:30 AM", status: "Active", subAdminName: "Jane Doe" }
+    ];
+    console.log(`Seeding ${mockActive.length} Active Emergencies...`);
+    await ActiveEmergency.insertMany(mockActive);
+
+    // Seed Alerts Sent
+    const mockAlerts = [
+      { name: "Flood Alert", location: "Harris County", city: "Houston", time: "09:00 AM", status: "Sent", subAdminName: "Mansoor Soomro" },
+      { name: "Heat Wave Warning", location: "San Fernando Valley", city: "Los Angeles", time: "07:00 AM", status: "Sent", subAdminName: "Atiya Mansoor" },
+      { name: "Tornado Warning", location: "Cook County", city: "Chicago", time: "12:00 PM", status: "Sent", subAdminName: "John Smith" },
+      { name: "Blizzard Warning", location: "Albany", city: "New York", time: "06:00 PM", status: "Sent", subAdminName: "Jane Doe" }
+    ];
+    console.log(`Seeding ${mockAlerts.length} Alerts...`);
+    await AlertSentEmergency.insertMany(mockAlerts);
+
+    // Seed Virtual EOC Status
+    const mockEOC = [
+      { name: "Houston EOC", location: "TX-Center", city: "Houston", time: "Now", status: "Operational", subAdminName: "Mansoor Soomro" },
+      { name: "LA Operations Center", location: "CA-West", city: "Los Angeles", time: "Now", status: "Active", subAdminName: "Atiya Mansoor" },
+      { name: "Chicago Response Hub", location: "IL-Central", city: "Chicago", time: "Now", status: "Standby", subAdminName: "John Smith" },
+      { name: "NYC Command Post", location: "NY-Metro", city: "New York", time: "Now", status: "Operational", subAdminName: "Jane Doe" }
+    ];
+    console.log(`Seeding ${mockEOC.length} EOC Statuses...`);
+    await VirtualEOCStatus.insertMany(mockEOC);
 
     console.log('\x1b[32m%s\x1b[0m', 'Seeding completed successfully!');
   } catch (error) {

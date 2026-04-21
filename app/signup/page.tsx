@@ -195,11 +195,11 @@ export default function SignupPage() {
           </div>
 
           <h1 className="text-4xl font-black mb-6 tracking-tighter uppercase whitespace-nowrap">
-            Operational <span className="text-[#FFD75E]">Onboarding</span>
+            Create Your <span className="text-[#FFD75E]">Account</span>
           </h1>
 
           <p className="text-xl text-slate-300 font-medium leading-relaxed mb-8">
-            Secure your community. Empower your team. Join the global network of modernized emergency coordination.
+            Join our network and stay updated with live emergency alerts.
           </p>
 
 
@@ -223,7 +223,7 @@ export default function SignupPage() {
           <div className="bg-white rounded-[48px] shadow-2xl shadow-slate-200/60 p-8 sm:p-10 lg:p-12 border border-slate-100 animate-in fade-in slide-in-from-bottom-8 duration-700">
             <div className="mb-10 text-center lg:text-left">
               <h2 className="text-3xl font-black text-[#33375D] mb-3 tracking-tighter uppercase">Create Account</h2>
-              <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em]">Deployment Access Request</p>
+              <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em]">Enter your details</p>
             </div>
 
             <form onSubmit={handleSignup} className="space-y-6 overflow-y-auto max-h-[70vh] px-1 pr-3 scrollbar-hide">
@@ -267,7 +267,7 @@ export default function SignupPage() {
 
               <div className="space-y-4">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                  Deployment Profile
+                  Select Your Role
                 </label>
                 <div className="grid grid-cols-2 gap-4">
                   <button
@@ -299,14 +299,14 @@ export default function SignupPage() {
                   <div className="space-y-4 mb-2 pb-6 border-b border-[#33375D]/10">
                     <div className="flex items-center justify-between px-1">
                       <label className="text-[10px] font-black text-[#33375D] uppercase tracking-[0.2em] flex items-center gap-2">
-                        <MapPin size={12} /> Geolocation Terminal
+                        <MapPin size={12} /> Your Location
                       </label>
                       <button
                         type="button"
                         onClick={handleLocateMe}
                         className="text-[10px] font-black text-white flex items-center gap-2 bg-[#33375D] hover:bg-[#44496B] px-4 py-2 rounded-xl transition-all shadow-lg active:scale-95"
                       >
-                        <Navigation size={10} /> Auto Detect
+                        <Navigation size={10} /> Find My Location
                       </button>
                     </div>
                     <Autocomplete onLoad={onPlaceLoaded} onPlaceChanged={onPlaceChanged}>
@@ -402,7 +402,7 @@ export default function SignupPage() {
 
               <div className="space-y-3">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                  Access Password
+                  Password
                 </label>
                 <div className="relative group">
                   <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#33375D] transition-colors">
@@ -443,7 +443,7 @@ export default function SignupPage() {
                     <span>Processing...</span>
                   </div>
                 ) : (
-                  'Request Access'
+                  'Sign Up'
                 )}
               </Button>
             </form>
@@ -462,7 +462,7 @@ export default function SignupPage() {
           </div>
 
           <p className="mt-10 text-center text-slate-400 text-[9px] font-black uppercase tracking-[0.4em]">
-            © 2026 Ready2Go Operations • Node Terminal
+            © 2026 Ready2Go Operations
           </p>
         </div>
       </div>

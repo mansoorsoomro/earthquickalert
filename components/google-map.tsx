@@ -18,6 +18,7 @@ interface MapMarker {
     timestamp?: string
     color?: string
     icon?: string
+    category?: string
 }
 
 interface GoogleMapProps {
@@ -67,6 +68,13 @@ export function GoogleMap({ address, markers = [], center, zoom = 10 }: GoogleMa
             map.panTo(center)
         }
     }, [map, center])
+
+    // Clear selected marker if it's no longer in the markers list (e.g. when switching tabs)
+    React.useEffect(() => {
+        if (selectedMarker && !markers.find(m => m.id === selectedMarker.id)) {
+            setSelectedMarker(null)
+        }
+    }, [markers, selectedMarker])
 
     if (!isLoaded) return <div className="w-full h-full min-h-[400px] bg-slate-100 animate-pulse flex items-center justify-center rounded-xl border border-slate-200">
         <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Initalizing Satellite Feed...</p>
@@ -172,7 +180,9 @@ export function GoogleMap({ address, markers = [], center, zoom = 10 }: GoogleMa
                                 {selectedMarker.type === 'user' ? '👤 Citizen' :
                                     selectedMarker.type === 'earthquake' ? '🌋 Earthquake' :
                                         selectedMarker.type === 'weather' ? '🌦️ Weather Alert' :
-                                            selectedMarker.type === 'incident' ? '⚠️ Incident' : '📍 Admin'}
+                                            selectedMarker.type === 'incident' ? '⚠️ Incident' :
+                                                selectedMarker.category ? selectedMarker.category :
+                                                    selectedMarker.type === 'infrastructure' ? '🏢 Infrastructure' : '📍 Admin'}
                             </h3>
                             <div className="font-bold text-lg mb-1">{selectedMarker.title}</div>
 

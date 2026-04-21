@@ -76,10 +76,12 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
     zipcode: user?.zipcode || '',
     radiusMile: 5,
     userId: user?._id || '',
+    organizationalAddress: '',
   })
 
   const [mapCenter, setMapCenter] = useState(defaultCenter)
-  const [autocomplete, setAutocomplete] = useState<any>(null)
+  const [primaryAutocomplete, setPrimaryAutocomplete] = useState<any>(null)
+  const [orgAutocomplete, setOrgAutocomplete] = useState<any>(null)
 
   const { isLoaded } = useJsApiLoader({
     id: GOOGLE_MAPS_LOADER_ID,
@@ -100,7 +102,7 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
         state: user.state || '',
         country: user.country || '',
         zipcode: user.zipcode || '',
-        billingAddress: fullAddress || prev.billingAddress
+        billingAddress: fullAddress || prev.billingAddress,
       }))
 
       if (fullAddress) {
@@ -119,9 +121,9 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
     }
   }, [isOpen, user])
 
-  const onPlaceChanged = () => {
-    if (autocomplete !== null) {
-      const place = autocomplete.getPlace()
+  const onPrimaryPlaceChanged = () => {
+    if (primaryAutocomplete !== null) {
+      const place = primaryAutocomplete.getPlace()
       if (place.geometry) {
         const lat = place.geometry.location.lat()
         const lng = place.geometry.location.lng()
@@ -142,6 +144,18 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
           country: country || prev.country,
           zipcode: zipcode || prev.zipcode,
           billingAddress: place.formatted_address || prev.billingAddress
+        }))
+      }
+    }
+  }
+
+  const onOrgPlaceChanged = () => {
+    if (orgAutocomplete !== null) {
+      const place = orgAutocomplete.getPlace()
+      if (place.formatted_address) {
+        setFormData(prev => ({
+          ...prev,
+          organizationalAddress: place.formatted_address
         }))
       }
     }
@@ -209,6 +223,23 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                   />
                 </div>
 
+                <div className="md:col-span-2 space-y-2">
+                  <Label className="text-sm font-medium text-slate-700 ml-1">Organization Address</Label>
+                  {isLoaded ? (
+                    <Autocomplete onLoad={setOrgAutocomplete} onPlaceChanged={onOrgPlaceChanged}>
+                      <Input
+                        required
+                        value={formData.organizationalAddress}
+                        onChange={(e) => setFormData({ ...formData, organizationalAddress: e.target.value })}
+                        placeholder="HQ or Registered Address"
+                        className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
+                      />
+                    </Autocomplete>
+                  ) : (
+                    <Input disabled className="h-11 bg-slate-50 border-slate-200 rounded-lg" placeholder="Initializing maps..." />
+                  )}
+                </div>
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-slate-700 ml-1">Point of Contact</Label>
                   <Input
@@ -244,16 +275,16 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-slate-700 ml-1">Primary Address</Label>
+                <div className="md:col-span-2 space-y-2 pt-4">
+                  <Label className="text-sm font-medium text-slate-700 ml-1 font-bold">Primary Address</Label>
                   {isLoaded ? (
-                    <Autocomplete onLoad={setAutocomplete} onPlaceChanged={onPlaceChanged}>
+                    <Autocomplete onLoad={setPrimaryAutocomplete} onPlaceChanged={onPrimaryPlaceChanged}>
                       <Input
                         required
                         value={formData.billingAddress}
                         onChange={(e) => setFormData({ ...formData, billingAddress: e.target.value })}
-                        placeholder="Search for an address"
-                        className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        placeholder="Operations center or target location"
+                        className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all font-medium border-blue-100 shadow-sm"
                       />
                     </Autocomplete>
                   ) : (
@@ -354,4 +385,3 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
     </Dialog>
   )
 }
-

@@ -62,10 +62,12 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
     zipcode: '',
     radiusMile: 5,
     userId: '',
+    organizationalAddress: '',
   })
 
   const [mapCenter, setMapCenter] = useState(defaultCenter)
-  const [autocomplete, setAutocomplete] = useState<any>(null)
+  const [primaryAutocomplete, setPrimaryAutocomplete] = useState<any>(null)
+  const [orgAutocomplete, setOrgAutocomplete] = useState<any>(null)
 
   const { isLoaded } = useJsApiLoader({
     id: GOOGLE_MAPS_LOADER_ID,
@@ -112,9 +114,9 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
     }
   }
 
-  const onPlaceChanged = () => {
-    if (autocomplete !== null) {
-      const place = autocomplete.getPlace()
+  const onPrimaryPlaceChanged = () => {
+    if (primaryAutocomplete !== null) {
+      const place = primaryAutocomplete.getPlace()
       if (place.geometry) {
         const lat = place.geometry.location.lat()
         const lng = place.geometry.location.lng()
@@ -135,6 +137,18 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
           country: country || prev.country,
           zipcode: zipcode || prev.zipcode,
           billingAddress: place.formatted_address || prev.billingAddress
+        }))
+      }
+    }
+  }
+
+  const onOrgPlaceChanged = () => {
+    if (orgAutocomplete !== null) {
+      const place = orgAutocomplete.getPlace()
+      if (place.formatted_address) {
+        setFormData(prev => ({
+          ...prev,
+          organizationalAddress: place.formatted_address
         }))
       }
     }
@@ -207,6 +221,23 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
                 </div>
 
                 <div className="col-span-2 space-y-2">
+                  <Label className="text-sm font-medium text-slate-700 ml-1">Organization Address</Label>
+                  {isLoaded ? (
+                    <Autocomplete onLoad={setOrgAutocomplete} onPlaceChanged={onOrgPlaceChanged}>
+                      <Input
+                        required
+                        value={formData.organizationalAddress}
+                        onChange={(e) => setFormData({ ...formData, organizationalAddress: e.target.value })}
+                        placeholder="HQ or Registered Address"
+                        className="h-12 bg-white border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 transition-all font-medium"
+                      />
+                    </Autocomplete>
+                  ) : (
+                    <Input disabled className="h-12 bg-slate-50 border-slate-200 rounded-xl" placeholder="Initializing maps..." />
+                  )}
+                </div>
+
+                <div className="col-span-2 space-y-2">
                   <Label className="text-sm font-medium text-slate-700 ml-1">Assigned Sub-Admin</Label>
                   <div className="relative">
                     <select
@@ -237,6 +268,23 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
                     </div>
                   </div>
                 )}
+
+                <div className="col-span-2 space-y-2">
+                  <Label className="text-sm font-medium text-slate-700 ml-1">Primary Address</Label>
+                  {isLoaded ? (
+                    <Autocomplete onLoad={setPrimaryAutocomplete} onPlaceChanged={onPrimaryPlaceChanged}>
+                      <Input
+                        required
+                        value={formData.billingAddress}
+                        onChange={(e) => setFormData({ ...formData, billingAddress: e.target.value })}
+                        placeholder="Operations center or target location"
+                        className="h-12 bg-white border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 transition-all font-medium"
+                      />
+                    </Autocomplete>
+                  ) : (
+                    <Input disabled className="h-12 bg-slate-50 border-slate-200 rounded-xl" placeholder="Initializing maps..." />
+                  )}
+                </div>
               </div>
             </div>
 
@@ -246,22 +294,6 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
                 <MapPin size={14} /> Service Area
               </h3>
               <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-slate-700 ml-1">Primary Address</Label>
-                  {isLoaded ? (
-                    <Autocomplete onLoad={setAutocomplete} onPlaceChanged={onPlaceChanged}>
-                      <Input
-                        required
-                        value={formData.billingAddress}
-                        onChange={(e) => setFormData({ ...formData, billingAddress: e.target.value })}
-                        placeholder="Search for an address"
-                        className="h-12 bg-white border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 transition-all"
-                      />
-                    </Autocomplete>
-                  ) : (
-                    <Input disabled className="h-12 bg-slate-50 border-slate-200 rounded-xl" placeholder="Initializing maps..." />
-                  )}
-                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                   <div className="space-y-6">

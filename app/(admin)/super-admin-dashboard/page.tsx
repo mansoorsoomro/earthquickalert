@@ -37,6 +37,7 @@ export default function SuperAdminDashboard() {
   const [eocStatus, setEocStatus] = useState<GenericEmergencyMetric[]>([])
   const [responders, setResponders] = useState<any[]>([])
   const [licenses, setLicenses] = useState<any[]>([])
+  const [subAdminUsers, setSubAdminUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedLocation, setSelectedLocation] = useState('All')
 
@@ -62,7 +63,7 @@ export default function SuperAdminDashboard() {
         fetchMetric('/api/ready2go-users-impacted', setImpactedUsers),
         fetchMetric('/api/virtual-eoc-status', setEocStatus),
         fetchMetric('/api/responders', setResponders),
-        fetchMetric('/api/admin/licenses', (data) => setLicenses(data.licenses || []))
+        fetchMetric('/api/admin/users?role=sub-admin', (data) => setSubAdminUsers(data.users || []))
       ])
 
       setLoading(false)
@@ -71,29 +72,32 @@ export default function SuperAdminDashboard() {
     fetchData()
   }, [])
 
-  const allLocations = Array.from(new Set([
-    ...licenses.map(l => l.organizationName),
-    ...activeEmergencies.map(e => e.location),
-    ...alertsSent.map(e => e.location),
-    ...impactedUsers.map(e => e.location),
-    ...eocStatus.map(e => e.location)
+  const allSubAdmins = Array.from(new Set([
+    ...activeEmergencies.map((e: any) => e.subAdminName),
+    ...alertsSent.map((e: any) => e.subAdminName),
+    ...impactedUsers.map((e: any) => e.subAdminName),
+    ...eocStatus.map((e: any) => e.subAdminName)
   ].filter(Boolean))).sort()
 
   const filteredActive = selectedLocation === 'All'
     ? activeEmergencies
-    : activeEmergencies.filter(e => e.location === selectedLocation)
+    : activeEmergencies.filter((e: any) => e.subAdminName === selectedLocation)
 
   const filteredAlerts = selectedLocation === 'All'
     ? alertsSent
-    : alertsSent.filter(e => e.location === selectedLocation)
+    : alertsSent.filter((e: any) => e.subAdminName === selectedLocation)
 
   const filteredImpacted = selectedLocation === 'All'
     ? impactedUsers
-    : impactedUsers.filter(e => e.location === selectedLocation)
+    : impactedUsers.filter((e: any) => e.subAdminName === selectedLocation)
 
   const filteredEOC = selectedLocation === 'All'
     ? eocStatus
-    : eocStatus.filter(e => e.location === selectedLocation)
+    : eocStatus.filter((e: any) => e.subAdminName === selectedLocation)
+
+  const selectedAdminCoords = selectedLocation !== 'All' 
+    ? subAdminUsers.find(u => u.name === selectedLocation) 
+    : undefined
 
   return (
     <div className="flex-1 overflow-auto bg-[#F8FAFC] selection:bg-blue-600/10 min-h-screen">
@@ -121,19 +125,19 @@ export default function SuperAdminDashboard() {
           </div>
 
           <div className="relative z-10 w-full md:w-72">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-2 italic">Filter by Location</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-2 italic text-blue-600">sub-admin name</p>
             <div className="relative group">
               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                <MapPin size={16} className="text-[#DC2626] group-focus-within:animate-pulse" />
+                <UserIcon size={16} className="text-[#DC2626] group-focus-within:animate-pulse" />
               </div>
               <select
                 value={selectedLocation}
                 onChange={(e) => setSelectedLocation(e.target.value)}
                 className="w-full h-14 pl-12 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 font-black text-xs uppercase tracking-widest appearance-none focus:outline-none focus:ring-4 focus:ring-red-500/5 focus:border-[#DC2626] transition-all cursor-pointer hover:bg-white"
               >
-                <option value="All">All Locations</option>
-                {allLocations.map(loc => (
-                  <option key={loc} value={loc}>{loc}</option>
+                <option value="All">All admins</option>
+                {allSubAdmins.map(admin => (
+                  <option key={admin} value={admin}>{admin}</option>
                 ))}
               </select>
               <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-[#DC2626] transition-colors" size={18} />
@@ -200,7 +204,7 @@ export default function SuperAdminDashboard() {
             </div>
             <div className="pt-4 border-t border-slate-50">
               <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest leading-relaxed">
-                {selectedLocation === 'All' ? 'All areas' : `Affected in ${selectedLocation}`}
+                {selectedLocation === 'All' ? 'All areas' : `Managed by ${selectedLocation}`}
               </p>
             </div>
           </Card>
@@ -242,7 +246,7 @@ export default function SuperAdminDashboard() {
         {/* Main Content Area */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
           <div className="lg:col-span-2 space-y-8">
-            <GISMap selectedLocation={selectedLocation} />
+            <GISMap key={selectedLocation} selectedLocation={selectedLocation} />
           </div>
 
           <div className="space-y-8">
@@ -263,7 +267,12 @@ export default function SuperAdminDashboard() {
               <LicenseRequestList />
             </div>
 
-            <ThreatMonitoring />
+            <ThreatMonitoring 
+              key={selectedLocation}
+              lat={selectedAdminCoords?.lat} 
+              lon={selectedAdminCoords?.lng} 
+              locationName={selectedLocation !== 'All' ? selectedLocation : 'USA'} 
+            />
           </div>
         </div>
 
