@@ -252,7 +252,7 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-slate-700 ml-1">Operational Email</Label>
+                  <Label className="text-sm font-medium text-slate-700 ml-1">Email</Label>
                   <Input
                     required
                     type="email"
@@ -274,8 +274,16 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                     className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
                   />
                 </div>
+              </div>
+            </div>
 
-                <div className="md:col-span-2 space-y-2 pt-4">
+            {/* Service Area */}
+            <div className="space-y-4 pt-8 border-t border-slate-100">
+              <h3 className="text-xs font-semibold text-blue-600 uppercase tracking-wider flex items-center gap-2">
+                <MapPin size={14} /> Service Area
+              </h3>
+              <div className="space-y-6">
+                <div className="space-y-2">
                   <Label className="text-sm font-medium text-slate-700 ml-1 font-bold">Primary Address</Label>
                   {isLoaded ? (
                     <Autocomplete onLoad={setPrimaryAutocomplete} onPlaceChanged={onPrimaryPlaceChanged}>
@@ -291,14 +299,6 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                     <Input disabled className="h-11 bg-slate-50 border-slate-200 rounded-lg" placeholder="Initializing maps..." />
                   )}
                 </div>
-              </div>
-            </div>
-
-            <div className="space-y-4 pt-8 border-t border-slate-100">
-              <h3 className="text-xs font-semibold text-blue-600 uppercase tracking-wider flex items-center gap-2">
-                <MapPin size={14} /> Service Area
-              </h3>
-              <div className="space-y-6">
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                   <div className="space-y-6">
@@ -315,7 +315,7 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                       onChange={(e) => setFormData({ ...formData, radiusMile: parseInt(e.target.value) })}
                       className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-blue-600"
                     />
-                    <div className="flex justify-between text-[10px] text-slate-400 font-medium">
+                    <div className="flex justify-between text-[10px] text-slate-400 font-medium uppercase tracking-widest">
                       <span>5 Miles</span>
                       <span>50 Miles</span>
                       <span>100 Miles</span>
@@ -323,7 +323,7 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                   </div>
 
                   {isLoaded && (
-                    <div className="h-32 rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+                    <div className="h-40 rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
                       <GoogleMap
                         mapContainerStyle={{ width: '100%', height: '100%' }}
                         center={mapCenter}
@@ -361,14 +361,14 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
               type="button"
               variant="ghost"
               onClick={onClose}
-              className="h-11 px-6 font-medium text-slate-500 hover:text-slate-900 transition-colors"
+              className="h-11 px-6 font-medium text-slate-500 hover:text-slate-900 transition-colors uppercase text-xs tracking-widest"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={loading}
-              className="h-11 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all shadow-lg shadow-blue-500/25 active:scale-[0.98]"
+              className="h-11 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black transition-all shadow-lg active:scale-[0.98] uppercase text-xs tracking-widest"
             >
               {loading ? (
                 <>
@@ -376,7 +376,7 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                   Processing...
                 </>
               ) : (
-                "Create License"
+                "Finalize License"
               )}
             </Button>
           </DialogFooter>

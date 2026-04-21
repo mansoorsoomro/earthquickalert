@@ -12,25 +12,25 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { 
-    UserPlus, 
-    Shield, 
-    Eye, 
-    Loader2, 
-    Mail, 
-    Lock,
-    User,
-    Upload,
-    FileText,
-    CheckCircle2
+import {
+  UserPlus,
+  Shield,
+  Eye,
+  Loader2,
+  Mail,
+  Lock,
+  User,
+  Upload,
+  FileText,
+  CheckCircle2
 } from "lucide-react"
 import { toast } from "sonner"
-import { 
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select"
 import { MapPin } from "lucide-react"
 
@@ -99,7 +99,7 @@ export function AddUserModal({ isOpen, onClose, onSuccess }: AddUserModalProps) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    
+
     try {
       const payload = bulkData || formData
       const res = await fetch('/api/admin/users', {
@@ -141,16 +141,16 @@ export function AddUserModal({ isOpen, onClose, onSuccess }: AddUserModalProps) 
                   <DialogDescription className="text-slate-500 font-medium leading-tight mt-1 truncate max-w-[200px]">Onboard operational personnel.</DialogDescription>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2">
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleFileUpload} 
-                  accept=".csv" 
-                  className="hidden" 
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  accept=".csv"
+                  className="hidden"
                 />
-                <Button 
+                <Button
                   type="button"
                   variant="outline"
                   size="sm"
@@ -165,128 +165,128 @@ export function AddUserModal({ isOpen, onClose, onSuccess }: AddUserModalProps) 
 
           <div className="p-8 space-y-5">
             {bulkData ? (
-                <div className="bg-emerald-50 border-2 border-emerald-100 rounded-[24px] p-6 text-center animate-in zoom-in-95 duration-300">
-                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-emerald-100 text-emerald-600">
-                        <CheckCircle2 size={32} />
-                    </div>
-                    <h3 className="text-emerald-900 font-black uppercase tracking-tight text-lg">Batch Data Loaded</h3>
-                    <p className="text-emerald-600 font-bold text-xs mt-1 uppercase tracking-widest">{bulkData.length} Users Ready for Import</p>
-                    <button 
-                        type="button" 
-                        onClick={() => setBulkData(null)}
-                        className="mt-6 text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] hover:underline"
-                    >
-                        Click to cancel and add single user
-                    </button>
-                    
-                    <div className="mt-6 pt-6 border-t border-emerald-100 flex items-center gap-3 px-2">
-                        <FileText className="text-emerald-300 shrink-0" size={16} />
-                        <p className="text-[9px] text-emerald-800 text-left font-medium leading-relaxed italic">
-                            Email addresses and roles will be validated upon submission. Existing users will be skipped.
-                        </p>
-                    </div>
+              <div className="bg-emerald-50 border-2 border-emerald-100 rounded-[24px] p-6 text-center animate-in zoom-in-95 duration-300">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-emerald-100 text-emerald-600">
+                  <CheckCircle2 size={32} />
                 </div>
+                <h3 className="text-emerald-900 font-black uppercase tracking-tight text-lg">Batch Data Loaded</h3>
+                <p className="text-emerald-600 font-bold text-xs mt-1 uppercase tracking-widest">{bulkData.length} Users Ready for Import</p>
+                <button
+                  type="button"
+                  onClick={() => setBulkData(null)}
+                  className="mt-6 text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] hover:underline"
+                >
+                  Click to cancel and add single user
+                </button>
+
+                <div className="mt-6 pt-6 border-t border-emerald-100 flex items-center gap-3 px-2">
+                  <FileText className="text-emerald-300 shrink-0" size={16} />
+                  <p className="text-[9px] text-emerald-800 text-left font-medium leading-relaxed italic">
+                    Email addresses and roles will be validated upon submission. Existing users will be skipped.
+                  </p>
+                </div>
+              </div>
             ) : (
-                <>
-                    <div className="space-y-2">
-                    <Label htmlFor="name" className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Full Name</Label>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Full Name</Label>
+                  <div className="relative group">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="e.g. John Doe"
+                      className="h-14 pl-12 border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 rounded-2xl font-bold text-slate-700 shadow-sm"
+                      required={!bulkData}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Email</Label>
+                  <div className="relative group">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="name@organization.com"
+                      className="h-14 pl-12 border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 rounded-2xl font-bold text-slate-700 shadow-sm"
+                      required={!bulkData}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="responderFunction" className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Specific Function / Role</Label>
                     <div className="relative group">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
-                        <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="e.g. John Doe"
+                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+                      <Input
+                        id="responderFunction"
+                        value={formData.responderFunction}
+                        onChange={(e) => setFormData({ ...formData, responderFunction: e.target.value })}
+                        placeholder="e.g. Search & Rescue, Medical, Shelter Lead"
                         className="h-14 pl-12 border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 rounded-2xl font-bold text-slate-700 shadow-sm"
-                        required={!bulkData}
-                        />
+                      />
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Role</Label>
+                      <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
+                        <SelectTrigger className="h-14 border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 rounded-2xl font-bold text-slate-700 shadow-sm">
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
+                          <SelectItem value="eoc-manager" className="rounded-xl focus:bg-blue-50 py-3">
+                            <div className="flex items-center gap-2">
+                              <Shield size={16} className="text-indigo-600" />
+                              <span className="font-bold text-xs uppercase tracking-tight">Leader</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="eoc-observer" className="rounded-xl focus:bg-blue-50 py-3">
+                            <div className="flex items-center gap-2">
+                              <Eye size={16} className="text-indigo-600" />
+                              <span className="font-bold text-xs uppercase tracking-tight">Responder</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="space-y-2">
-                    <Label htmlFor="email" className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Operational Email</Label>
-                    <div className="relative group">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+                      <Label htmlFor="pass" className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Password</Label>
+                      <div className="relative group">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
                         <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="name@organization.com"
-                        className="h-14 pl-12 border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 rounded-2xl font-bold text-slate-700 shadow-sm"
-                        required={!bulkData}
+                          id="pass"
+                          type="password"
+                          value={formData.password}
+                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                          className="h-14 pl-12 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl font-bold text-slate-700 shadow-sm"
+                          required={!bulkData}
                         />
+                      </div>
                     </div>
-                    </div>
-
-                    <div className="space-y-4 pt-2">
-                    <div className="space-y-2">
-                        <Label htmlFor="responderFunction" className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Specific Function / Role</Label>
-                        <div className="relative group">
-                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
-                            <Input
-                                id="responderFunction"
-                                value={formData.responderFunction}
-                                onChange={(e) => setFormData({ ...formData, responderFunction: e.target.value })}
-                                placeholder="e.g. Search & Rescue, Medical, Shelter Lead"
-                                className="h-14 pl-12 border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 rounded-2xl font-bold text-slate-700 shadow-sm"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Role</Label>
-                            <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })}>
-                                <SelectTrigger className="h-14 border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 rounded-2xl font-bold text-slate-700 shadow-sm">
-                                    <SelectValue placeholder="Select role" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
-                                    <SelectItem value="eoc-manager" className="rounded-xl focus:bg-blue-50 py-3">
-                                        <div className="flex items-center gap-2">
-                                            <Shield size={16} className="text-indigo-600" />
-                                            <span className="font-bold text-xs uppercase tracking-tight">Leader</span>
-                                        </div>
-                                    </SelectItem>
-                                    <SelectItem value="eoc-observer" className="rounded-xl focus:bg-blue-50 py-3">
-                                        <div className="flex items-center gap-2">
-                                            <Eye size={16} className="text-indigo-600" />
-                                            <span className="font-bold text-xs uppercase tracking-tight">Responder</span>
-                                        </div>
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                        <Label htmlFor="pass" className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Password</Label>
-                        <div className="relative group">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
-                            <Input
-                                id="pass"
-                                type="password"
-                                value={formData.password}
-                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                className="h-14 pl-12 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl font-bold text-slate-700 shadow-sm"
-                                required={!bulkData}
-                            />
-                        </div>
-                        </div>
-                    </div>
-                    </div>
-                </>
+                  </div>
+                </div>
+              </>
             )}
 
             <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex gap-3">
-                <Shield className="text-amber-600 shrink-0" size={18} />
-                <p className="text-[10px] text-amber-700 font-bold uppercase leading-relaxed tracking-wider">
-                    Total organization capacity is limited to 500 personnel accounts. {bulkData ? 'Bulk import will immediately grant access once verified.' : 'This user will have immediate access to your EOC dashboard.'}
-                </p>
+              <Shield className="text-amber-600 shrink-0" size={18} />
+              <p className="text-[10px] text-amber-700 font-bold uppercase leading-relaxed tracking-wider">
+                Total organization capacity is limited to 500 personnel accounts. {bulkData ? 'Bulk import will immediately grant access once verified.' : 'This user will have immediate access to your EOC dashboard.'}
+              </p>
             </div>
             {!bulkData && (
-                <p className="text-center text-[9px] text-slate-400 font-bold uppercase tracking-widest italic pt-2">
-                    Tip: Use Bulk CSV for faster onboarding of entire teams
-                </p>
+              <p className="text-center text-[9px] text-slate-400 font-bold uppercase tracking-widest italic pt-2">
+                Tip: Use Bulk CSV for faster onboarding of entire teams
+              </p>
             )}
           </div>
 

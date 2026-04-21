@@ -237,6 +237,34 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
                   )}
                 </div>
 
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-slate-700 ml-1">Point of Contact</Label>
+                  <div className="relative">
+                    <Input
+                      required
+                      value={formData.billingContact}
+                      onChange={(e) => setFormData({ ...formData, billingContact: e.target.value })}
+                      placeholder="e.g. John Doe"
+                      className="h-12 bg-white border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 transition-all font-medium pl-10"
+                    />
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-slate-700 ml-1">Phone Number</Label>
+                  <div className="relative">
+                    <Input
+                      required
+                      value={formData.phoneNumber}
+                      onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                      placeholder="e.g. +1 (555) 000-0000"
+                      className="h-12 bg-white border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 transition-all font-medium pl-10"
+                    />
+                    <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  </div>
+                </div>
+
                 <div className="col-span-2 space-y-2">
                   <Label className="text-sm font-medium text-slate-700 ml-1">Assigned Sub-Admin</Label>
                   <div className="relative">
@@ -263,13 +291,21 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
                       <User size={20} />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-blue-900 uppercase tracking-widest leading-none mb-1">Authenticated Email</p>
+                      <p className="text-xs font-bold text-blue-900 uppercase tracking-widest leading-none mb-1">Email</p>
                       <p className="text-sm font-medium text-blue-700">{formData.billingEmail}</p>
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
 
-                <div className="col-span-2 space-y-2">
+            {/* Location & Radius */}
+            <div className="space-y-4 pt-8 border-t border-slate-100">
+              <h3 className="text-xs font-semibold text-blue-600 uppercase tracking-wider flex items-center gap-2">
+                <MapPin size={14} /> Service Area
+              </h3>
+              <div className="space-y-6">
+                <div className="space-y-2">
                   <Label className="text-sm font-medium text-slate-700 ml-1">Primary Address</Label>
                   {isLoaded ? (
                     <Autocomplete onLoad={setPrimaryAutocomplete} onPlaceChanged={onPrimaryPlaceChanged}>
@@ -285,15 +321,6 @@ export function ProvisionLicenseModal({ isOpen, onClose, onSuccess }: ProvisionL
                     <Input disabled className="h-12 bg-slate-50 border-slate-200 rounded-xl" placeholder="Initializing maps..." />
                   )}
                 </div>
-              </div>
-            </div>
-
-            {/* Location & Radius */}
-            <div className="space-y-4 pt-8 border-t border-slate-100">
-              <h3 className="text-xs font-semibold text-blue-600 uppercase tracking-wider flex items-center gap-2">
-                <MapPin size={14} /> Service Area
-              </h3>
-              <div className="space-y-6">
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                   <div className="space-y-6">

@@ -10,6 +10,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -34,8 +36,15 @@ import {
   ShieldAlert,
   ChevronRight,
   Wand2,
-  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  Check,
+  ExternalLink,
+  ArrowRight,
+  X,
   Send,
+  Loader2,
+  Sparkles,
   Search as SearchIcon
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
@@ -43,8 +52,37 @@ import { AlertSeverity, AlertSource } from '@/lib/types/api-alerts'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
 import { toast } from 'sonner'
-import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+
+const ALERT_CATEGORIES = [
+  { name: 'Tornado Warning', color: '#FF0000' },
+  { name: 'Tornado Watch', color: '#FFFF00' },
+  { name: 'Flash Flood Warning', color: '#8B0000' },
+  { name: 'Special Marine Warning', color: '#FFA500' },
+  { name: 'Winter Storm Warning', color: '#FF69B4' },
+  { name: 'High Wind Warning', color: '#DAA520' },
+  { name: 'Flood Warning', color: '#00FF00' },
+  { name: 'Gale Warning', color: '#DDA0DD' },
+  { name: 'Red Flag Warning', color: '#FF1493' },
+  { name: 'Winter Weather Advisory', color: '#7B68EE' },
+  { name: 'Flood Advisory', color: '#00FA9A' },
+  { name: 'Coastal Flood Advisory', color: '#ADFF2F' },
+  { name: 'High Surf Advisory', color: '#BA55D3' },
+  { name: 'Small Craft Advisory', color: '#D8BFD8' },
+  { name: 'Brisk Wind Advisory', color: '#D8BFD8' },
+  { name: 'Hazardous Seas Warning', color: '#D8BFD8' },
+  { name: 'Lake Wind Advisory', color: '#D2B48C' },
+  { name: 'Wind Advisory', color: '#D2B48C' },
+  { name: 'Winter Storm Watch', color: '#4682B4' },
+  { name: 'Rip Current Statement', color: '#40E0D0' },
+  { name: 'Flood Watch', color: '#2E8B57' },
+  { name: 'High Wind Watch', color: '#B8860B' },
+  { name: 'Freeze Watch', color: '#00FFFF' },
+  { name: 'Fire Weather Watch', color: '#FFE4B5' },
+  { name: 'Special Weather Statement', color: '#FFE4B5' },
+  { name: 'Marine Weather Statement', color: '#FFE4B5' },
+  { name: 'Air Quality Alert', color: '#696969' },
+]
 
 const NWS_NATIONAL_ALERTS = [
   // Severe Weather
@@ -92,52 +130,37 @@ export default function AlertsCommunicationPage() {
   const [alerts, setAlerts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null)
-  const [countryStatuses, setCountryStatuses] = useState<any[]>([])
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
 
-  // National Dispatch Wizard States
-  const [dispatchStep, setDispatchStep] = useState(1)
-  const [selectedNwsType, setSelectedNwsType] = useState<string | null>(null)
-  const [dispatchChannels, setDispatchChannels] = useState<string[]>(['push', 'sms'])
-  const [dispatchMessage, setDispatchMessage] = useState('')
-  const [isGeneratingAI, setIsGeneratingAI] = useState(false)
-  const [isDispatching, setIsDispatching] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [dispatchTarget, setDispatchTarget] = useState<string>('National')
-
-  // Per-card manual alert states
-  const [cardAlertTypes, setCardAlertTypes] = useState<Record<string, string>>({})
-  const [cardMessages, setCardMessages] = useState<Record<string, string>>({})
 
   // Unified Channel Selection States
   const [isChannelModalOpen, setIsChannelModalOpen] = useState(false)
   const [modalChannels, setModalChannels] = useState<string[]>(['push', 'sms'])
+  const [isDispatching, setIsDispatching] = useState(false)
   const [pendingDispatch, setPendingDispatch] = useState<{
-    type: 'country' | 'national' | 'monitoring',
-    country?: string,
+    type: 'monitoring',
     alertType?: string,
     message?: string
   } | null>(null)
 
+  const [isActionModalOpen, setIsActionModalOpen] = useState(false)
+  const [currentActionAlert, setCurrentActionAlert] = useState<any>(null)
+
+
+
   const fetchDynamicAlerts = useCallback(async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/alerts-sent-emergencies')
+      const res = await fetch('/api/alerts-communication')
       if (res.ok) {
         const data = await res.json()
         const formattedAlerts = data.map((item: any) => ({
-          id: item._id || Math.random().toString(),
-          title: item.name || 'System Alert',
-          severity: item.status === 'Critical' ? AlertSeverity.EXTREME : item.status === 'High' ? AlertSeverity.SEVERE : AlertSeverity.MODERATE,
-          affectedAreas: [item.location || 'Regional Sector'],
-          timestamp: item.timestamp || new Date().toISOString(),
-          expiresAt: item.expiresAt || new Date(Date.now() + 4 * 60 * 60000).toISOString(),
-          description: item.description || `Automatic alert dispatched for ${item.type}`,
-          source: AlertSource.WEATHER_API
+          ...item,
+          id: item._id,
+          severity: item.severity === 'Extreme' ? AlertSeverity.EXTREME : item.severity === 'High' ? AlertSeverity.SEVERE : AlertSeverity.MODERATE,
+          affectedAreas: [item.location]
         }))
         setAlerts(formattedAlerts)
 
-        // Select first alert by default if not already selected
         if (formattedAlerts.length > 0 && !selectedAlertId) {
           setSelectedAlertId(formattedAlerts[0].id)
         }
@@ -149,89 +172,13 @@ export default function AlertsCommunicationPage() {
     }
   }, [selectedAlertId])
 
-  useEffect(() => {
-    const checkRoleAndFetchCountryData = async () => {
-      try {
-        const res = await fetch('/api/admin/sub-admin-country-status')
-        if (res.ok) {
-          const data = await res.json()
-          const countries = data.countries || []
-          setCountryStatuses(countries)
-          
-          // Auto-populate defaults from AI suggestions
-          const defaultTypes: Record<string, string> = {}
-          const defaultMessages: Record<string, string> = {}
-          countries.forEach((c: any) => {
-            if (c.suggestedType) defaultTypes[c.country] = c.suggestedType
-            if (c.suggestedMessage) defaultMessages[c.country] = c.suggestedMessage
-          })
-          setCardAlertTypes(prev => ({ ...defaultTypes, ...prev }))
-          setCardMessages(prev => ({ ...defaultMessages, ...prev }))
-          
-          setIsSuperAdmin(true)
-        }
-      } catch (err) {
-        console.error('Failed to fetch country intelligence', err)
-      }
-    }
 
-    checkRoleAndFetchCountryData()
+  useEffect(() => {
     fetchDynamicAlerts()
     const interval = setInterval(fetchDynamicAlerts, 60000)
     return () => clearInterval(interval)
   }, [fetchDynamicAlerts])
 
-  const handleStartManualDispatch = (target: string) => {
-    setDispatchTarget(target)
-    setDispatchStep(1)
-    setSelectedNwsType(null)
-    setDispatchMessage('')
-    // Scroll to the dispatch section
-    const element = document.getElementById('national-dispatch-wizard')
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-    toast.info(`Manual Dispatch: ${target}`, {
-      description: 'Please select an alert type from the pick list below.'
-    })
-  }
-
-  const handleApplyCardAlert = (country: string, typeName: string) => {
-    setCardAlertTypes(prev => ({ ...prev, [country]: typeName }))
-    setCardMessages(prev => ({
-      ...prev,
-      [country]: `Official NWS Alert for ${country}: ${typeName} in effect. Please monitor local conditions and follow safety protocols.`
-    }))
-  }
-
-  const handleApplyAIRecommendation = (country: string) => {
-    const status = countryStatuses.find(c => c.country === country)
-    if (status && status.suggestedType) {
-      setCardAlertTypes(prev => ({ ...prev, [country]: status.suggestedType }))
-      setCardMessages(prev => ({ ...prev, [country]: status.suggestedMessage }))
-      toast.success('AI Recommendation Applied', {
-        description: `Alert type and message have been drafted for ${country}.`
-      })
-    }
-  }
-
-  const handleCountryBroadcast = async (country: string) => {
-    const alertType = cardAlertTypes[country]
-    const message = cardMessages[country]
-
-    if (!alertType || !message) {
-      toast.error('Missing Information', { description: 'Please select an alert type and message first.' })
-      return
-    }
-
-    setPendingDispatch({
-      type: 'country',
-      country,
-      alertType,
-      message
-    })
-    setIsChannelModalOpen(true)
-  }
 
   const handleConfirmUnifiedDispatch = async () => {
     if (!pendingDispatch) return
@@ -243,14 +190,10 @@ export default function AlertsCommunicationPage() {
         alertType: pendingDispatch.alertType,
         message: pendingDispatch.message,
         channels: modalChannels,
-        target: pendingDispatch.type === 'country' ? pendingDispatch.country : (pendingDispatch.type === 'monitoring' ? 'Regional' : 'National')
+        target: 'Regional'
       }
 
-      const endpoint = pendingDispatch.type === 'country'
-        ? '/api/admin/broadcast-country-alert'
-        : '/api/admin/national-alert-dispatch'
-
-      const res = await fetch(endpoint, {
+      const res = await fetch('/api/admin/national-alert-dispatch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -261,11 +204,6 @@ export default function AlertsCommunicationPage() {
           description: `Alert sent via ${modalChannels.join(', ')} to ${payload.target}.`
         })
         setIsChannelModalOpen(false)
-        if (pendingDispatch.type === 'national') {
-          setDispatchStep(1)
-          setSelectedNwsType(null)
-          setDispatchMessage('')
-        }
       } else {
         toast.error('Dispatch Failed')
       }
@@ -276,6 +214,29 @@ export default function AlertsCommunicationPage() {
     }
   }
 
+  const handleStatusChange = async (alert: any) => {
+    try {
+      const newStatus = alert.status === 'Take Action' ? 'Get Prepared' : 'Take Action'
+      const res = await fetch('/api/alerts-communication', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: alert.id, status: newStatus })
+      })
+
+      if (res.ok) {
+        toast.success('Status Updated', {
+          description: `Alert status changed to ${newStatus}.`
+        })
+        fetchDynamicAlerts()
+        setIsActionModalOpen(false)
+      }
+    } catch (err) {
+      toast.error('Failed to update status')
+    }
+  }
+
+
+
   const handleMonitoringDispatch = () => {
     if (alerts.length === 0) {
       toast.error('No Live Alerts', { description: 'Cannot dispatch from empty feed.' })
@@ -284,74 +245,17 @@ export default function AlertsCommunicationPage() {
     const latest = alerts[0]
     setPendingDispatch({
       type: 'monitoring',
-      alertType: latest.title,
+      alertType: latest.name,
       message: latest.description
     })
     setIsChannelModalOpen(true)
   }
 
   const handleFeedDispatch = (alert: any) => {
-    setPendingDispatch({
-      type: 'monitoring',
-      alertType: alert.title,
-      message: alert.description
-    })
-    setIsChannelModalOpen(true)
+    setCurrentActionAlert(alert)
+    setIsActionModalOpen(true)
   }
 
-  const handleAIDraft = async () => {
-    if (!selectedNwsType) return
-    try {
-      setIsGeneratingAI(true)
-      const res = await fetch('/api/admin/ai-alert-draft', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ alertType: selectedNwsType, context: dispatchMessage })
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setDispatchMessage(data.message)
-        toast.success('AI Draft Generated')
-      }
-    } catch (err) {
-      toast.error('AI Generation Failed')
-    } finally {
-      setIsGeneratingAI(false)
-    }
-  }
-
-  const handleNationalDispatch = async () => {
-    try {
-      setIsDispatching(true)
-      const res = await fetch('/api/admin/national-alert-dispatch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          alertType: selectedNwsType,
-          channels: dispatchChannels,
-          message: dispatchMessage,
-          target: dispatchTarget
-        })
-      })
-      if (res.ok) {
-        toast.success('National Alert Dispatched', {
-          description: 'Alert has been saved and broadcasted to all users.'
-        })
-        // Reset wizard
-        setDispatchStep(1)
-        setSelectedNwsType(null)
-        setDispatchMessage('')
-        fetchDynamicAlerts()
-      } else {
-        const error = await res.json()
-        toast.error('Dispatch Failed', { description: error.error })
-      }
-    } catch (err) {
-      toast.error('Dispatch System Error')
-    } finally {
-      setIsDispatching(false)
-    }
-  }
 
   const toggleNotification = (key: string) => {
     setNotificationPrefs((prev) => ({
@@ -361,6 +265,46 @@ export default function AlertsCommunicationPage() {
   }
 
   const selectedAlert = alerts.find(a => a.id === selectedAlertId)
+  
+  // AI Alert State
+  const [alertMessage, setAlertMessage] = useState('')
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false)
+  const [isSendingAlert, setIsSendingAlert] = useState(false)
+  const [filterCategory, setFilterCategory] = useState<string | null>(null)
+
+  const handleGenerateAIMessage = async (alert: any) => {
+    setIsGeneratingAI(true)
+    try {
+      const response = await fetch('/api/ai/generate-alert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          alertType: alert.name,
+          context: alert.description 
+        })
+      })
+      const data = await response.json()
+      if (data.message) {
+        setAlertMessage(data.message)
+      } else {
+        toast.error("Failed to generate message")
+      }
+    } catch (error) {
+      toast.error("Error connecting to AI service")
+    } finally {
+      setIsGeneratingAI(false)
+    }
+  }
+
+  const handleSendOfficialAlert = async (alert: any) => {
+    setIsSendingAlert(true)
+    // Simulate API call to send alert
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    handleStatusChange(alert)
+    setIsSendingAlert(false)
+    setIsActionModalOpen(false)
+    toast.success("Official Alert Dispatched Successfully")
+  }
 
   return (
     <main className="min-h-screen bg-[#F8FAFC] p-6 lg:p-12 space-y-8 max-w-7xl mx-auto">
@@ -375,407 +319,26 @@ export default function AlertsCommunicationPage() {
               This system checks for updates every minute, ensuring you receive the most current weather watches and warnings as they happen.
             </p>
           </div>
-          <Button
+          {/* <Button
             variant="outline"
             onClick={() => fetchDynamicAlerts()}
             className="mt-2 border-slate-200 text-slate-600 hover:bg-slate-50 gap-2 font-bold"
           >
             <Clock size={16} className="text-blue-500" />
             Check Updates
-          </Button>
+          </Button> */}
         </div>
       </Card>
 
-      {/* Global Intelligence Section (Super Admin Only) */}
-      {isSuperAdmin && countryStatuses.length > 0 && (
-        <section className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-700">
-          <div className="flex items-center gap-3 px-2">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 border border-indigo-400">
-              <Globe size={20} />
-            </div>
-            <div>
-              <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">International Alert Status</h2>
-              <div className="flex items-center gap-2">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">AI Summary • Sub-Admin Area Updates</p>
-                <div className="w-1 h-1 rounded-full bg-slate-300" />
-                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest leading-none">Super-Admin Access Only</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {countryStatuses.map((item, idx) => (
-              <Card key={idx} className="p-6 bg-white border-slate-200 rounded-3xl hover:shadow-xl hover:shadow-indigo-500/5 transition-all relative group overflow-hidden border-t-4 border-t-indigo-500">
-                <div className="flex justify-between items-start mb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center border border-indigo-100/50">
-                      <Flag size={18} className="text-indigo-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-black text-slate-900 leading-none mb-1">{item.country}</h3>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{item.subAdminCount} Units Deployed</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100">
-                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                      <span className="text-[9px] font-black uppercase tracking-widest">Active Monitoring</span>
-                    </div>
-                    {item.weatherCount > 0 && (
-                      <Badge className="bg-amber-50 text-amber-600 border-none text-[8px] font-black uppercase px-2 py-0.5">
-                        {item.weatherCount} Weather Threats
-                      </Badge>
-                    )}
-                    {item.earthquakeCount > 0 && (
-                      <Badge className="bg-red-50 text-red-600 border-none text-[8px] font-black uppercase px-2 py-0.5">
-                        {item.earthquakeCount} Seismic Signals
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 relative group/insight mt-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <ShieldAlert size={14} className="text-indigo-500" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">AI Situation Summary</span>
-                  </div>
-                  <p className="text-[11px] font-bold text-slate-700 leading-relaxed italic lowercase first-letter:uppercase">
-                    {item.status}
-                  </p>
-                </div>
-
-                <div className="space-y-5">
-                  <div className="flex justify-between items-center px-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Manual Alert Type</label>
-                    <button
-                      onClick={() => handleApplyAIRecommendation(item.country)}
-                      className="flex items-center gap-1.5 text-[9px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded-lg transition-all"
-                      title="Apply AI Suggested Alert"
-                    >
-                      <Wand2 size={10} /> Apply AI Insight
-                    </button>
-                  </div>
-                  <div className="p-4 bg-indigo-50/30 rounded-2xl border border-indigo-100/50 flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] leading-none mb-1.5">Selected Alert Category</p>
-                      <p className="text-sm font-black text-indigo-900 tracking-tight">
-                        {cardAlertTypes[item.country] || "General Safety Alert"}
-                      </p>
-                    </div>
-                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center border border-indigo-100 shadow-sm text-indigo-600">
-                      {NWS_NATIONAL_ALERTS.find(a => a.name === cardAlertTypes[item.country])?.icon || <ShieldAlert size={18} />}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center px-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Broadcast Message</label>
-                    <button
-                      onClick={() => toast.info('AI is refining your draft...')}
-                      className="text-[9px] font-black text-indigo-500 uppercase hover:underline"
-                    >
-                      AI Refine
-                    </button>
-                  </div>
-                  <Textarea
-                    value={cardMessages[item.country] || ""}
-                    onChange={(e) => setCardMessages(prev => ({ ...prev, [item.country]: e.target.value }))}
-                    placeholder="Draft your emergency alert here..."
-                    className="min-h-[100px] bg-slate-50 border-slate-100 rounded-2xl text-[12px] font-medium leading-relaxed resize-none p-4"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between text-[10px] text-slate-400 font-black uppercase tracking-wider px-1 pt-1">
-                  <span className="flex items-center gap-1.5">
-                    <Clock size={12} /> Real-time Dispatch
-                  </span>
-                  <span>Target: {item.country}</span>
-                </div>
-
-                <div className="pt-2">
-                  <Button
-                    onClick={() => handleCountryBroadcast(item.country)}
-                    disabled={isDispatching || !cardAlertTypes[item.country]}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-5 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-indigo-100 mt-2 transition-all active:scale-95 group"
-                  >
-                    {isDispatching && pendingDispatch?.country === item.country ? (
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    ) : (
-                      <Send className="w-4 h-4 mr-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                    )}
-                    {isDispatching && pendingDispatch?.country === item.country ? 'Sending...' : 'Send to All Users'}
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* National Alert Dispatch Wizard (Super Admin Only) */}
-      {isSuperAdmin && (
-        <section id="national-dispatch-wizard" className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-700 delay-150 scroll-mt-24">
-          <div className="flex items-center gap-3 px-2">
-            <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-red-200 border border-red-400">
-              <ShieldAlert size={20} />
-            </div>
-            <div>
-              <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">
-                {dispatchTarget === 'National' ? 'Send National Alert' : `Send Alert to ${dispatchTarget}`}
-              </h2>
-              <div className="flex items-center gap-2">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Pick NWS Alert • Manual Dispatch</p>
-                <div className="w-1 h-1 rounded-full bg-slate-300" />
-                <p className="text-[10px] font-black text-red-600 uppercase tracking-widest leading-none underline decoration-2 underline-offset-4 decoration-red-200">Admin Controls</p>
-              </div>
-            </div>
-          </div>
-
-          <Card className="bg-white border-2 border-slate-100 rounded-[40px] p-1 shadow-2xl shadow-slate-200/50 overflow-hidden">
-            <div className="grid grid-cols-1 lg:grid-cols-12 max-h-[600px]">
-              {/* Step Navigation Sidebar */}
-              <div className="lg:col-span-3 bg-slate-50/50 border-r border-slate-100 p-8 space-y-8 flex flex-col h-full">
-                <div className="space-y-6">
-                  {[
-                    { step: 1, label: 'Pick Alert Type', sub: 'Select NWS Type' },
-                    { step: 2, label: 'Choose Channels', sub: 'How to send (SMS, Push, etc)' },
-                    { step: 3, label: 'Write Message', sub: 'Review & AI Support' }
-                  ].map((s) => (
-                    <div
-                      key={s.step}
-                      className={cn(
-                        "flex items-center gap-4 transition-all duration-300",
-                        dispatchStep === s.step ? "scale-105" : "opacity-40 grayscale"
-                      )}
-                    >
-                      <div className={cn(
-                        "w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm",
-                        dispatchStep === s.step ? "bg-red-600 text-white shadow-lg shadow-red-100" : (dispatchStep > s.step ? "bg-emerald-500 text-white" : "bg-white border border-slate-200 text-slate-400")
-                      )}>
-                        {dispatchStep > s.step ? <ShieldCheck size={18} /> : s.step}
-                      </div>
-                      <div>
-                        <p className={cn("text-[10px] uppercase font-black tracking-widest leading-none mb-1", dispatchStep === s.step ? "text-red-600" : "text-slate-400")}>Step {s.step}</p>
-                        <p className="text-xs font-black text-slate-900">{s.label}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="pt-8 border-t border-slate-200 mt-auto">
-                  <div className="p-4 bg-red-50 rounded-2xl border border-red-100">
-                    <p className="text-[9px] font-black text-red-600 uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                      <ShieldAlert /> Important Notice
-                    </p>
-                    <p className="text-[10px] font-bold text-red-800 leading-tight">
-                      These alerts will be sent to all users across the country.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Step Content */}
-              <div className="lg:col-span-9 relative flex flex-col h-[600px] border-l border-slate-100">
-                <div className="flex-1 overflow-y-auto p-8 lg:p-12 custom-scrollbar pb-24">
-                  {dispatchStep === 1 && (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-                      <div className="flex justify-between items-end">
-                        <div>
-                          <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-2">Select Alert Type</h3>
-                          <p className="text-sm font-bold text-slate-400">Choose the type of alert you want to send from the list below.</p>
-                        </div>
-                        <div className="relative">
-                          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                          <input
-                            type="text"
-                            placeholder="Search alerts..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-red-500/20"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-8">
-                        {NWS_NATIONAL_ALERTS.filter(a => a.name.toLowerCase().includes(searchTerm.toLowerCase())).map((type) => (
-                          <button
-                            key={type.id}
-                            onClick={() => setSelectedNwsType(type.name)}
-                            className={cn(
-                              "flex items-center justify-between p-4 rounded-2xl border-2 transition-all group",
-                              selectedNwsType === type.name
-                                ? "bg-red-50 border-red-500 shadow-md shadow-red-100"
-                                : "bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50"
-                            )}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-slate-100">
-                                {type.icon}
-                              </div>
-                              <span className={cn("text-xs font-black", selectedNwsType === type.name ? "text-slate-900" : "text-slate-700")}>{type.name}</span>
-                            </div>
-                            <Badge variant="outline" className={cn("text-[9px] font-black uppercase tracking-widest", selectedNwsType === type.name ? "bg-red-600 text-white" : "border-slate-200")}>
-                              {type.severity}
-                            </Badge>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {dispatchStep === 2 && (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-                      <div className="flex justify-between items-start mb-8">
-                        <div>
-                          <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-2">Select Channels</h3>
-                          <p className="text-sm font-bold text-slate-400">Choose how users will receive this alert (Push, Text, or Email).</p>
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <Badge className="bg-red-50 text-red-600 border-red-100 px-3 py-1 text-[10px] font-black uppercase">
-                            Selected: {selectedNwsType}
-                          </Badge>
-                          <Badge className="bg-indigo-50 text-indigo-600 border-indigo-100 px-3 py-1 text-[10px] font-black uppercase">
-                            Target: {dispatchTarget}
-                          </Badge>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[
-                          { id: 'push', label: 'Push Notification', desc: 'Instant alert on phone apps', icon: <Smartphone size={24} /> },
-                          { id: 'sms', label: 'Text Message (SMS)', desc: 'Standard phone text alert', icon: <MessageSquare size={24} /> },
-                          { id: 'email', label: 'Email', desc: 'Message sent to email address', icon: <Mail size={24} /> },
-                        ].map((ch) => (
-                          <Card
-                            key={ch.id}
-                            className={cn(
-                              "p-6 cursor-pointer border-2 transition-all",
-                              dispatchChannels.includes(ch.id) ? "border-red-500 bg-red-50/50 shadow-lg shadow-red-100" : "border-slate-100 hover:border-slate-200"
-                            )}
-                            onClick={() => {
-                              if (dispatchChannels.includes(ch.id)) {
-                                setDispatchChannels(dispatchChannels.filter(c => c !== ch.id))
-                              } else {
-                                setDispatchChannels([...dispatchChannels, ch.id])
-                              }
-                            }}
-                          >
-                            <div className={cn("mb-4", dispatchChannels.includes(ch.id) ? "text-red-600" : "text-slate-400")}>
-                              {ch.icon}
-                            </div>
-                            <h4 className="text-sm font-black text-slate-900 mb-1">{ch.label}</h4>
-                            <p className="text-[10px] font-medium text-slate-400 tracking-tight">{ch.desc}</p>
-                            <div className="mt-4 flex justify-end">
-                              <Switch checked={dispatchChannels.includes(ch.id)} onCheckedChange={() => { }} className="data-[state=checked]:bg-red-600" />
-                            </div>
-                          </Card>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {dispatchStep === 3 && (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-                      <div className="flex justify-between items-start mb-8">
-                        <div>
-                          <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-2">Write Your Message</h3>
-                          <p className="text-sm font-bold text-slate-400">Type your alert message here. You can also use AI to help you write it.</p>
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <div className="flex gap-2">
-                            {dispatchChannels.map(c => <Badge key={c} variant="outline" className="text-[9px] font-black uppercase tracking-widest bg-slate-50">{c}</Badge>)}
-                          </div>
-                          <Badge className="bg-indigo-50 text-indigo-600 border-indigo-100 px-3 py-1 text-[10px] font-black uppercase">
-                            Target: {dispatchTarget}
-                          </Badge>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="relative group">
-                          <Textarea
-                            value={dispatchMessage}
-                            onChange={(e) => setDispatchMessage(e.target.value)}
-                            placeholder="Type your message here or click the AI button below..."
-                            className="min-h-[200px] border-2 border-slate-100 rounded-[32px] p-8 text-sm font-bold text-slate-700 bg-white shadow-inner focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all"
-                          />
-                          <div className="absolute bottom-6 right-6 flex gap-3">
-                            <Button
-                              variant="outline"
-                              onClick={handleAIDraft}
-                              disabled={isGeneratingAI}
-                              className="bg-white/80 backdrop-blur-md border-slate-200 text-indigo-600 font-black uppercase tracking-widest text-[9px] rounded-xl px-4 py-2 flex items-center gap-2 shadow-sm hover:bg-indigo-50 border-indigo-100 transition-all"
-                            >
-                              {isGeneratingAI ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 size={12} />}
-                              AI Help
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="flex justify-between px-2">
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                            Character Count: <span className={cn(dispatchMessage.length > 160 ? "text-red-500" : "text-emerald-600")}>{dispatchMessage.length}</span> / 160 (For best results on SMS)
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Sticky Footer for Navigation Buttons */}
-                <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center backdrop-blur-sm">
-                  <div className="flex gap-2">
-                    {dispatchStep > 1 && (
-                      <Button variant="outline" onClick={() => setDispatchStep(dispatchStep - 1)} className="border-slate-200 text-slate-600 font-bold px-8 py-6 rounded-2xl uppercase tracking-widest text-[11px] bg-white">
-                        Back to Step {dispatchStep - 1}
-                      </Button>
-                    )}
-                  </div>
-
-                  {dispatchStep === 1 && (
-                    <Button
-                      disabled={!selectedNwsType}
-                      onClick={() => setDispatchStep(2)}
-                      className="bg-slate-900 hover:bg-black text-white px-8 py-6 rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center gap-2 group shadow-xl"
-                    >
-                      Go to Step 2 <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  )}
-
-                  {dispatchStep === 2 && (
-                    <Button
-                      disabled={dispatchChannels.length === 0}
-                      onClick={() => setDispatchStep(3)}
-                      className="bg-slate-900 hover:bg-black text-white px-8 py-6 rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center gap-2 group shadow-xl"
-                    >
-                      Go to Step 3 <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  )}
-
-                  {dispatchStep === 3 && (
-                    <Button
-                      onClick={handleNationalDispatch}
-                      disabled={isDispatching || !dispatchMessage}
-                      className="bg-red-600 hover:bg-red-700 text-white px-10 py-6 rounded-2xl font-black uppercase tracking-widest text-[12px] flex items-center gap-2 group shadow-2xl shadow-red-200 ring-4 ring-red-500/10 active:scale-95 transition-all"
-                    >
-                      {isDispatching ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-5 h-5 mr-1" />}
-                      {isDispatching ? 'Sending...' : (dispatchTarget === 'National' ? 'Send National Alert' : `Send to ${dispatchTarget}`)}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </Card>
-        </section>
-      )}
 
       {/* Status Bar */}
-      <div className="bg-[#EBEBFF] border border-[#6366F1]/10 p-4 rounded-xl flex items-center justify-between text-[#4338CA]">
-        <div className="flex items-center gap-4">
-          <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-white">
-            <Info size={16} />
+      <div className="bg-[#EEF2FF] border border-[#6366F1]/10 p-3 rounded-xl flex items-center justify-between text-[#4338CA] mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white shadow-sm">
+            <Info size={14} />
           </div>
-          <div className="flex items-center gap-1.5 text-sm font-semibold">
+          <div className="flex items-center gap-1.5 text-[12px] font-bold">
             <span className="text-[#3730A3]">Real-time monitoring:</span>
             <span className="font-medium text-[#4338CA]/80">
               {alerts.length > 0
@@ -785,7 +348,6 @@ export default function AlertsCommunicationPage() {
             </span>
           </div>
         </div>
-
       </div>
 
       {/* Channel Selection Modal */}
@@ -864,52 +426,59 @@ export default function AlertsCommunicationPage() {
               <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">No active alerts detected in your sector logic.</p>
             </div>
           ) : (
-            alerts.map((alert) => {
-              const isWarning = alert.title.toLowerCase().includes('warning');
-              const isTornado = alert.title.toLowerCase().includes('tornado');
-              const isBlizzard = alert.title.toLowerCase().includes('blizzard');
+            alerts.filter(alert => !filterCategory || alert.name === filterCategory).map((alert) => {
+              const isWarning = alert.type === 'Warning';
               const isSelected = selectedAlertId === alert.id;
 
               const badgeColor = isWarning ? 'bg-red-50 text-red-600 border-red-100' : 'bg-yellow-50 text-amber-600 border-amber-100';
-              const icon = isTornado ? <AlertTriangle className="w-5 h-5 text-red-500" /> : isBlizzard ? <CloudRain className="w-5 h-5 text-amber-500" /> : <Zap className="w-5 h-5 text-orange-500" />;
-              const buttonColor = isWarning ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600';
-              const buttonText = isWarning ? 'Take Action' : 'Get Prepared';
+
+              let icon = <AlertTriangle className="w-5 h-5 text-red-500" />;
+              if (alert.iconType === 'lightning') icon = <Zap className="w-5 h-5 text-orange-500" />;
+              if (alert.iconType === 'cloud') icon = <CloudRain className="w-5 h-5 text-amber-500" />;
+
+              const isTakeAction = alert.status === 'Take Action';
+              const isAlertSent = alert.status === 'Get Prepared';
+
+              const buttonColor = isTakeAction ? 'bg-[#EF4444] hover:bg-red-600' : 'bg-[#22C55E] cursor-default';
+              const buttonText = isTakeAction ? 'Take Action' : 'Alert Sent';
 
               return (
                 <Card
                   key={alert.id}
                   onClick={() => setSelectedAlertId(alert.id)}
                   className={cn(
-                    "cursor-pointer bg-white border-slate-200 rounded-2xl p-8 hover:shadow-md transition-all relative overflow-hidden",
+                    "bg-white border-slate-200 rounded-2xl p-6 hover:shadow-md transition-all relative overflow-hidden",
                     isSelected ? "ring-2 ring-blue-500 border-transparent shadow-lg shadow-blue-500/10" : "border-slate-200"
                   )}
                 >
-                  {isSelected && <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 -mr-12 -mt-12 rounded-full opacity-50" />}
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="flex items-center gap-3">
-                      <span className={cn("px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase border", badgeColor)}>
-                        {isWarning ? 'Warning' : 'Watch'}
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center gap-2">
+                      <span className={cn("px-3 py-1 rounded-md text-[9px] font-black uppercase border", badgeColor)}>
+                        {alert.type}
                       </span>
                       {icon}
                     </div>
-                    <span className="text-slate-400 text-[11px] font-medium">
-                      {new Date(alert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <span className="text-slate-400 text-[11px] font-bold">
+                      Issued {alert.issuedAt}
                     </span>
                   </div>
 
-                  <div className="space-y-2 mb-8">
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">{alert.title}</h2>
-                    <p className="text-slate-500 text-sm font-medium">{alert.affectedAreas?.join(', ') || 'Metropolitan Area'}</p>
+                  <div className="space-y-0.5 mb-4">
+                    <h2 className="text-[22px] font-black text-slate-900 tracking-tight leading-tight">{alert.name}</h2>
+                    <p className="text-slate-500 text-[13px] font-bold">{alert.location}</p>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4">
-                    <div className="flex items-center gap-2 text-slate-500">
-                      <Clock size={16} />
-                      <span className="text-xs font-semibold">Expires: {new Date(alert.expiresAt || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                    <div className="flex items-center gap-2 text-slate-400">
+                      <Clock size={14} />
+                      <span className="text-[11px] font-black uppercase tracking-wider">Expires: {alert.expiresAt}</span>
                     </div>
                     <Button
-                      onClick={() => handleFeedDispatch(alert)}
-                      className={cn("rounded-lg px-8 py-6 font-bold text-white transition-all active:scale-95 shadow-sm", buttonColor)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (isTakeAction) handleFeedDispatch(alert)
+                      }}
+                      className={cn("rounded-lg px-8 py-5 font-black text-white transition-all shadow-sm text-[14px]", buttonColor)}
                     >
                       {buttonText}
                     </Button>
@@ -917,77 +486,226 @@ export default function AlertsCommunicationPage() {
                 </Card>
               );
             })
+
+
           )}
         </div>
 
         {/* Sidebars */}
         <div className="lg:col-span-4">
-          <div className="sticky top-8 space-y-8 h-fit">
-            {/* Alerts Details Sidepanel */}
-            <Card className="bg-white border-slate-200 rounded-3xl p-8 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900 mb-6">Alerts Details</h3>
-
-              <div className="flex items-center gap-3 mb-8 pb-6 border-b border-slate-100">
-                <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 shadow-sm">
-                  <Image src="https://www.weather.gov/assets/images/nws_logo.png" alt="NWS" width={32} height={32} />
+          <div className="sticky top-8 space-y-6 h-fit">
+            {/* Alert Type Filter Legend */}
+            <Card className="bg-white border-slate-200 rounded-[28px] p-6 shadow-sm overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
+              
+              <div className="flex items-center justify-between mb-5 relative">
+                <div className="space-y-0.5">
+                  <h3 className="text-[15px] font-black text-slate-900 leading-none uppercase tracking-tight">Filter by Alert</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">NWS Official Color Logic</p>
                 </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] leading-none mb-1">Data Source</p>
-                  <p className="text-sm font-black text-slate-900 tracking-tight">National Weather Service</p>
-                </div>
+                {filterCategory && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setFilterCategory(null)}
+                    className="h-7 px-3 rounded-lg text-[9px] font-black uppercase tracking-widest text-[#EF4444] hover:bg-red-50 transition-all border border-red-100/50"
+                  >
+                    Clear Filter
+                  </Button>
+                )}
               </div>
 
-              {selectedAlert ? (
-                <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-bold uppercase text-red-600 tracking-widest flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                      Live Intelligence
-                    </p>
-                    <h4 className="text-xl font-black text-slate-900 leading-tight">{selectedAlert.title}</h4>
-                  </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar relative">
+                {ALERT_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.name}
+                    onClick={() => setFilterCategory(filterCategory === cat.name ? null : cat.name)}
+                    className={cn(
+                      "flex items-center gap-2.5 group transition-all p-1.5 rounded-xl border",
+                      filterCategory === cat.name 
+                        ? "bg-slate-900 border-slate-900 shadow-lg shadow-slate-900/10" 
+                        : "hover:bg-slate-50 border-transparent"
+                    )}
+                  >
+                    <div 
+                      className="w-3.5 h-3.5 rounded-md shrink-0 shadow-sm border border-black/5" 
+                      style={{ backgroundColor: cat.color }} 
+                    />
+                    <span className={cn(
+                      "text-[10px] font-black uppercase tracking-tight text-left leading-tight transition-colors truncate",
+                      filterCategory === cat.name ? "text-white" : "text-slate-600 group-hover:text-slate-900"
+                    )}>
+                      {cat.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </Card>
 
-                  <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50">
-                    <p className="text-[10px] font-bold uppercase text-blue-600 tracking-widest mb-2">Primary Location</p>
-                    <p className="text-sm font-bold text-slate-700">{selectedAlert.affectedAreas[0]}</p>
-                    <p className="text-[11px] font-medium text-slate-400 mt-1 italic">NWS Sector Detection: Real-time Coordinate Sync active.</p>
-                  </div>
+            {/* Alerts Details Sidepanel */}
+            <Card className="bg-white border-slate-100 rounded-[24px] p-6 shadow-sm">
+              <h3 className="text-[20px] font-black text-slate-900 mb-5">Alerts Details</h3>
 
-                  <div className="space-y-4">
-                    <p className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Tactical Summary</p>
-                    <p className="text-sm font-medium text-slate-600 leading-relaxed lowercase first-letter:uppercase pr-2 max-h-[200px] overflow-y-auto custom-scrollbar">
-                      {selectedAlert.description}
-                    </p>
-                  </div>
-
-                  <div className="pt-6 border-t border-slate-100">
-                    <ul className="space-y-3">
-                      {[
-                        'NWS-Verified Alert Chain',
-                        'Dynamic Location Tracking',
-                        'Priority Communication Level'
-                      ].map((item, idx) => (
-                        <li key={idx} className="flex gap-3 text-[11px] font-bold text-slate-500 items-center">
-                          <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+              <div className="bg-[#F0F4FF] rounded-[20px] p-6 space-y-6">
+                <div className="flex items-center gap-4">
+                  {/* <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-blue-50">
+                    <Image src="https://www.weather.gov/assets/images/nws_logo.png" alt="NWS" width={32} height={32} />
+                  </div> */}
+                  <h4 className="text-[17px] font-black text-slate-900 leading-tight">National Weather Service</h4>
                 </div>
-              ) : (
-                <div className="py-20 text-center space-y-4 border-2 border-dashed border-slate-100 rounded-[32px]">
-                  <CloudRain className="w-12 h-12 text-slate-200 mx-auto" />
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Select an alert to <br /> view intel</p>
-                </div>
-              )}
+
+                <ul className="space-y-4">
+                  {[
+                    "Official, government-issued weather alerts",
+                    "Real-time updates during active weather events",
+                    "Timely watches, warnings, and advisories for your area",
+                    "Reliable information designed to support quick decision-making"
+                  ].map((point, idx) => (
+                    <li key={idx} className="flex gap-3 items-start group">
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-900 mt-1.5 shrink-0" />
+                      <p className="text-[14px] font-bold text-slate-700 leading-snug tracking-tight">
+                        {point}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </Card>
 
             {/* Notification Preferences Sidepanel */}
-
+            <Card className="bg-white border-slate-200 rounded-3xl p-8 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-900 mb-6">Notification Preferences</h3>
+              <div className="space-y-6">
+                {[
+                  { id: 'push', label: 'Push Notifications', icon: <Smartphone size={18} /> },
+                  { id: 'sms', label: 'SMS Alerts', icon: <MessageSquare size={18} /> },
+                  { id: 'email', label: 'Email Alerts', icon: <Mail size={18} /> },
+                ].map((pref) => (
+                  <div key={pref.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-slate-700">
+                      {pref.icon}
+                      <span className="text-sm font-bold">{pref.label}</span>
+                    </div>
+                    <Switch
+                      checked={notificationPrefs[pref.id]}
+                      onCheckedChange={() => toggleNotification(pref.id)}
+                      className="data-[state=checked]:bg-[#4338CA]"
+                    />
+                  </div>
+                ))}
+              </div>
+            </Card>
           </div>
         </div>
       </div>
+
+      {/* Action Required Modal */}
+      <Dialog open={isActionModalOpen} onOpenChange={setIsActionModalOpen}>
+        <DialogContent className="max-w-[480px] p-0 overflow-hidden border-none rounded-[24px] bg-white shadow-2xl flex flex-col max-h-[95vh] my-auto">
+          {currentActionAlert && (
+            <>
+              {/* Header - Fixed */}
+              <div className="bg-[#EF4444] p-6 pt-10 text-white relative shrink-0">
+
+                <div className="space-y-1 mb-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-white/90">Action Required</p>
+                  <DialogTitle className="text-[28px] font-black tracking-tight leading-tight text-white">
+                    {currentActionAlert.name}
+                  </DialogTitle>
+                  <DialogDescription className="sr-only">
+                    Emergency alert details and required actions for {currentActionAlert.name}.
+                  </DialogDescription>
+                </div>
+                <div className="flex items-center gap-3 text-[10px] font-bold text-white/90">
+                  <p>{currentActionAlert.location}</p>
+                  <div className="w-1 h-1 rounded-full bg-white/40 shrink-0" />
+                  <p className="shrink-0">Issued {currentActionAlert.issuedAt}</p>
+                  <div className="w-1 h-1 rounded-full bg-white/40 shrink-0" />
+                  <p className="shrink-0">Expires: {currentActionAlert.expiresAt}</p>
+                </div>
+              </div>
+
+              {/* Content - Scrollable */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                <div className="space-y-2">
+                  <h3 className="text-[15px] font-black text-slate-900 tracking-tight">What This Means</h3>
+                  <p className="text-slate-600 font-medium leading-relaxed text-[13px]">
+                    {currentActionAlert.description}
+                  </p>
+                </div>
+
+                <div className="bg-[#FFEDEC] rounded-[16px] p-5 space-y-4">
+                  <h3 className="text-[14px] font-black text-slate-900 tracking-tight">What You Need To Do Now</h3>
+                  <div className="space-y-3">
+                    {currentActionAlert.instructions?.map((inst: string, idx: number) => (
+                      <div key={idx} className="flex gap-2 items-start">
+                        <Check size={14} className="text-slate-900 shrink-0 mt-0.5" strokeWidth={4} />
+                        <p className="text-slate-900 font-bold text-[13px] tracking-tight leading-snug">{inst}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[15px] font-black text-slate-900 tracking-tight">Broadcast Message</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleGenerateAIMessage(currentActionAlert)}
+                      disabled={isGeneratingAI}
+                      className="text-[#6366F1] hover:text-[#4F46E5] hover:bg-indigo-50 font-black text-[11px] uppercase tracking-widest gap-2"
+                    >
+                      {isGeneratingAI ? (
+                        <>
+                          <Loader2 size={14} className="animate-spin" />
+                          Drafting...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={14} />
+                          AI Auto-Draft
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <Textarea
+                    placeholder="Enter the official emergency broadcast message..."
+                    value={alertMessage}
+                    onChange={(e) => setAlertMessage(e.target.value)}
+                    className="min-h-[120px] rounded-2xl border-slate-200 focus:ring-[#EF4444]/10 focus:border-[#EF4444] font-medium text-[13px] transition-all resize-none bg-slate-50/50"
+                  />
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Recommended: Keep under 160 characters for SMS compatibility.
+                  </p>
+                </div>
+              </div>
+
+              {/* Footer - Fixed Action Button */}
+              <div className="p-6 border-t border-slate-100 bg-white shrink-0">
+                <Button
+                  disabled={!alertMessage || isSendingAlert}
+                  onClick={() => handleSendOfficialAlert(currentActionAlert)}
+                  className="w-full bg-[#EF4444] hover:bg-[#DC2626] text-white font-black h-14 rounded-2xl text-[14px] uppercase tracking-widest transition-all active:scale-[0.98] shadow-xl shadow-red-500/20 gap-3"
+                >
+                  {isSendingAlert ? (
+                    <>
+                      <Loader2 size={20} className="animate-spin" />
+                      Dispatching Communications...
+                    </>
+                  ) : (
+                    <>
+                      <Send size={18} />
+                      Send Official Alert
+                    </>
+                  )}
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
+

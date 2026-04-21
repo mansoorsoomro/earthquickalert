@@ -95,8 +95,8 @@ export default function SuperAdminDashboard() {
     ? eocStatus
     : eocStatus.filter((e: any) => e.subAdminName === selectedLocation)
 
-  const selectedAdminCoords = selectedLocation !== 'All' 
-    ? subAdminUsers.find(u => u.name === selectedLocation) 
+  const selectedAdminCoords = selectedLocation !== 'All'
+    ? subAdminUsers.find(u => u.name === selectedLocation)
     : undefined
 
   return (
@@ -125,7 +125,7 @@ export default function SuperAdminDashboard() {
           </div>
 
           <div className="relative z-10 w-full md:w-72">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-2 italic text-blue-600">sub-admin name</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-2 italic text-blue-600">Filter by Sub-Admin</p>
             <div className="relative group">
               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                 <UserIcon size={16} className="text-[#DC2626] group-focus-within:animate-pulse" />
@@ -267,11 +267,11 @@ export default function SuperAdminDashboard() {
               <LicenseRequestList />
             </div>
 
-            <ThreatMonitoring 
+            <ThreatMonitoring
               key={selectedLocation}
-              lat={selectedAdminCoords?.lat} 
-              lon={selectedAdminCoords?.lng} 
-              locationName={selectedLocation !== 'All' ? selectedLocation : 'USA'} 
+              lat={selectedAdminCoords?.lat}
+              lon={selectedAdminCoords?.lng}
+              locationName={selectedLocation !== 'All' ? selectedLocation : 'USA'}
             />
           </div>
         </div>

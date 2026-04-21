@@ -268,13 +268,13 @@ export default function AdminUsersPage() {
                                                             handleOrgSelect(org._id, org.organizationName);
                                                         }}
                                                         className={cn(
-                                                            "w-full h-12 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl group/btn transition-all active:scale-95 flex items-center justify-center gap-3",
-                                                            selectedOrgId === org._id 
-                                                                ? "bg-white/20 hover:bg-white/30 text-white border border-white/20" 
+                                                            "w-full h-12 rounded-2xl text-[8px] font-black uppercase tracking-[0.2em] shadow-xl group/btn transition-all active:scale-95 flex items-center justify-center gap-3",
+                                                            selectedOrgId === org._id
+                                                                ? "bg-white/20 hover:bg-white/30 text-white border border-white/20"
                                                                 : "bg-[#33375D] text-white hover:bg-[#1E293B] border-none"
                                                         )}
                                                     >
-                                                        Verify Dispatch <ArrowUpRight size={18} className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform text-white" />
+                                                        View All Responders <ArrowUpRight size={18} className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform text-white" />
                                                     </Button>
                                                 </div>
                                             </div>
