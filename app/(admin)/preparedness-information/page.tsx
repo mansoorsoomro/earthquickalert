@@ -151,7 +151,7 @@ export default function PreparednessInformationPage() {
   return (
     <main className="min-h-screen bg-slate-50/50 pb-20">
 
-      <div className="px-6 lg:px-12 pt-8 space-y-8 max-w-[1600px] mx-auto">
+      <div className="px-6 lg:px-12 pt-8 space-y-8 max-w-[1800px] mx-auto">
         {/* Main Header Card */}
         <Card className="p-8 border-slate-200 rounded-2xl shadow-sm relative overflow-hidden bg-white group transition-all hover:shadow-md">
           <div className="absolute top-0 left-0 w-1.5 h-full bg-slate-900 group-hover:bg-blue-600 transition-colors" />

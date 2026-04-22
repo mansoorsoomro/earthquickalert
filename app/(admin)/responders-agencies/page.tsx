@@ -54,7 +54,7 @@ export default function RespondersAgenciesPage() {
 
     return (
         <div className="flex-1 overflow-auto bg-[#F8FAFC]">
-            <main className="p-6 md:p-10 space-y-8 max-w-[1600px] mx-auto">
+            <main className="p-6 md:p-10 space-y-8 max-w-[1800px] mx-auto">
 
                 {/* Info Card Header */}
                 <div className="bg-white border-l-4 border-l-[#33375D] rounded-xl p-8 shadow-sm border border-slate-200">
