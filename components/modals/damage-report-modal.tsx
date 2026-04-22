@@ -46,7 +46,7 @@ export function DamageReportModal({ isOpen, onClose }: DamageReportModalProps) {
                                 <h3 className="font-bold text-slate-900 mb-1">{report.type} Damage</h3>
                                 <div className="flex items-center gap-3">
                                     <Badge className={`${report.severity === 'Catastrophic' ? 'bg-red-500' :
-                                            report.severity === 'Major' ? 'bg-orange-500' : 'bg-yellow-500'
+                                        report.severity === 'Major' ? 'bg-orange-500' : 'bg-yellow-500'
                                         } text-white border-0 text-[10px] font-black uppercase px-2`}>
                                         {report.severity}
                                     </Badge>

@@ -153,3 +153,9 @@ html, body, #__next {
   clip: rect(1px, 1px, 1px, 1px);
   white-space: nowrap;
 }
+
+/* Google Maps Autocomplete Dropdown Fix for Modals */
+.pac-container {
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}

@@ -253,6 +253,7 @@ export default function AlertsCommunicationPage() {
 
   const handleFeedDispatch = (alert: any) => {
     setCurrentActionAlert(alert)
+    setAlertMessage('') // Reset message for the new alert
     setIsActionModalOpen(true)
   }
 
@@ -265,7 +266,7 @@ export default function AlertsCommunicationPage() {
   }
 
   const selectedAlert = alerts.find(a => a.id === selectedAlertId)
-  
+
   // AI Alert State
   const [alertMessage, setAlertMessage] = useState('')
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
@@ -278,9 +279,9 @@ export default function AlertsCommunicationPage() {
       const response = await fetch('/api/ai/generate-alert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           alertType: alert.name,
-          context: alert.description 
+          context: alert.description
         })
       })
       const data = await response.json()
@@ -307,7 +308,8 @@ export default function AlertsCommunicationPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC] p-6 lg:p-12 space-y-8 max-w-7xl mx-auto">
+    <main className="min-h-screen bg-[#F8FAFC]">
+      <div className="max-w-7xl mx-auto p-6 lg:p-12 space-y-8">
       {/* Hero Header */}
       <Card className="p-8 lg:p-12 bg-white border-slate-200 rounded-3xl shadow-sm relative overflow-hidden">
         <div className="absolute top-0 left-0 w-1.5 h-full bg-[#6366F1]" />
@@ -497,16 +499,16 @@ export default function AlertsCommunicationPage() {
             {/* Alert Type Filter Legend */}
             <Card className="bg-white border-slate-200 rounded-[28px] p-6 shadow-sm overflow-hidden relative">
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
-              
+
               <div className="flex items-center justify-between mb-5 relative">
                 <div className="space-y-0.5">
                   <h3 className="text-[15px] font-black text-slate-900 leading-none uppercase tracking-tight">Filter by Alert</h3>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">NWS Official Color Logic</p>
                 </div>
                 {filterCategory && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setFilterCategory(null)}
                     className="h-7 px-3 rounded-lg text-[9px] font-black uppercase tracking-widest text-[#EF4444] hover:bg-red-50 transition-all border border-red-100/50"
                   >
@@ -522,14 +524,14 @@ export default function AlertsCommunicationPage() {
                     onClick={() => setFilterCategory(filterCategory === cat.name ? null : cat.name)}
                     className={cn(
                       "flex items-center gap-2.5 group transition-all p-1.5 rounded-xl border",
-                      filterCategory === cat.name 
-                        ? "bg-slate-900 border-slate-900 shadow-lg shadow-slate-900/10" 
+                      filterCategory === cat.name
+                        ? "bg-slate-900 border-slate-900 shadow-lg shadow-slate-900/10"
                         : "hover:bg-slate-50 border-transparent"
                     )}
                   >
-                    <div 
-                      className="w-3.5 h-3.5 rounded-md shrink-0 shadow-sm border border-black/5" 
-                      style={{ backgroundColor: cat.color }} 
+                    <div
+                      className="w-3.5 h-3.5 rounded-md shrink-0 shadow-sm border border-black/5"
+                      style={{ backgroundColor: cat.color }}
                     />
                     <span className={cn(
                       "text-[10px] font-black uppercase tracking-tight text-left leading-tight transition-colors truncate",
@@ -705,6 +707,7 @@ export default function AlertsCommunicationPage() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </main>
   );
 }

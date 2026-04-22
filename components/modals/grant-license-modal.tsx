@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -80,8 +80,8 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
   })
 
   const [mapCenter, setMapCenter] = useState(defaultCenter)
-  const [primaryAutocomplete, setPrimaryAutocomplete] = useState<any>(null)
-  const [orgAutocomplete, setOrgAutocomplete] = useState<any>(null)
+  const primaryAutocompleteRef = useRef<any>(null)
+  const orgAutocompleteRef = useRef<any>(null)
 
   const { isLoaded } = useJsApiLoader({
     id: GOOGLE_MAPS_LOADER_ID,
@@ -121,9 +121,17 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
     }
   }, [isOpen, user])
 
-  const onPrimaryPlaceChanged = () => {
-    if (primaryAutocomplete !== null) {
-      const place = primaryAutocomplete.getPlace()
+  const onPrimaryLoad = useCallback((autocomplete: any) => {
+    primaryAutocompleteRef.current = autocomplete
+  }, [])
+
+  const onOrgLoad = useCallback((autocomplete: any) => {
+    orgAutocompleteRef.current = autocomplete
+  }, [])
+
+  const onPrimaryPlaceChanged = useCallback(() => {
+    if (primaryAutocompleteRef.current !== null) {
+      const place = primaryAutocompleteRef.current.getPlace()
       if (place.geometry) {
         const lat = place.geometry.location.lat()
         const lng = place.geometry.location.lng()
@@ -147,11 +155,11 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
         }))
       }
     }
-  }
+  }, [])
 
-  const onOrgPlaceChanged = () => {
-    if (orgAutocomplete !== null) {
-      const place = orgAutocomplete.getPlace()
+  const onOrgPlaceChanged = useCallback(() => {
+    if (orgAutocompleteRef.current !== null) {
+      const place = orgAutocompleteRef.current.getPlace()
       if (place.formatted_address) {
         setFormData(prev => ({
           ...prev,
@@ -159,7 +167,7 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
         }))
       }
     }
-  }
+  }, [])
 
   const handleGrant = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -189,7 +197,15 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] rounded-3xl border-slate-200 p-0 overflow-hidden bg-white text-slate-900 max-h-[90vh] overflow-y-auto outline-none border shadow-2xl">
+      <DialogContent 
+        className="sm:max-w-[700px] rounded-3xl border-slate-200 p-0 overflow-hidden bg-white text-slate-900 max-h-[90vh] overflow-y-auto outline-none border shadow-2xl"
+        onInteractOutside={(e) => {
+          const target = e.target as HTMLElement;
+          if (target?.closest('.pac-container')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <form onSubmit={handleGrant}>
           <DialogHeader className="p-8 border-b border-slate-100 bg-white">
             <div className="flex items-center gap-4">
@@ -217,7 +233,7 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                   <Input
                     required
                     value={formData.organizationName}
-                    onChange={(e) => setFormData({ ...formData, organizationName: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, organizationName: e.target.value }))}
                     placeholder="e.g. California State, Miami City, or SoFi Stadium"
                     className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
                   />
@@ -226,11 +242,11 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                 <div className="md:col-span-2 space-y-2">
                   <Label className="text-sm font-medium text-slate-700 ml-1">Organization Address</Label>
                   {isLoaded ? (
-                    <Autocomplete onLoad={setOrgAutocomplete} onPlaceChanged={onOrgPlaceChanged}>
+                    <Autocomplete onLoad={onOrgLoad} onPlaceChanged={onOrgPlaceChanged}>
                       <Input
                         required
                         value={formData.organizationalAddress}
-                        onChange={(e) => setFormData({ ...formData, organizationalAddress: e.target.value })}
+                        onChange={(e) => setFormData(prev => ({ ...prev, organizationalAddress: e.target.value }))}
                         placeholder="HQ or Registered Address"
                         className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
                       />
@@ -245,7 +261,7 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                   <Input
                     required
                     value={formData.billingContact}
-                    onChange={(e) => setFormData({ ...formData, billingContact: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, billingContact: e.target.value }))}
                     placeholder="Full name of representative"
                     className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
                   />
@@ -257,7 +273,7 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                     required
                     type="email"
                     value={formData.billingEmail}
-                    onChange={(e) => setFormData({ ...formData, billingEmail: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, billingEmail: e.target.value }))}
                     placeholder="email@organization.com"
                     className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
                   />
@@ -269,7 +285,7 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                     required
                     type="tel"
                     value={formData.phoneNumber}
-                    onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, phoneNumber: e.target.value }))}
                     placeholder="+1 (555) 000-0000"
                     className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
                   />
@@ -286,11 +302,11 @@ export function GrantLicenseModal({ user, isOpen, onClose, onSuccess }: GrantLic
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-slate-700 ml-1 font-bold">Primary Address</Label>
                   {isLoaded ? (
-                    <Autocomplete onLoad={setPrimaryAutocomplete} onPlaceChanged={onPrimaryPlaceChanged}>
+                    <Autocomplete onLoad={onPrimaryLoad} onPlaceChanged={onPrimaryPlaceChanged}>
                       <Input
                         required
                         value={formData.billingAddress}
-                        onChange={(e) => setFormData({ ...formData, billingAddress: e.target.value })}
+                        onChange={(e) => setFormData(prev => ({ ...prev, billingAddress: e.target.value }))}
                         placeholder="Operations center or target location"
                         className="h-11 bg-white border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 transition-all font-medium border-blue-100 shadow-sm"
                       />
