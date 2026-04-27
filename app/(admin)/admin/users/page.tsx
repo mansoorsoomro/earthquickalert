@@ -284,13 +284,12 @@ export default function AdminUsersPage() {
                             </div>
                         )}
 
-                        <div className="space-y-6">
+                        {/* <div className="space-y-6">
                             <div className="flex items-center gap-4">
                                 <div className="w-10 h-1 bg-[#33375D] rounded-full" />
                                 <h2 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.4em]">Administrative Infrastructure</h2>
                             </div>
 
-                            {/* Unified Personnel Search */}
                             <div className="relative max-w-md group">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#33375D] transition-colors w-4 h-4" />
                                 <input
@@ -302,8 +301,7 @@ export default function AdminUsersPage() {
                                 />
                             </div>
 
-                            {/* Admin Table */}
-                            <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+                           <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
                                 <CardHeader className="p-6 border-b border-slate-100 bg-white flex flex-row items-center justify-between">
                                     <CardTitle className="text-lg font-black text-slate-900 uppercase tracking-tight">Decision Makers & Dispatchers</CardTitle>
                                     <Badge className="bg-[#33375D] text-white px-3 py-1 rounded-full text-[10px] font-bold border-none">{adminNodes.length} Verified Accounts</Badge>
@@ -366,7 +364,7 @@ export default function AdminUsersPage() {
                                     </div>
                                 </CardContent>
                             </Card>
-                        </div>
+                        </div> */}
                     </div>
                 ) : (
                     <div className="space-y-10 animate-in slide-in-from-right-10 fade-in duration-500">

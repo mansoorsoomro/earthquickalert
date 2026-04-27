@@ -90,6 +90,10 @@ export function Sidebar() {
           ...menuItems,
         ]
 
+  const filteredBottomItems = isSuperAdminRole 
+    ? bottomItems.filter(item => item.label === 'Log out')
+    : bottomItems;
+
   return (
     <div className="hidden md:flex w-72 bg-[#33375D] text-white flex-col h-full border-r border-slate-700/50">
       {/* Logo Section */}
@@ -130,7 +134,7 @@ export function Sidebar() {
       {/* Bottom Navigation */}
       <div className="p-4 mb-4">
         <div className="bg-[#44496B] rounded-2xl p-4 space-y-1 shadow-inner">
-          {bottomItems.map((item) => {
+          {filteredBottomItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
 

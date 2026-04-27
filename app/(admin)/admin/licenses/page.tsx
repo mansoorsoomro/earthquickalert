@@ -138,11 +138,11 @@ export default function LicenseManagement() {
                 </Card>
 
                 {/* Banner Gradient */}
-                <div className="bg-gradient-to-r from-blue-700 to-indigo-600 rounded-3xl p-10 text-white relative overflow-hidden shadow-2xl shadow-blue-900/20 group">
+                <div className="bg-[#33375D] rounded-3xl p-10 text-white relative overflow-hidden shadow-2xl shadow-[#33375D]/20 group">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl transition-all group-hover:bg-white/20" />
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
                         <div>
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/30 border border-blue-400/30 text-[10px] font-black uppercase tracking-widest mb-4">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[10px] font-black uppercase tracking-widest mb-4">
                                 <ShieldCheck size={12} /> License Overview
                             </div>
                             <h2 className="text-3xl font-black tracking-tight mb-3">Organization List</h2>
